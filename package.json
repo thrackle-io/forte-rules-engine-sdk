@@ -5,16 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ethers": "^6.13.4"
+    "ethers": "^6.13.4",
+    "vitest": "^2.1.4"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
     "typescript": "^5.6.3"
   }
 }
