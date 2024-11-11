@@ -10,24 +10,95 @@ type Tuple = {
     s: string;
   }
 
-var str = "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4) --> revert --> addValue(uint256)"
+// Examples 
+// ----------------------------------------------------------------------------------------------------------------
+/**
+ * Example A: 
+ * ( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4)
+ * 
+ * [AND,
+ *  [1 + 1 == 2],
+ *  [AND,
+ *      [AND,
+ *          [3 + 4 > 5],
+ *          [AND,
+ *              [2 == 2],
+ *              [1 == 1],
+ *          ]
+ *      ],
+ *      [4 == 4]
+ *  ]
+ * ] 
+ * 
+ */
 
-var initialSplit = str.split('-->')
-var condition = initialSplit[0]
-// var condition = "( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) )"
-var array = convertToTree(condition)
+/**
+ * Example B:
+ * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+ * [AND,
+ *  [3 + 4 > 5],
+ *  [AND,
+ *      [1 == 1],
+ *      [2 == 2]
+ *  ]
+ * ]
+ */
+// ----------------------------------------------------------------------------------------------------------------
 
-if(array.length > 0) {
-    iterate(array)
+// Comment/Uncomment accordingly to run the two examples (outlined above)
+
+// Example A:
+// var str = "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4) --> revert --> addValue(uint256)"
+// var initialSplit = str.split('-->')
+// var condition = initialSplit[0]
+
+
+// Example B:
+var condition = "3 + 4 > 5 AND (1 == 1 AND 2 == 2)"
+
+var array = convertToTree(condition, "AND")
+if(array.length == 1) {
+    array = array[0]
 }
 
-console.log(array)
-var secondArray = array[2][1][0]
-console.log(secondArray)
-console.log(secondArray[0][1][1])
+if(array.length > 0) {
+    iterate(array, "AND")
+}
+
+// console.log(JSON.stringify(array, null, 0));
+
+// Experiment
+// ----------------------------------------------------------------------------------------------------------------
+
+/**
+ * Example B:
+ * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+ * [AND,
+ *  [">",
+ *      ["+", "3", "4"],
+ *      "5"]
+ *  [AND,
+ *      ["==", "1", "1"],
+ *      ["==", "2", "2"]
+ *  ]
+ * ]
+ */
+
+iterate(array, "==")
+console.log(JSON.stringify(array, null, 0))
+
+iterate(array, ">")
+console.log(JSON.stringify(array, null, 0))
+
+iterate(array, "+")
+console.log(JSON.stringify(array, null, 0))
+
+singleify(array)
+console.log(JSON.stringify(array, null, 0))
+// ----------------------------------------------------------------------------------------------------------------
 
 
-function convertToTree(condition : string) {
+function convertToTree(condition : string, splitOn : string) {
     // Recursive Function steps:
     // replace anything in parenthesis with i:n
 
@@ -46,10 +117,9 @@ function convertToTree(condition : string) {
     }
 
     // split based on AND
-    var newSplit = condition.split(" AND ")
+    var newSplit = condition.split(splitOn)
 
     // convert to syntax array
-
     var endIndex = newSplit.length - 1
     var overAllArray = new Array()
     while (endIndex > 0) {
@@ -65,13 +135,21 @@ function convertToTree(condition : string) {
             if(actualValueTwo.includes('(')) {
                 actualValueTwo = actualValueTwo.substring(1, actualValueTwo.length - 1)
             }
-
-            innerArray.push(actualValue, actualValueTwo)
-            var outerArray = new Array()
-            outerArray.push("AND")
-            outerArray.push(innerArray)
+            var innerArrayTwo = new Array()
+            innerArray.push(actualValue)
+            innerArrayTwo.push(actualValueTwo)
+            if(overAllArray.length == 0) {
+                var outerArray = new Array()
+                outerArray.push(splitOn)
+                outerArray.push(innerArray)
+                outerArray.push(innerArrayTwo)
+                overAllArray.unshift(outerArray)
+            } else {
+                overAllArray.unshift(innerArrayTwo)
+                overAllArray.unshift(innerArray)
+                overAllArray.unshift(splitOn)
+            }
             endIndex -= 2
-            overAllArray.unshift(outerArray)
         }
         if(endIndex == 0) {
             var innerArray = new Array()
@@ -82,7 +160,7 @@ function convertToTree(condition : string) {
             innerArray.push(actualValue)
             var outerArray = new Array()
             overAllArray.unshift(innerArray)
-            overAllArray.unshift("AND")
+            overAllArray.unshift(splitOn)
             endIndex -= 1
         }
     }
@@ -91,32 +169,34 @@ function convertToTree(condition : string) {
 
 }
 
-function logArray(array) {
-    var iter = 0
-    while(iter < array.length) {
-        if(Array.isArray(array[iter])) {
-            logArray(array[iter])
-        } else {
-            console.log(array[iter])
-        }
-        iter += 1
-    }
-}
-
-function iterate(array) {
+function iterate(array, splitOn: string) {
     var iter = 0
     while(iter < array.length) {
         if(!Array.isArray(array[iter])) {
-            if(array[iter].includes(" AND " )) {
-                var output = convertToTree(array[iter])
-                array[iter] = output
+            var checkVal = " " + splitOn + " "
+            if(array[iter].includes(checkVal)) {
+                var output = convertToTree(array[iter], splitOn)
+                if(output.length > 0) {
+                    if(output.length == 1) {
+                        output = output[0]
+                    }
+                    array.splice(iter, 1, output[0])
+                }
+                if(output.length > 1) {
+                    var iterTwo = 1
+                    while(iterTwo < output.length) {
+                        array.splice(iter+iterTwo, 0, output[iterTwo])
+                        iterTwo++
+                    }
+                }
                 iter -= 1
             }
         } else {
             if(array[iter].length > 0) {
-                iterate(array[iter])
+                iterate(array[iter], splitOn)
             }
         }
+
         iter += 1
     }
 }
@@ -137,4 +217,18 @@ function unconvertTuple(str: String, tuples: Tuple[]) {
         iter++
     }
     return actualValue
+}
+
+function singleify(array) {
+    var iter = 0
+    while(iter < array.length) {
+        if(Array.isArray(array[iter])) {
+            if(array[iter].length == 1) {
+                array[iter] = array[iter][0]
+            } else {
+                singleify(array[iter])
+            }
+        }
+        iter++
+    }
 }
