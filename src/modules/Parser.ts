@@ -1,4 +1,4 @@
-// const ethers = require('ethers');
+const ethers = require('ethers');
 
 type Tuple = {
     i: string;
@@ -6,50 +6,45 @@ type Tuple = {
   }
 
 export function parseSyntax(syntax: string) {
-
+    // Split the initial syntax string into condition, effect and function signature 
     var initialSplit = syntax.split('-->')
     var condition = initialSplit[0]
-
+    // Create the initial Abstract Syntax Tree (AST) splitting on AND
     var array = convertToTree(condition, "AND")
     if(array.length == 1) {
         array = array[0]
     }  
 
     if(array.length > 0) {
+        // Recursively iterate over the tree splitting on the available operators
         iterate(array, "AND")
+        iterate(array, "==")
+        iterate(array, ">")
+        iterate(array, "+")
+        removeArrayWrappers(array)
+        intify(array)
     }
-
-    iterate(array, "==")
-    console.log(JSON.stringify(array, null, 0))
-
-    iterate(array, ">")
-    console.log(JSON.stringify(array, null, 0))
-
-    iterate(array, "+")
-    console.log(JSON.stringify(array, null, 0))
-
-    singleify(array)
-    console.log(JSON.stringify(array, null, 0))
-    intify(array)
-    console.log(JSON.stringify(array, null, 0))
 
     var retVal = []
     var mem = []
     const iter = { value: 0 };
-    compileM(retVal, mem, array, iter)
-    console.log(retVal)
+    // Convert the AST into the Instruction Set Syntax 
+    convertToInstructionSet(retVal, mem, array, iter)
     return retVal
 }
 
+// Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
 function convertToTree(condition : string, splitOn : string) {
     // Recursive Function steps:
-    // replace anything in parenthesis with i:n
-
+    // 1. Replace anything in parenthesis with i:n
     var substrs = new Array()
-
     var iter = 0
     var leng = condition.split('(').length
     while(iter <= (leng - 2)) {
+
+        // Start with the final instance of "(" in the string, create a substring
+        // to the next instance of ")" and replace that with i:n
+        // Repeat this process until all parenthesis have been accounted for
         var start = condition.lastIndexOf("(")
         var substr = condition.substring(start, condition.indexOf(")", start) + 1)
         condition = condition.replace(substr, "i:".concat(iter.toString()))
@@ -59,17 +54,19 @@ function convertToTree(condition : string, splitOn : string) {
         iter++
     }
 
-    // split based on AND
-    var newSplit = condition.split(splitOn)
+    // 2. Split based on the passed in delimiter (splitOn)
+    var delimiterSplit = condition.split(splitOn)
 
-    // convert to syntax array
-    var endIndex = newSplit.length - 1
+    // 3. Convert to syntax array
+    // Start from the back of the array and work forwards
+    var endIndex = delimiterSplit.length - 1
     var overAllArray = new Array()
     while (endIndex > 0) {
         if(endIndex >= 1) {
             var innerArray = new Array()
-            var actualValue = unconvertTuple(newSplit[endIndex - 1], substrs) 
-            var actualValueTwo = unconvertTuple(newSplit[endIndex], substrs) 
+            // Retrieve the contents of the parenthesis for the last two i:n values
+            var actualValue = retrieveParenthesisContent(delimiterSplit[endIndex - 1], substrs) 
+            var actualValueTwo = retrieveParenthesisContent(delimiterSplit[endIndex], substrs) 
         
             if(actualValue.includes('(')) {
                 actualValue = actualValue.substring(1, actualValue.length - 1)
@@ -78,9 +75,12 @@ function convertToTree(condition : string, splitOn : string) {
             if(actualValueTwo.includes('(')) {
                 actualValueTwo = actualValueTwo.substring(1, actualValueTwo.length - 1)
             }
+            // Add the contents to an inner array
             var innerArrayTwo = new Array()
             innerArray.push(actualValue)
             innerArrayTwo.push(actualValueTwo)
+            // If this is the first entry in the overall array, add the values in an array wrapper
+            // otherwise add them directly
             if(overAllArray.length == 0) {
                 var outerArray = new Array()
                 outerArray.push(splitOn)
@@ -94,9 +94,10 @@ function convertToTree(condition : string, splitOn : string) {
             }
             endIndex -= 2
         }
+        // Slightly modified process for the final index in the array
         if(endIndex == 0) {
             var innerArray = new Array()
-            var actualValue = unconvertTuple(newSplit[endIndex], substrs)
+            var actualValue = retrieveParenthesisContent(delimiterSplit[endIndex], substrs)
             if(actualValue.includes('(')) {
                 actualValue = actualValue.substring(1, actualValue.length - 1)
             }
@@ -112,6 +113,7 @@ function convertToTree(condition : string, splitOn : string) {
 
 }
 
+// Iterate over the array and recursively split based on the splitOn delimiter 
 function iterate(array, splitOn: string) {
     var iter = 0
     while(iter < array.length) {
@@ -144,7 +146,8 @@ function iterate(array, splitOn: string) {
     }
 }
 
-function unconvertTuple(str: String, tuples: Tuple[]) {
+// Replace the i: syntax with the original contents of the parenthesis
+function retrieveParenthesisContent(str: String, tuples: Tuple[]) {
     var actualValue = str
     var iter = 0
     while(iter < tuples.length) {
@@ -153,7 +156,7 @@ function unconvertTuple(str: String, tuples: Tuple[]) {
             actualValue = tuple.s
             if(actualValue.includes('i:')) {
                 var substr = actualValue.substring(actualValue.indexOf("i:"), actualValue.indexOf(':') + 2)
-                actualValue = actualValue.replace(substr, unconvertTuple(substr, tuples))
+                actualValue = actualValue.replace(substr, retrieveParenthesisContent(substr, tuples))
             }
             break
         }
@@ -162,20 +165,22 @@ function unconvertTuple(str: String, tuples: Tuple[]) {
     return actualValue
 }
 
-function singleify(array) {
+// Remove extraneous array wrappers created during the recursion 
+function removeArrayWrappers(array) {
     var iter = 0
     while(iter < array.length) {
         if(Array.isArray(array[iter])) {
             if(array[iter].length == 1) {
                 array[iter] = array[iter][0]
             } else {
-                singleify(array[iter])
+                removeArrayWrappers(array[iter])
             }
         }
         iter++
     }
 }
 
+// Replace string representations of numbers with actual numbers
 function intify(array) {
     var iter = 0
     while(iter < array.length) {
@@ -184,7 +189,6 @@ function intify(array) {
          } else {
             if(!isNaN(Number(array[iter]))) {
                 array[iter] = Number(array[iter])
-                console.log(Number(array[iter]))
             }
                 
         }
@@ -192,32 +196,40 @@ function intify(array) {
     }
 }
 
-function compileM(retVal, mem, expression, iterator: { value: number}) {
+// Convert AST to Instruction Set Syntax
+function convertToInstructionSet(retVal, mem, expression, iterator: { value: number}) {
+    // If it's a number add it directly to the instruction set and store its memory location in mem
     if(typeof expression == "number") {
         retVal.push("N")
         retVal.push(expression)
         mem.push(iterator.value)
         iterator.value += 1
+    // If it's an array with a string as the first index, recursively run starting at the next index
+    // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
         var sliced = expression.slice(1)
-        compileM(retVal, mem, sliced, iterator)
+        convertToInstructionSet(retVal, mem, sliced, iterator)
         retVal.push(expression[0])
         retVal.push(mem[0])
         retVal.push(mem[1])
         mem.shift()
         mem.shift()
+    // If it's an array with a number as the first index, add the number to the instruction set, add its memory
+    // location to the memory map and recursively run starting at the next index
     } else if (typeof expression[0] == "number") {
         retVal.push("N")
         retVal.push(expression[0])
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
-        compileM(retVal, mem, sliced, iterator)
+        convertToInstructionSet(retVal, mem, sliced, iterator)
+    // If it's an array with a= nested array as the first index recusively run with the nested array, update the memory map 
+    // and recusively run starting at the next index
     } else if(Array.isArray(expression[0])) {
-        compileM(retVal, mem, expression[0], iterator)
+        convertToInstructionSet(retVal, mem, expression[0], iterator)
         mem.push(iterator.value)
         iterator.value += 1
         expression = expression.slice(1)
-        compileM(retVal, mem, expression, iterator)
+        convertToInstructionSet(retVal, mem, expression, iterator)
     }
 }
