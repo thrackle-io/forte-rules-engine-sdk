@@ -1,4 +1,4 @@
-const ethers = require('ethers');
+// const ethers = require('ethers');
 
 type Tuple = {
     i: string;
@@ -11,13 +11,19 @@ export function parseSyntax(syntax: string) {
     var condition = initialSplit[0]
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
     var array = convertToTree(condition, "AND")
+
+    if(array.length == 0) {
+        array = convertToTree(condition, "OR")
+    }
+
     if(array.length == 1) {
         array = array[0]
-    }  
-
+    } 
+    console.log(array)
     if(array.length > 0) {
         // Recursively iterate over the tree splitting on the available operators
         iterate(array, "AND")
+        iterate(array, "OR")
         iterate(array, "==")
         iterate(array, ">")
         iterate(array, "+")
@@ -210,10 +216,13 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
         var sliced = expression.slice(1)
         convertToInstructionSet(retVal, mem, sliced, iterator)
         retVal.push(expression[0])
-        retVal.push(mem[0])
-        retVal.push(mem[1])
-        mem.shift()
-        mem.shift()
+        retVal.push(mem[mem.length - 2])
+        retVal.push(mem[mem.length - 1])
+        mem.pop()
+        mem.pop()
+        mem.push(iterator.value)
+        iterator.value += 1
+
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
     // location to the memory map and recursively run starting at the next index
     } else if (typeof expression[0] == "number") {
@@ -223,12 +232,10 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
         mem.push(iterator.value)
         iterator.value += 1
         convertToInstructionSet(retVal, mem, sliced, iterator)
-    // If it's an array with a= nested array as the first index recusively run with the nested array, update the memory map 
+    // If it's an array with a nested array as the first index recusively run with the nested array, update the memory map 
     // and recusively run starting at the next index
     } else if(Array.isArray(expression[0])) {
         convertToInstructionSet(retVal, mem, expression[0], iterator)
-        mem.push(iterator.value)
-        iterator.value += 1
         expression = expression.slice(1)
         convertToInstructionSet(retVal, mem, expression, iterator)
     }
