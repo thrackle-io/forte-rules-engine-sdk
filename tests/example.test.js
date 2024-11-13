@@ -82,3 +82,41 @@ test('Evaluates a complex syntax string (using only values and operators)', () =
     var retVal = parseSyntax(str)
     expect(retVal).toEqual(expectedArray)
   });
+
+test('Evaluates a simple syntax string (using AND + OR operators)', () => {
+    /*
+   * Original Syntax:
+   * (3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)
+   * 
+   * Abstract Tree Syntax:
+   * [OR,
+   *  [AND,
+   *    [>,
+   *      [+, 3, 4] ,5],
+   *    [==, 5, 5]],
+   *  [OR,
+   *    [==, 1, 1],
+   *    [==, 2, 3]
+   *  ]
+   * ]
+   *
+   * Instruction Set Syntax:
+   * [ 'N', 3, 'N', 4, '+', 0, 1,
+   *   'N', 5, '>', 2, 3, 'N', 5,
+   *   'N', 5, '==', 5, 6, 'AND', 4,
+   *    7, 'N', 1, 'N', 1, '==', 9,
+   *    10, 'N', 2, 'N', 3, '==', 12,
+   *    13, 'OR', 11, 14, 'OR', 8, 15 ]
+   */
+  var expectedArray = [
+    'N', 3, 'N', 4, '+', 0, 1,
+    'N', 5, '>', 2, 3, 'N', 5,
+    'N', 5, '==', 5, 6, 'AND', 4,
+    7, 'N', 1, 'N', 1, '==', 9,
+    10, 'N', 2, 'N', 3, '==', 12,
+    13, 'OR', 11, 14, 'OR', 8, 15
+  ]
+  var str = "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)  --> revert --> addValue(uint256)"; 
+  var retVal = parseSyntax(str)
+  expect(retVal).toEqual(expectedArray)
+});

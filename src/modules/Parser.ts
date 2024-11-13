@@ -11,25 +11,29 @@ export function parseSyntax(syntax: string) {
     var condition = initialSplit[0]
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
     var array = convertToTree(condition, "AND")
-
     if(array.length == 0) {
+        // If array is empty the top level conditional must be an OR instead of an AND
         array = convertToTree(condition, "OR")
     }
 
     if(array.length == 1) {
         array = array[0]
-    } 
-    console.log(array)
+    } else if(array.length == 0) {
+        // If the array is still empty than a single top level statement without an AND or OR was used.
+        array.push(condition)
+    }
+    
     if(array.length > 0) {
         // Recursively iterate over the tree splitting on the available operators
-        iterate(array, "AND")
         iterate(array, "OR")
+        iterate(array, "AND")
         iterate(array, "==")
         iterate(array, ">")
         iterate(array, "+")
         removeArrayWrappers(array)
         intify(array)
     }
+    console.log(JSON.stringify(array, null, 0));
 
     var retVal = []
     var mem = []
@@ -46,6 +50,8 @@ function convertToTree(condition : string, splitOn : string) {
     var substrs = new Array()
     var iter = 0
     var leng = condition.split('(').length
+    var delimiterArray = []
+
     while(iter <= (leng - 2)) {
 
         // Start with the final instance of "(" in the string, create a substring
