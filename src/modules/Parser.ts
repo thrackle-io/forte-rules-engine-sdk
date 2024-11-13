@@ -1,14 +1,21 @@
-// const ethers = require('ethers');
+import { ethers } from "ethers" 
 
 type Tuple = {
     i: string;
     s: string;
   }
 
+var matchArray = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
+
 export function parseSyntax(syntax: string) {
     // Split the initial syntax string into condition, effect and function signature 
     var initialSplit = syntax.split('-->')
     var condition = initialSplit[0]
+
+
+    var functionSignature = initialSplit[2]
+    var names = parseFunctionArguments(functionSignature)
+
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
     var array = convertToTree(condition, "AND")
     if(array.length == 0) {
@@ -25,22 +32,46 @@ export function parseSyntax(syntax: string) {
     
     if(array.length > 0) {
         // Recursively iterate over the tree splitting on the available operators
-        iterate(array, "OR")
-        iterate(array, "AND")
-        iterate(array, "==")
-        iterate(array, ">")
-        iterate(array, "+")
+        for(var matchCase of matchArray) {
+            iterate(array, matchCase)
+        }
         removeArrayWrappers(array)
         intify(array)
     }
-    console.log(JSON.stringify(array, null, 0));
 
     var retVal = []
     var mem = []
     const iter = { value: 0 };
     // Convert the AST into the Instruction Set Syntax 
-    convertToInstructionSet(retVal, mem, array, iter)
+    convertToInstructionSet(retVal, mem, array, iter, names)
     return retVal
+}
+
+// Parse the function signature string and build the placeholder data structure
+function parseFunctionArguments(functionSignature: String) {
+    var start = functionSignature.lastIndexOf("(")
+    var substr = functionSignature.substring(start+1, functionSignature.indexOf(")", start))
+    var params = substr.split(", ");
+    var names = []
+    var typeIndex = 0
+    var addressIndex = 0
+    var uint256Index = 0
+    var stringIndex = 0
+    for(var param of params) {
+        var typeName = param.split(" ");
+        if(typeName[0].trim() == "uint256") {
+            names.push({name: typeName[1], tIndex: typeIndex, specificIndex: uint256Index})
+            uint256Index++
+        } else if(typeName[0].trim() == "string") {
+            names.push({name: typeName[1], tIndex: typeIndex, specificIndex: stringIndex})
+            stringIndex++
+        } else if(typeName[0].trim() == "address") {
+            names.push({name: typeName[1], tIndex: typeIndex, specificIndex: addressIndex})
+            addressIndex++
+        }
+        typeIndex++
+    }
+    return names
 }
 
 // Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
@@ -209,7 +240,7 @@ function intify(array) {
 }
 
 // Convert AST to Instruction Set Syntax
-function convertToInstructionSet(retVal, mem, expression, iterator: { value: number}) {
+function convertToInstructionSet(retVal, mem, expression, iterator: { value: number}, parameterNames) {
     // If it's a number add it directly to the instruction set and store its memory location in mem
     if(typeof expression == "number") {
         retVal.push("N")
@@ -219,15 +250,42 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
     // If it's an array with a string as the first index, recursively run starting at the next index
     // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
-        var sliced = expression.slice(1)
-        convertToInstructionSet(retVal, mem, sliced, iterator)
-        retVal.push(expression[0])
-        retVal.push(mem[mem.length - 2])
-        retVal.push(mem[mem.length - 1])
-        mem.pop()
-        mem.pop()
-        mem.push(iterator.value)
-        iterator.value += 1
+        var foundMatch = false
+        for(var parameter of parameterNames) {
+            if(parameter.name == expression[0].trim()) {
+                foundMatch = true
+    
+                retVal.push("PLH")
+                retVal.push(parameter.tIndex)
+                retVal.push(parameter.specificIndex)
+                var sliced = expression.slice(1)
+                mem.push(iterator.value)
+                iterator.value += 1
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+            }
+        }
+        if(!foundMatch) {
+            if(matchArray.includes(expression[0].trim()) ) {
+                foundMatch = true
+                var sliced = expression.slice(1)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+                retVal.push(expression[0])
+                retVal.push(mem[mem.length - 2])
+                retVal.push(mem[mem.length - 1])
+                mem.pop()
+                mem.pop()
+                mem.push(iterator.value)
+                iterator.value += 1
+            }
+        }
+        
+        if(!foundMatch) {
+            retVal.push(expression[0].trim())
+            var sliced = expression.slice(1)
+            mem.push(iterator.value)
+            iterator.value += 1
+            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+        }
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
     // location to the memory map and recursively run starting at the next index
@@ -237,12 +295,12 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
-        convertToInstructionSet(retVal, mem, sliced, iterator)
+        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
     // If it's an array with a nested array as the first index recusively run with the nested array, update the memory map 
     // and recusively run starting at the next index
     } else if(Array.isArray(expression[0])) {
-        convertToInstructionSet(retVal, mem, expression[0], iterator)
+        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames)
         expression = expression.slice(1)
-        convertToInstructionSet(retVal, mem, expression, iterator)
+        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames)
     }
 }
