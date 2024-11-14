@@ -1,4 +1,3 @@
-import { ethers } from "ethers" 
 
 type Tuple = {
     i: string;
@@ -48,7 +47,7 @@ export function parseSyntax(syntax: string) {
 }
 
 // Parse the function signature string and build the placeholder data structure
-function parseFunctionArguments(functionSignature: String) {
+function parseFunctionArguments(functionSignature: string) {
     var start = functionSignature.lastIndexOf("(")
     var substr = functionSignature.substring(start+1, functionSignature.indexOf(")", start))
     var params = substr.split(", ");
@@ -190,7 +189,7 @@ function iterate(array, splitOn: string) {
 }
 
 // Replace the i: syntax with the original contents of the parenthesis
-function retrieveParenthesisContent(str: String, tuples: Tuple[]) {
+function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
     var actualValue = str
     var iter = 0
     while(iter < tuples.length) {
@@ -296,8 +295,8 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
         mem.push(iterator.value)
         iterator.value += 1
         convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
-    // If it's an array with a nested array as the first index recusively run with the nested array, update the memory map 
-    // and recusively run starting at the next index
+    // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
+    // and recursively run starting at the next index
     } else if(Array.isArray(expression[0])) {
         convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames)
         expression = expression.slice(1)
