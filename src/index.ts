@@ -1,6 +1,6 @@
 // index.ts
 
-export { parse } from './modules/Parser';
+export { parseSyntax } from './modules/Parser';
+export const VERSION = '0.1.0';
 
-// Export any utility functions or constants
-export const VERSION = '1.0.0';
+
