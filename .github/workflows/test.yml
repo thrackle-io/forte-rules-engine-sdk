@@ -34,7 +34,8 @@ jobs:
 
       - name: Run Anvil
         run: |
-          anvil -p 8545
+          anvil -p 8545 &
+          sleep 3
         id: build
 
       - name: Run Tests
