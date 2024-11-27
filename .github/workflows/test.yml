@@ -1,0 +1,43 @@
+name: test
+
+on: workflow_dispatch
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Typescript Project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Install Dependencies
+        run: |
+          npm install -g typescript
+          npm install
+
+      - name: Run Anvil
+        run: |
+          anvil -p 8545
+        id: build
+
+      - name: Run Tests
+        run: |
+          npm run test
+        id: test

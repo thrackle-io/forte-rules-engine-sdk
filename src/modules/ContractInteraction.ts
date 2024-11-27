@@ -4,6 +4,8 @@ import {
     GetContractReturnType,
     PublicClient,
     WalletClient,
+    BaseError,
+    ContractFunctionRevertedError
 } from "viem";
 
 import { privateKeyToAccount } from 'viem/accounts';
@@ -25,7 +27,7 @@ export const getRulesEngineContract = (address: Address, client: WalletClient & 
   client
 });
 
-export const createBlankPolicy = async (client: WalletClient & PublicClient, contractAddressForPolicy: Address, rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const createBlankPolicy = async (client: WalletClient & PublicClient, contractAddressForPolicy: Address, rulesEngineContract: RulesEngineContract): Promise<number | Error> => {
     try {
         const addPolicy = await client.simulateContract({
             address: rulesEngineContract.address,
@@ -52,8 +54,11 @@ export const createBlankPolicy = async (client: WalletClient & PublicClient, con
         })
 
         return addPolicy.result;
-    } catch (error) {
-        console.error(error);
-        return -1;
+    } catch (err) {
+        if (err instanceof BaseError) {
+            const revertError = err.walk(err => err instanceof ContractFunctionRevertedError)
+            return revertError ?? err
+        }
+        return err as Error
     }
 }
