@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { parseSyntax } from '../src/index.ts';
+import { keccak256, hexToNumber, encodePacked } from 'viem';
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**
@@ -35,7 +36,7 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
   ]
   var str = "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)"
   var retVal = parseSyntax(str)
-  expect(retVal).toEqual(expectedArray)
+  expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
 test('Evaluates a complex syntax string (using only values and operators)', () => {
@@ -80,7 +81,7 @@ test('Evaluates a complex syntax string (using only values and operators)', () =
      21 ] 
     var str = "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4) --> revert --> addValue(uint256 value)"
     var retVal = parseSyntax(str)
-    expect(retVal).toEqual(expectedArray)
+    expect(retVal.instructionSet).toEqual(expectedArray)
   });
 
 test('Evaluates a simple syntax string (using AND + OR operators)', () => {
@@ -118,7 +119,7 @@ test('Evaluates a simple syntax string (using AND + OR operators)', () => {
   ]
   var str = "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)  --> revert --> addValue(uint256 value)"; 
   var retVal = parseSyntax(str)
-  expect(retVal).toEqual(expectedArray)
+  expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
 test('Evaluates a simple syntax string (using AND + OR operators and function parameters)', () => {
@@ -158,14 +159,28 @@ var expectedArray = [
   3, 'N', 5, 'N',
   5, '==', 5, 6,
   'AND', 4, 7, 'PLH',
-  1, 0, 'test', '==',
+  1, 0, parseInt(keccak256('test'), 16), '==',
   9, 10, 'PLH',  2,
-  0, "'0x1234567'", '==', 12,
+  0, hexToNumber(keccak256(encodePacked(['address'], ["0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"]))), '==', 12,
   13, 'OR', 11, 14,
   'OR', 8, 15
 ]
 
-var str = "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == '0x1234567')  --> revert --> addValue(uint256 value, string info, address addr)";
+var expectedRawDataArray = [
+     {
+       "dataType": "string",
+       "iSetIndex": 26,
+       "rawData": "test",
+     },
+     {
+       "dataType": "address",
+       "iSetIndex": 33,
+       "rawData": "'0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'",
+     },
+   ]
+
+var str = "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC')  --> revert --> addValue(uint256 value, string info, address addr)";
 var retVal = parseSyntax(str)
-expect(retVal).toEqual(expectedArray)
+expect(retVal.instructionSet).toEqual(expectedArray)
+expect(retVal.rawData).toEqual(expectedRawDataArray)
 });
