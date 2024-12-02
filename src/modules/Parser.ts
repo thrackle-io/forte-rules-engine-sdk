@@ -1,16 +1,17 @@
+import { keccak256, hexToNumber, encodePacked } from 'viem';
 
 type Tuple = {
     i: string;
     s: string;
   }
 
-var matchArray = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
+const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
+const operandArray: string[] = ['PLH', 'N']
 
 export function parseSyntax(syntax: string) {
     // Split the initial syntax string into condition, effect and function signature 
     var initialSplit = syntax.split('-->')
     var condition = initialSplit[0]
-
 
     var functionSignature = initialSplit[2]
     var names = parseFunctionArguments(functionSignature)
@@ -43,7 +44,18 @@ export function parseSyntax(syntax: string) {
     const iter = { value: 0 };
     // Convert the AST into the Instruction Set Syntax 
     convertToInstructionSet(retVal, mem, array, iter, names)
-    return retVal
+    
+    var excludeArray = []
+    for(var name of names) {
+        excludeArray.push(name.name)
+    }
+
+    excludeArray.push(...matchArray)
+    excludeArray.push(...operandArray)
+    var rawData = []
+    buildRawData(retVal, excludeArray, rawData)
+
+    return {instructionSet: retVal, rawData: rawData}
 }
 
 // Parse the function signature string and build the placeholder data structure
@@ -59,13 +71,13 @@ function parseFunctionArguments(functionSignature: string) {
     for(var param of params) {
         var typeName = param.split(" ");
         if(typeName[0].trim() == "uint256") {
-            names.push({name: typeName[1], tIndex: typeIndex, specificIndex: uint256Index})
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             uint256Index++
         } else if(typeName[0].trim() == "string") {
-            names.push({name: typeName[1], tIndex: typeIndex, specificIndex: stringIndex})
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             stringIndex++
         } else if(typeName[0].trim() == "address") {
-            names.push({name: typeName[1], tIndex: typeIndex, specificIndex: addressIndex})
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             addressIndex++
         }
         typeIndex++
@@ -231,9 +243,32 @@ function intify(array) {
          } else {
             if(!isNaN(Number(array[iter]))) {
                 array[iter] = Number(array[iter])
-            }
+            } 
                 
         }
+        iter++
+    }
+}
+
+// Build the rawData array that contains the string representations of strings and addresses and
+// convert them to numbers in the instruction set.
+function buildRawData(instructionSet, excludeArray, rawDataArray) {
+    let iter = 0
+    while(iter < instructionSet.length) {
+            // Only capture values that aren't naturally numbers
+            if(!isNaN(Number(instructionSet[iter]))) {
+                instructionSet[iter] = Number(instructionSet[iter])
+            } else {
+                if(!excludeArray.includes(instructionSet[iter].trim())) {
+                    // Create the raw data entry
+                    rawDataArray.push({rawData: instructionSet[iter].trim(), iSetIndex: iter, dataType: "string"})
+                    if(!operandArray.includes(instructionSet[iter].trim())) {
+                        console.log(instructionSet[iter].trim())
+                        // Convert the string to a keccak356 has then to a uint256
+                        instructionSet[iter] = hexToNumber(keccak256(encodePacked(['string'], [instructionSet[iter].trim()])))
+                    }
+                }
+            } 
         iter++
     }
 }
@@ -256,7 +291,6 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
     
                 retVal.push("PLH")
                 retVal.push(parameter.tIndex)
-                retVal.push(parameter.specificIndex)
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
                 iterator.value += 1

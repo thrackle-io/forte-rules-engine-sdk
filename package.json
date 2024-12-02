@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "viem": "^2.2.1",
     "vitest": "^2.1.4"
   },
   "devDependencies": {
