@@ -153,15 +153,14 @@ test('Evaluates a simple syntax string (using AND + OR operators and function pa
  *   'OR', 8, 15 ]
  */
 var expectedArray = [
-  'PLH', 0, 0, 'N',
+  'PLH', 0, 'N',
   4, '+', 0, 1,
   'N', 5, '>', 2,
   3, 'N', 5, 'N',
   5, '==', 5, 6,
   'AND', 4, 7, 'PLH',
-  1, 0, parseInt(keccak256('test'), 16), '==',
-  9, 10, 'PLH',  2,
-  0, hexToNumber(keccak256(encodePacked(['address'], ["0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"]))), '==', 12,
+  1, parseInt(keccak256('test'), 16), '==',
+  9, 10, 'PLH',  2, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
   13, 'OR', 11, 14,
   'OR', 8, 15
 ]
@@ -169,17 +168,12 @@ var expectedArray = [
 var expectedRawDataArray = [
      {
        "dataType": "string",
-       "iSetIndex": 26,
+       "iSetIndex": 24,
        "rawData": "test",
-     },
-     {
-       "dataType": "address",
-       "iSetIndex": 33,
-       "rawData": "'0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'",
      },
    ]
 
-var str = "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC')  --> revert --> addValue(uint256 value, string info, address addr)";
+var str = "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
 var retVal = parseSyntax(str)
 expect(retVal.instructionSet).toEqual(expectedArray)
 expect(retVal.rawData).toEqual(expectedRawDataArray)

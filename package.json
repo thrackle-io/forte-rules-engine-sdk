@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "viem": "^0.0.0-canary-20241124112529",
+    "viem": "^2.2.1",
     "vitest": "^2.1.4"
   },
   "devDependencies": {
