@@ -7,6 +7,39 @@ type Tuple = {
 
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
 const operandArray: string[] = ['PLH', 'N']
+const supportedTrackerTypes: string[] = ['uint256', 'string', 'address']
+
+export function parseTrackerSyntax(syntax: string) {
+    var initialSplit = syntax.split('-->')
+    if(initialSplit.length != 4) {
+        throw new Error("Incorrect Tracker Definition Syntax")
+    }
+    let trackerName = initialSplit[0]
+    let trackerType = initialSplit[1].trim()
+    if(!supportedTrackerTypes.includes(trackerType)) {
+        throw new Error("Unsupported type")
+    }
+    var trackerDefaultValue: any
+    if(trackerType == "uint256" || trackerType == "address") {
+        if(!isNaN(Number(initialSplit[2]))) {
+            trackerDefaultValue = Number(initialSplit[2])
+        } else {
+            throw new Error("Default Value doesn't match type")
+        }
+    } else {
+        trackerDefaultValue = initialSplit[2].trim()
+    }
+
+    var trackerPolicyId = 0
+    if(!isNaN(Number(initialSplit[3]))) {
+        trackerPolicyId = Number(initialSplit[3])
+    } else {
+        throw new Error("policy Id must be an integer")
+    }
+
+    return {name: initialSplit[0].trim(), type: trackerType, defaultValue: trackerDefaultValue, policyId: trackerPolicyId}
+
+}
 
 export function parseSyntax(syntax: string) {
     // Split the initial syntax string into condition, effect and function signature 
