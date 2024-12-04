@@ -208,20 +208,20 @@ expect(retVal.policyId).toEqual(3)
 
 test('Tests an incorrect type', () => {
 var str = "Simple Address Tracker --> address --> thisShouldFail --> 3";
-expect(() => parseTrackerSyntax(str)).toThrowError()
+expect(() => parseTrackerSyntax(str)).toThrowError("Default Value doesn't match type")
 });
 
 test('Tests incorrect amount of items', () => {
 var str = "Simple Address Tracker --> address --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC";
-expect(() => parseTrackerSyntax(str)).toThrowError()
+expect(() => parseTrackerSyntax(str)).toThrowError("Incorrect Tracker Definition Syntax")
 });
 
 test('Tests unsupported type', () => {
 var str = "Simple String Tracker --> bool --> test --> 3";
-expect(() => parseTrackerSyntax(str)).toThrowError()
+expect(() => parseTrackerSyntax(str)).toThrowError("Unsupported type")
 });
 
 test('Tests incorrectly formated Policy Id', () => {
 var str = "Simple String Tracker --> string --> test --> otherTest";
-expect(() => parseTrackerSyntax(str)).toThrowError()
+expect(() => parseTrackerSyntax(str)).toThrowError("policy Id must be an integer")
 });
