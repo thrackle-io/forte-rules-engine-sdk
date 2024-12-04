@@ -10,6 +10,7 @@ const operandArray: string[] = ['PLH', 'N']
 const supportedTrackerTypes: string[] = ['uint256', 'string', 'address']
 const PT = [ {name: 'address', enumeration: 0}, {name: 'string', enumeration: 1}, {name: 'uint256', enumeration: 2}, {name: 'bool', enumeration: 3}, 
     {name: 'void', enumeration: 4}, {name: 'bytes', enumeration: 5} ]
+const FC_PREFIX: string = 'FC:'
 
 export function parseTrackerSyntax(syntax: string) {
     var initialSplit = syntax.split('-->')
@@ -78,19 +79,25 @@ export function parseForeignCallDefinition(syntax: string) {
 
 export function parseSyntax(syntax: string) {
     // Split the initial syntax string into condition, effect and function signature 
+    syntax = cleanString(syntax)
     var initialSplit = syntax.split('-->')
     var condition = initialSplit[0]
 
     var functionSignature = initialSplit[2]
+
     var names = parseFunctionArguments(functionSignature)
+    var fcParse = parseForeignCalls(condition)
+    condition = fcParse.condition
+    var FCs = fcParse.substrs
 
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
+
     var array = convertToTree(condition, "AND")
     if(array.length == 0) {
         // If array is empty the top level conditional must be an OR instead of an AND
         array = convertToTree(condition, "OR")
     }
-
+    
     if(array.length == 1) {
         array = array[0]
     } else if(array.length == 0) {
@@ -107,12 +114,11 @@ export function parseSyntax(syntax: string) {
         intify(array)
     }
 
-    var retVal = []
-    var mem = []
+    var retVal: any[] = []
+    var mem: any[] = []
     const iter = { value: 0 };
     // Convert the AST into the Instruction Set Syntax 
-    convertToInstructionSet(retVal, mem, array, iter, names)
-    
+    convertToInstructionSet(retVal, mem, array, iter, names, FCs)
     var excludeArray = []
     for(var name of names) {
         excludeArray.push(name.name)
@@ -120,7 +126,7 @@ export function parseSyntax(syntax: string) {
 
     excludeArray.push(...matchArray)
     excludeArray.push(...operandArray)
-    var rawData = []
+    var rawData: any[] = []
     buildRawData(retVal, excludeArray, rawData)
 
     return {instructionSet: retVal, rawData: rawData}
@@ -136,6 +142,7 @@ function parseFunctionArguments(functionSignature: string) {
     var addressIndex = 0
     var uint256Index = 0
     var stringIndex = 0
+
     for(var param of params) {
         var typeName = param.split(" ");
         if(typeName[0].trim() == "uint256") {
@@ -150,7 +157,32 @@ function parseFunctionArguments(functionSignature: string) {
         }
         typeIndex++
     }
+
     return names
+}
+
+function parseForeignCalls(condition: string) {
+    let iter = 0
+    let substrs = []
+    // Use a regular expression to find all FC expressions
+    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+    const matches = condition.matchAll(fcRegex);
+    let processedCondition = condition
+    // Convert matches iterator to array to process all at once
+    for (const match of matches) {
+        const fullFcExpr = match[0];
+        
+        // Create a unique placeholder for this FC expression
+        const placeholder = `FC:${iter}`;
+        processedCondition = processedCondition.replace(fullFcExpr, placeholder);
+        
+        var tuple: Tuple = { i: placeholder, s: fullFcExpr };
+        substrs.push(tuple);
+        iter++;
+    }
+
+    condition = processedCondition
+    return {condition: condition, substrs: substrs}
 }
 
 // Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
@@ -158,9 +190,12 @@ function convertToTree(condition : string, splitOn : string) {
     // Recursive Function steps:
     // 1. Replace anything in parenthesis with i:n
     var substrs = new Array()
-    var iter = 0
-    var leng = condition.split('(').length
-    var delimiterArray = []
+
+    var delimiterSplit = condition.split(splitOn)
+
+    let iter = 0
+
+    let leng = condition.split('(').length
 
     while(iter <= (leng - 2)) {
 
@@ -178,10 +213,10 @@ function convertToTree(condition : string, splitOn : string) {
 
     // 2. Split based on the passed in delimiter (splitOn)
     var delimiterSplit = condition.split(splitOn)
-
     // 3. Convert to syntax array
     // Start from the back of the array and work forwards
     var endIndex = delimiterSplit.length - 1
+
     var overAllArray = new Array()
     while (endIndex > 0) {
         if(endIndex >= 1) {
@@ -190,11 +225,11 @@ function convertToTree(condition : string, splitOn : string) {
             var actualValue = retrieveParenthesisContent(delimiterSplit[endIndex - 1], substrs) 
             var actualValueTwo = retrieveParenthesisContent(delimiterSplit[endIndex], substrs) 
         
-            if(actualValue.includes('(')) {
+            if(actualValue.startsWith('(')) {
                 actualValue = actualValue.substring(1, actualValue.length - 1)
             }
 
-            if(actualValueTwo.includes('(')) {
+            if(actualValueTwo.startsWith('(')) {
                 actualValueTwo = actualValueTwo.substring(1, actualValueTwo.length - 1)
             }
             // Add the contents to an inner array
@@ -236,8 +271,9 @@ function convertToTree(condition : string, splitOn : string) {
 }
 
 // Iterate over the array and recursively split based on the splitOn delimiter 
-function iterate(array, splitOn: string) {
+function iterate(array: any[], splitOn: string) {
     var iter = 0
+    
     while(iter < array.length) {
         if(!Array.isArray(array[iter])) {
             var checkVal = " " + splitOn + " "
@@ -268,16 +304,15 @@ function iterate(array, splitOn: string) {
     }
 }
 
-// Replace the i: syntax with the original contents of the parenthesis
 function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
     var actualValue = str
     var iter = 0
     while(iter < tuples.length) {
-        var tuple: Tuple = tuples[iter]
+        let tuple: Tuple = tuples[iter]
         if(str.includes(tuple.i)) {
             actualValue = tuple.s
             if(actualValue.includes('i:')) {
-                var substr = actualValue.substring(actualValue.indexOf("i:"), actualValue.indexOf(':') + 2)
+                var substr = actualValue.substring(actualValue.indexOf("i:"), actualValue.indexOf('i:') + 3)
                 actualValue = actualValue.replace(substr, retrieveParenthesisContent(substr, tuples))
             }
             break
@@ -288,7 +323,7 @@ function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
 }
 
 // Remove extraneous array wrappers created during the recursion 
-function removeArrayWrappers(array) {
+function removeArrayWrappers(array: any[]) {
     var iter = 0
     while(iter < array.length) {
         if(Array.isArray(array[iter])) {
@@ -303,7 +338,7 @@ function removeArrayWrappers(array) {
 }
 
 // Replace string representations of numbers with actual numbers
-function intify(array) {
+function intify(array: any[]) {
     var iter = 0
     while(iter < array.length) {
         if(Array.isArray(array[iter])) {
@@ -320,7 +355,7 @@ function intify(array) {
 
 // Build the rawData array that contains the string representations of strings and addresses and
 // convert them to numbers in the instruction set.
-function buildRawData(instructionSet, excludeArray, rawDataArray) {
+function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArray: any[]) {
     let iter = 0
     while(iter < instructionSet.length) {
             // Only capture values that aren't naturally numbers
@@ -331,7 +366,6 @@ function buildRawData(instructionSet, excludeArray, rawDataArray) {
                     // Create the raw data entry
                     rawDataArray.push({rawData: instructionSet[iter].trim(), iSetIndex: iter, dataType: "string"})
                     if(!operandArray.includes(instructionSet[iter].trim())) {
-                        console.log(instructionSet[iter].trim())
                         // Convert the string to a keccak356 has then to a uint256
                         instructionSet[iter] = hexToNumber(keccak256(encodePacked(['string'], [instructionSet[iter].trim()])))
                     }
@@ -342,7 +376,11 @@ function buildRawData(instructionSet, excludeArray, rawDataArray) {
 }
 
 // Convert AST to Instruction Set Syntax
-function convertToInstructionSet(retVal, mem, expression, iterator: { value: number}, parameterNames) {
+function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number}, parameterNames: any[], foreignCalls: Tuple[]) {
+    if (!expression || expression.length === 0) {
+        return;
+    }
+
     // If it's a number add it directly to the instruction set and store its memory location in mem
     if(typeof expression == "number") {
         retVal.push("N")
@@ -353,6 +391,7 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
     // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
         var foundMatch = false
+
         for(var parameter of parameterNames) {
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
@@ -362,14 +401,31 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
                 iterator.value += 1
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
+            }
+        }
+
+        if (expression[0].trim().startsWith(FC_PREFIX)) {
+            let placeHolderBuffer = parameterNames.length
+            let totalLength = foreignCalls.length + placeHolderBuffer
+            for (let i = placeHolderBuffer; i < totalLength; i++) {
+                let tuple: Tuple = foreignCalls[i - placeHolderBuffer]
+                if (tuple.i == expression[0].trim()) {
+                    foundMatch = true
+                    retVal.push("PLH")
+                    retVal.push(i)
+                    var sliced = expression.slice(1)
+                    mem.push(iterator.value)
+                    iterator.value += 1
+                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
+                }
             }
         }
         if(!foundMatch) {
             if(matchArray.includes(expression[0].trim()) ) {
                 foundMatch = true
                 var sliced = expression.slice(1)
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
                 retVal.push(expression[0])
                 retVal.push(mem[mem.length - 2])
                 retVal.push(mem[mem.length - 1])
@@ -383,9 +439,14 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
         if(!foundMatch) {
             retVal.push(expression[0].trim())
             var sliced = expression.slice(1)
+            // Ensure sliced array is smaller than original
+            // if (sliced.length >= expression.length) {
+            //     console.warn("Potential infinite recursion detected");
+            //     return;
+            // }
             mem.push(iterator.value)
             iterator.value += 1
-            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
         }
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
@@ -396,12 +457,17 @@ function convertToInstructionSet(retVal, mem, expression, iterator: { value: num
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
-        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
     // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
     // and recursively run starting at the next index
     } else if(Array.isArray(expression[0])) {
-        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames)
+        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, foreignCalls)
         expression = expression.slice(1)
-        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames)
+        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames, foreignCalls)
     }
+}
+
+// removes newlines and extra spaces from a string
+function cleanString(str: string) {
+    return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 }

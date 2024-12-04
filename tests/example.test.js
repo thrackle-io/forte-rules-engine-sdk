@@ -257,3 +257,145 @@ test('Tests unsupported argument type', () => {
 var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, notAnInt, uint256 --> 3";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported argument type')
 });
+
+test('Evaluates a simple syntax string with a Foreign Call', () => {
+/*
+ * Original Syntax:
+ * FC:leaderboard(to) > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value
+ * 
+ * Abstract Tree Syntax:
+ *  [AND,
+ *    [>,
+ *      [FC:leaderboard, "to"], 100],
+ *    [==, "value", 100],
+ * ]
+ * 
+ * Instruction Set Syntax:
+ * [ 'PLH, 2, 
+ *   'N', 100, 
+ *   '>', 0, 1, 
+ *   'PLH', 1, 
+ *   'N', 100, 
+ *   '==', 3, 4, 
+ *   'AND', 2, 5, 
+ */
+  let expectedArray = [
+    'PLH', 2, 'N', 100,
+    '>', 0, 1,
+    'PLH', 1, 'N', 100, '==',
+    3, 4, 'AND', 2, 5
+  ]
+  let str = "FC:leaderboard(to) > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value"
+  let retVal = parseSyntax(str)
+  expect(retVal.instructionSet).toEqual(expectedArray)
+})
+
+test('Evaluate a complex syntax string with multiple foreign calls', () => {
+  /*
+  * Original Syntax:
+  * (FC:isAllowed(to) == 1 AND sender == 0xdeadbeefdeadbeef) OR (FC:isSuperCoolGuy(to) AND (FC:isRich(to) == 1) AND (FC:creditRisk(amount) < 500 )) -> revert --> “transfer(address to, uint256 value)” --> address to, uint256 value
+  * 
+  * Abstract Tree Syntax:
+  *  [OR,
+  *    [AND,
+  *      [==, "FC:isAllowed(to)", 1],
+  *      [==, "to", 0xdeadbeefdeadbeef]],
+  *    [AND,
+  *      [==, "FC:isSuperCoolGuy(to)", 1],
+  *      [AND,
+  *        [==, "FC:isRich(to)", 1],
+  *        [<, "FC:creditRisk(amount)", 500]]]
+  * ]
+  * 
+  * Instruction Set Syntax:
+  * [ 'PLH, 0, 
+  *   'N', 1, 
+  *   '==', 0, 1, 
+  *   'PLH', 2, 
+  *   'N', 0xdeadbeefdeadbeef, 
+  *   '==', 4, 5, 
+  *   'AND', 2, 6,
+  *   'PLH', 7,
+  *   'N', 1,
+  *   '==', 8, 9,
+  *   'AND', 7, 10,
+  *   'PLH', 11,
+  *   'N', 500,
+  *   '<', 11, 12,
+  *   'AND', 10, 13] 
+  */
+
+  /**
+   * instruction set:  
+   */
+
+  let expectedArray = [
+    'PLH', 2, 
+    'N', 1,
+    '==', 0, 1,
+    'PLH', 0,
+    'N', 0xdeadbeefdeadbeef, '==',
+    3, 4, 'AND',
+    2, 5, 'PLH',
+    3, 'PLH', 4,
+    'N', 1, 
+    '==', 8, 9, 
+    'AND', 7, 10, 
+    'PLH', 5, 'N', 500,
+    '<', 12, 13,
+    'AND', 11, 14,
+    'OR', 6, 15
+  ]
+ 
+  let str = `( FC:isAllowed(to) == 1 AND to == 0xdeadbeefdeadbeef )
+   OR 
+   (
+    (
+      FC:isSuperCoolGuy(to)
+      AND 
+      FC:isRich(to) == 1
+    )
+    AND 
+    FC:creditRisk(amount) < 500 
+   ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
+  let retVal = parseSyntax(str)
+  expect(retVal.instructionSet).toEqual(expectedArray)
+
+})
+
+test('Evaluate complex expression with placeholders', () => {
+
+  let expectedArray = [
+    'PLH', 0,                    'N',
+    1,     '==',                 0,
+    1,     'PLH',                0,
+    'N',   16045690984833335000, '==',
+    3,     4,                    'AND',
+    2,     5,                    'PLH',
+    1,     'N',                  1,
+    '==',  7,                    8,
+    'PLH', 0,                    'N',
+    1,     '==',                 10,
+    11,    'AND',                9,
+    12,    'PLH',                1,
+    'N',   500,                  '<',
+    14,    15,                   'AND',
+    13,    16,                   'OR',
+    6,     17
+  ]
+
+  let str = `( to == 1 AND to == 0xdeadbeefdeadbeef )
+  OR
+  (
+   (
+     value == 1
+     AND 
+     to == 1
+   )
+   AND 
+   value < 500 
+  ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
+  let retVal = parseSyntax(str)
+  console.log(retVal.instructionSet)
+  expect(retVal.instructionSet).toEqual(expectedArray)
+})
