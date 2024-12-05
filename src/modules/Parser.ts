@@ -1,4 +1,4 @@
-import { keccak256, hexToNumber, encodePacked } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes } from 'viem';
 
 type Tuple = {
     i: string;
@@ -8,6 +8,8 @@ type Tuple = {
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
 const operandArray: string[] = ['PLH', 'N']
 const supportedTrackerTypes: string[] = ['uint256', 'string', 'address']
+const PT = [ {name: 'address', enumeration: 0}, {name: 'string', enumeration: 1}, {name: 'uint256', enumeration: 2}, {name: 'bool', enumeration: 3}, 
+    {name: 'void', enumeration: 4}, {name: 'bytes', enumeration: 5} ]
 
 export function parseTrackerSyntax(syntax: string) {
     var initialSplit = syntax.split('-->')
@@ -38,7 +40,40 @@ export function parseTrackerSyntax(syntax: string) {
     }
 
     return {name: initialSplit[0].trim(), type: trackerType, defaultValue: trackerDefaultValue, policyId: trackerPolicyId}
+}
 
+export function parseForeignCallDefinition(syntax: string) {
+    var initialSplit = syntax.split('-->')
+    if(initialSplit.length != 6) {
+        throw new Error("Incorrect Foreign Call Syntax")
+    }
+    var address: Address = getAddress(initialSplit[1].trim())
+    var signature = toBytes(toFunctionSelector(initialSplit[2].trim()))
+    var returnType = 4 // default to void
+    if(!PT.some(parameter => parameter.name === initialSplit[3].trim())) {
+        throw new Error("Unsupported return type")
+    }
+    for(var parameterType of PT) {
+        if(parameterType.name == initialSplit[3].trim()) {
+            returnType = parameterType.enumeration
+        }
+    }
+    var parameterTypes: number[] = []
+    var parameterSplit = initialSplit[4].trim().split(',')
+    for(var fcParameter of parameterSplit) {
+        if(!PT.some(parameter => parameter.name === fcParameter.trim())) {
+            throw new Error("Unsupported argument type")
+        }
+        
+        for(var parameterType of PT) {
+            if(fcParameter.trim() == parameterType.name) {
+                parameterTypes.push(parameterType.enumeration)
+            }
+        }
+    }
+
+    return {name: initialSplit[0].trim(), address: address, signature: signature, 
+        returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())}
 }
 
 export function parseSyntax(syntax: string) {
