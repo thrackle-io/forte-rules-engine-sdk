@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest'
+<<<<<<< HEAD
 import { parseSyntax, parseTrackerSyntax } from '../src/index.ts';
 import { keccak256, hexToNumber, encodePacked } from 'viem';
+=======
+import { parseSyntax, parseForeignCallDefinition } from '../src/index.ts';
+import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
+>>>>>>> ce65bf3 (Added ability to parse Foreign Call Declarations)
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**
@@ -224,4 +229,35 @@ expect(() => parseTrackerSyntax(str)).toThrowError("Unsupported type")
 test('Tests incorrectly formated Policy Id', () => {
 var str = "Simple String Tracker --> string --> test --> otherTest";
 expect(() => parseTrackerSyntax(str)).toThrowError("policy Id must be an integer")
+});
+
+test('Creates a simple foreign call', () => {
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 3";
+var retVal = parseForeignCallDefinition(str)
+expect(retVal.name).toEqual("Simple Foreign Call")
+expect(retVal.address).toEqual(getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"))
+expect(retVal.signature).toEqual(toBytes("0x324eef7a"))
+expect(retVal.returnType).toEqual(2)
+expect(retVal.parameterTypes).toEqual([0,1,2])
+expect(retVal.policyId).toEqual(3)
+});
+
+test('Tests incorrect amount of items for Foreign Call', () => {
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256";
+expect(() => parseForeignCallDefinition(str)).toThrowError("Incorrect Foreign Call Syntax")
+});
+
+test('Tests incorrect format for address', () => {
+var str = "Simple Foreign Call --> test --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 3";
+expect(() => parseForeignCallDefinition(str)).toThrowError('Address "test" is invalid')
+});
+
+test('Tests unsupported return type', () => {
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> notAnInt --> address, string, uint256 --> 3";
+expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported return type')
+});
+
+test('Tests unsupported argument type', () => {
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, notAnInt, uint256 --> 3";
+expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported argument type')
 });
