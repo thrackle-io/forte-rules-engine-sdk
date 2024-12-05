@@ -1,11 +1,7 @@
 import { expect, test } from 'vitest'
-<<<<<<< HEAD
-import { parseSyntax, parseTrackerSyntax } from '../src/index.ts';
-import { keccak256, hexToNumber, encodePacked } from 'viem';
-=======
-import { parseSyntax, parseForeignCallDefinition } from '../src/index.ts';
+import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax } from '../src/index.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
->>>>>>> ce65bf3 (Added ability to parse Foreign Call Declarations)
+
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**
