@@ -96,13 +96,17 @@ export function parseSyntax(syntax: string, trackerNames: string[]) {
 
     const trRegex = /TR:[a-zA-Z]+/g
     var matches = initialSplit[0].match(trRegex)
+
+
+
     if(matches != null) {
-        for(var match of matches!) {
+        var uniq = [...new Set(matches)];
+        for(var match of uniq!) {
             names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
             nextIndex += 1
         }
     }
-
+    
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
 
     var array = convertToTree(condition, "AND")
