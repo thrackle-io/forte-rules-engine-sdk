@@ -77,7 +77,7 @@ export function parseForeignCallDefinition(syntax: string) {
         returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())}
 }
 
-export function parseSyntax(syntax: string) {
+export function parseSyntax(syntax: string, trackerNames: string[]) {
     // Split the initial syntax string into condition, effect and function signature 
     syntax = cleanString(syntax)
     var initialSplit = syntax.split('-->')
@@ -89,6 +89,19 @@ export function parseSyntax(syntax: string) {
     var fcParse = parseForeignCalls(condition)
     condition = fcParse.condition
     var FCs = fcParse.substrs
+
+    var nextIndex = names.length
+
+    // TODO: Add foreign calls in before trackers 
+
+    const trRegex = /TR:[a-zA-Z]+/g
+    var matches = initialSplit[0].match(trRegex)
+    if(matches != null) {
+        for(var match of matches!) {
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            nextIndex += 1
+        }
+    }
 
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
 
@@ -128,7 +141,6 @@ export function parseSyntax(syntax: string) {
     excludeArray.push(...operandArray)
     var rawData: any[] = []
     buildRawData(retVal, excludeArray, rawData)
-
     return {instructionSet: retVal, rawData: rawData}
 }
 
