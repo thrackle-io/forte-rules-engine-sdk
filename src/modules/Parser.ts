@@ -86,12 +86,10 @@ export function parseSyntax(syntax: string) {
     var functionSignature = initialSplit[2]
 
     var names = parseFunctionArguments(functionSignature)
-    var fcParse = parseForeignCalls(condition)
-    condition = fcParse.condition
-    var FCs = fcParse.substrs
-
+    condition = parseForeignCalls(condition, names.length, names)
+    parseTrackers(condition, names.length, names)
+    
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
-
     var array = convertToTree(condition, "AND")
     if(array.length == 0) {
         // If array is empty the top level conditional must be an OR instead of an AND
@@ -118,7 +116,7 @@ export function parseSyntax(syntax: string) {
     var mem: any[] = []
     const iter = { value: 0 };
     // Convert the AST into the Instruction Set Syntax 
-    convertToInstructionSet(retVal, mem, array, iter, names, FCs)
+    convertToInstructionSet(retVal, mem, array, iter, names)//, FCs)
     var excludeArray = []
     for(var name of names) {
         excludeArray.push(name.name)
@@ -128,7 +126,6 @@ export function parseSyntax(syntax: string) {
     excludeArray.push(...operandArray)
     var rawData: any[] = []
     buildRawData(retVal, excludeArray, rawData)
-
     return {instructionSet: retVal, rawData: rawData}
 }
 
@@ -161,9 +158,21 @@ function parseFunctionArguments(functionSignature: string) {
     return names
 }
 
-function parseForeignCalls(condition: string) {
+function parseTrackers(condition: string, nextIndex: number, names: any[]) {
+    const trRegex = /TR:[a-zA-Z]+/g
+    var matches = condition.match(trRegex)
+
+    if(matches != null) {
+        var uniq = [...new Set(matches)];
+        for(var match of uniq!) {
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            nextIndex++
+        }
+    }
+}
+
+function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
     let iter = 0
-    let substrs = []
     // Use a regular expression to find all FC expressions
     const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
     const matches = condition.matchAll(fcRegex);
@@ -175,14 +184,13 @@ function parseForeignCalls(condition: string) {
         // Create a unique placeholder for this FC expression
         const placeholder = `FC:${iter}`;
         processedCondition = processedCondition.replace(fullFcExpr, placeholder);
-        
-        var tuple: Tuple = { i: placeholder, s: fullFcExpr };
-        substrs.push(tuple);
+        names.push({name: match, tIndex: nextIndex, rawType: "foreign call", fcPlaceholder: placeholder})
         iter++;
+        nextIndex++;
     }
 
     condition = processedCondition
-    return {condition: condition, substrs: substrs}
+    return condition
 }
 
 // Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
@@ -376,7 +384,7 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
 }
 
 // Convert AST to Instruction Set Syntax
-function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number}, parameterNames: any[], foreignCalls: Tuple[]) {
+function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[]) { 
     if (!expression || expression.length === 0) {
         return;
     }
@@ -401,23 +409,16 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
                 iterator.value += 1
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
-            }
-        }
-
-        if (expression[0].trim().startsWith(FC_PREFIX)) {
-            let placeHolderBuffer = parameterNames.length
-            let totalLength = foreignCalls.length + placeHolderBuffer
-            for (let i = placeHolderBuffer; i < totalLength; i++) {
-                let tuple: Tuple = foreignCalls[i - placeHolderBuffer]
-                if (tuple.i == expression[0].trim()) {
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+            } else if(parameter.fcPlaceholder) {
+                if(parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
                     retVal.push("PLH")
-                    retVal.push(i)
+                    retVal.push(parameter.tIndex)
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
                     iterator.value += 1
-                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
+                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
                 }
             }
         }
@@ -425,7 +426,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
             if(matchArray.includes(expression[0].trim()) ) {
                 foundMatch = true
                 var sliced = expression.slice(1)
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
                 retVal.push(expression[0])
                 retVal.push(mem[mem.length - 2])
                 retVal.push(mem[mem.length - 1])
@@ -439,10 +440,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         if(!foundMatch) {
             retVal.push(expression[0].trim())
             var sliced = expression.slice(1)
-            // Ensure sliced array is smaller than original
             mem.push(iterator.value)
             iterator.value += 1
-            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
+            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
         }
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
@@ -453,15 +453,16 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
-        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
+        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
     // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
     // and recursively run starting at the next index
     } else if(Array.isArray(expression[0])) {
-        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, foreignCalls)
+        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames)
         expression = expression.slice(1)
-        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames, foreignCalls)
+        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames)
     }
 }
+
 
 // removes newlines and extra spaces from a string
 function cleanString(str: string) {

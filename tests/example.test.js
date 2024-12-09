@@ -432,3 +432,51 @@ test('Evaluate complex expression with placeholders', () => {
   console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
+
+
+test('Evaluates a simple syntax string (using AND + OR operators, trackers and function parameters)', () => {
+  /*
+ * Original Syntax:
+ * (value + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)
+ * 
+ * Abstract Tree Syntax:
+ * [OR,
+ *  [AND,
+ *    [>,
+ *      [+, "FC:isAllowed(to)", 4], 5],
+ *    [==, TR:testOne, 5]],
+ *  [OR,
+ *    [==, "info", TR:testTwo],
+ *    [==, TR:testOne, '0x1234567']
+ *  ]
+ * ]
+ * 
+ * Instruction Set Syntax:
+  'PLH', 3, 'N',
+  4, '+', 0, 1,
+  'N', 5, '>', 2,
+  3, 'PLH', 4, 'N',
+  5, '==', 5, 6,
+  'AND', 4, 7, 'PLH',
+  1, 'PLH', 5, '==',
+  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
+  13, 'OR', 11, 14,
+  'OR', 8, 15
+ */
+var expectedArray = [
+  'PLH', 3, 'N',
+  4, '+', 0, 1,
+  'N', 5, '>', 2,
+  3, 'PLH', 4, 'N',
+  5, '==', 5, 6,
+  'AND', 4, 7, 'PLH',
+  1, 'PLH', 5, '==',
+  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
+  13, 'OR', 11, 14,
+  'OR', 8, 15
+]
+
+var str = "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
+var retVal = parseSyntax(str)
+expect(retVal.instructionSet).toEqual(expectedArray)
+});
