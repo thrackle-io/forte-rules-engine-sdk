@@ -443,7 +443,7 @@ test('Evaluates a simple syntax string (using AND + OR operators, trackers and f
  * [OR,
  *  [AND,
  *    [>,
- *      [+, "value", 4], 5],
+ *      [+, "FC:isAllowed(to)", 4], 5],
  *    [==, TR:testOne, 5]],
  *  [OR,
  *    [==, "info", TR:testTwo],
@@ -452,31 +452,31 @@ test('Evaluates a simple syntax string (using AND + OR operators, trackers and f
  * ]
  * 
  * Instruction Set Syntax:
- * 'PLH', 0, 'N',
- *  4, '+', 0, 1,
- * 'N', 5, '>', 2,
- *  3, 'PLH', 3, 'N',
- *  5, '==', 5, 6,
- * 'AND', 4, 7, 'PLH',
- *  1, 'PLH', 4, '==',
- *  9, 10, 'PLH', 3, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
- *  13, 'OR', 11, 14,
- *  'OR', 8, 15]
- */
-var expectedArray = [
-  'PLH', 0, 'N',
+  'PLH', 3, 'N',
   4, '+', 0, 1,
   'N', 5, '>', 2,
-  3, 'PLH', 3, 'N',
+  3, 'PLH', 4, 'N',
   5, '==', 5, 6,
   'AND', 4, 7, 'PLH',
-  1, 'PLH', 4, '==',
-  9, 10, 'PLH', 3, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
+  1, 'PLH', 5, '==',
+  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
+  13, 'OR', 11, 14,
+  'OR', 8, 15
+ */
+var expectedArray = [
+  'PLH', 3, 'N',
+  4, '+', 0, 1,
+  'N', 5, '>', 2,
+  3, 'PLH', 4, 'N',
+  5, '==', 5, 6,
+  'AND', 4, 7, 'PLH',
+  1, 'PLH', 5, '==',
+  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
   13, 'OR', 11, 14,
   'OR', 8, 15
 ]
 
-var str = "(value + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
+var str = "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
 var retVal = parseSyntax(str)
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
