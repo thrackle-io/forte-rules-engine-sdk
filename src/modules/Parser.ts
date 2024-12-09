@@ -1,9 +1,45 @@
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray } from 'viem';
 
 type Tuple = {
     i: string;
     s: string;
   }
+
+type ForeignCallDefinition = {
+    name: string;
+    address: Address;
+    signature: ByteArray;
+    parameterTypes: number[];
+    policyId: number;
+}
+
+type PlaceholderStruct = {
+    PTEnumeration: number;
+    typeSpecificIndex: number;
+    trackerValue: boolean;
+    foreignCallReturnValue: boolean;
+}
+
+type IndividualArugmentMapping = {
+    PTEnumeration: number;
+    functionSignatureArg: PlaceholderStruct;
+}
+
+type ForeignCallArgumentMappings = {
+    foreignCallIndex: number;
+    mappings: IndividualArugmentMapping[];
+}
+
+type FunctionArgument = {
+    name: string
+    tIndex: number
+    rawType: string
+}
+
+type TrackerDefinition = {
+    name: string
+    rawType: string
+}
 
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
 const operandArray: string[] = ['PLH', 'N']
@@ -74,7 +110,69 @@ export function parseForeignCallDefinition(syntax: string) {
     }
 
     return {name: initialSplit[0].trim(), address: address, signature: signature, 
-        returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())}
+        returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())} as ForeignCallDefinition
+}
+
+export function buildForeignCallArgumentMapping(fCalls: string[], argumentNames: FunctionArgument[], trackers: TrackerDefinition[]) {
+    for(var foreignCall of fCalls) {
+        var cleaned = cleanString(foreignCall)
+        var initialSplit = cleaned.split('(')
+        var parameters = cleanString(initialSplit[1].replace(')', ''))
+        var parameterSplit = parameters.split(',')
+        var callName = initialSplit[0]
+        var mappings: IndividualArugmentMapping[] = []
+        
+        for(var parameter of parameterSplit) {
+            var found = false
+            parameter = parameter.trim()
+
+            var argumentIterator = 0
+            for (var arugment of argumentNames) {
+                if(buildIndividualMapping(parameter, argumentIterator, arugment, mappings, false)) {
+                    found = true
+                    break
+                }
+                argumentIterator+=1
+            }
+            if(!found) {
+                for(var tracker of trackers) {
+                    if(buildIndividualMapping(parameter, argumentIterator, tracker, mappings, true)) {
+                        break
+                    }
+                    argumentIterator+=1
+                }
+            }
+        }
+        var foreignCallMappings : ForeignCallArgumentMappings = {
+            foreignCallIndex: 0,
+            mappings: mappings
+        }
+        return foreignCallMappings
+    }
+}
+
+function buildIndividualMapping(parameter: string, argumentIterator: number, argTracker: any, mappings: IndividualArugmentMapping[], tracker: boolean) {
+    if (parameter.includes(argTracker.name)) {
+        var enumer = 0
+        for(var pType of PT) {
+            if(pType.name == argTracker.rawType) {
+                enumer = pType.enumeration
+            }
+        }
+        var placeholder: PlaceholderStruct = {
+            PTEnumeration: enumer,
+            typeSpecificIndex: argumentIterator,
+            trackerValue: tracker,
+            foreignCallReturnValue: false
+        }
+        var individualMapping: IndividualArugmentMapping = {
+            PTEnumeration: enumer,
+            functionSignatureArg: placeholder
+        }
+        mappings.push(individualMapping)
+        return true
+    }
+    return false
 }
 
 export function parseSyntax(syntax: string) {
@@ -88,7 +186,7 @@ export function parseSyntax(syntax: string) {
     var names = parseFunctionArguments(functionSignature)
     condition = parseForeignCalls(condition, names.length, names)
     parseTrackers(condition, names.length, names)
-    
+
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
     var array = convertToTree(condition, "AND")
     if(array.length == 0) {

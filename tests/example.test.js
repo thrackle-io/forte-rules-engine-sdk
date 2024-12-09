@@ -1,7 +1,6 @@
 import { expect, test } from 'vitest'
-import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax } from '../src/index.ts';
+import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, buildForeignCallArgumentMapping } from '../src/index.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
-
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**
@@ -480,3 +479,56 @@ var str = "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo
 var retVal = parseSyntax(str)
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
+
+test('Tests building foreign call argument mapping', () => {
+  var fc = ["testCall(to, value, somethingElse, TR:trackerTest)"];
+  var strings = [
+    {name:'to', tIndex: 0, rawType: "address"}, 
+    {name: 'someValue', tIndex: 0, rawType: "uint256"}, 
+    {name: 'someString', tIndex: 0, rawType: "string"}, 
+    {name: 'somethingElse', tIndex: 0, rawtype: "string"}, 
+    {name: 'value', tIndex: 0, rawType: "uint256"}, 
+    {name: 'anotherValue', tIndex: 0, rawType: "uint256"}
+  ]
+  var trackers = [
+    {name: 'trackerTest', rawType: "address"}
+  ]
+  
+  var expected = {
+    foreignCallIndex: 0,
+    mappings: [
+      { 
+        PTEnumeration: 0, functionSignatureArg: {
+          PTEnumeration: 0,
+          typeSpecificIndex: 0,
+          trackerValue: false,
+          foreignCallReturnValue: false
+        } 
+      }, { 
+        PTEnumeration: 2, functionSignatureArg:  {
+          PTEnumeration: 2,
+          typeSpecificIndex: 4,
+          trackerValue: false,
+          foreignCallReturnValue: false
+        }
+      }, { 
+          PTEnumeration: 0, functionSignatureArg: {
+            PTEnumeration: 0,
+            typeSpecificIndex: 3,
+            trackerValue: false,
+            foreignCallReturnValue: false
+          } 
+      }, { 
+          PTEnumeration: 0, functionSignatureArg: {
+            PTEnumeration: 0,
+            foreignCallReturnValue: false,
+            trackerValue: true,
+            typeSpecificIndex: 6,
+        },
+      },
+    ]
+  }
+  
+  var retVal = buildForeignCallArgumentMapping(fc, strings, trackers)
+  expect(retVal).toEqual(expected)
+  });
