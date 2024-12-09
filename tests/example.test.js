@@ -308,26 +308,24 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
   * ]
   * 
   * Instruction Set Syntax:
-  * [ 'PLH, 0, 
-  *   'N', 1, 
-  *   '==', 0, 1, 
-  *   'PLH', 2, 
-  *   'N', 0xdeadbeefdeadbeef, 
-  *   '==', 4, 5, 
-  *   'AND', 2, 6,
-  *   'PLH', 7,
-  *   'N', 1,
-  *   '==', 8, 9,
-  *   'AND', 7, 10,
-  *   'PLH', 11,
-  *   'N', 500,
-  *   '<', 11, 12,
-  *   'AND', 10, 13] 
+  * [
+  *  'PLH', 2, 
+  *  'N', 1,
+  *  '==', 0, 1,
+  *  'PLH', 0,
+  *  'N', 0xdeadbeefdeadbeef, '==',
+  *  3, 4, 'AND',
+  *  2, 5, 'PLH',
+  *  3, 'PLH', 4,
+  *  'N', 1, 
+  *  '==', 8, 9, 
+  *  'AND', 7, 10, 
+  *  'PLH', 5, 'N', 500,
+  *  '<', 12, 13,
+  *  'AND', 11, 14,
+  *  'OR', 6, 15
+  *]
   */
-
-  /**
-   * instruction set:  
-   */
 
   let expectedArray = [
     'PLH', 2, 
@@ -365,11 +363,46 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
 
 test('Evaluate complex expression with placeholders', () => {
 
+  /*
+  * Original Syntax:
+  * (to == 1 AND sender == 0xdeadbeefdeadbeef) OR (value == 1 AND to == 1 AND value < 500) -> revert --> “transfer(address to, uint256 value)” --> address to, uint256 value
+  * 
+  * Abstract Tree Syntax:
+  *  [OR,
+  *    [AND,
+  *      [==, "to", 1],
+  *      [==, "sender", 0xdeadbeefdeadbeef]],
+  *    [AND,
+  *      [==, "value", 1],
+  *      [AND,
+  *        [==, "to", 1],
+  *        [<, "value", 500]]]
+  * ]
+  * 
+  * Instruction Set Syntax:
+  * [
+  *  'PLH', 0,
+  *  'N', 1,
+  *  '==', 0, 1,
+  *  'PLH', 0,
+  *  'N', 0xdeadbeefdeadbeef, '==',
+  *  3, 4, 'AND',
+  *  2, 5, 'PLH',
+  *  3, 'PLH', 4,
+  *  'N', 1, 
+  *  '==', 8, 9, 
+  *  'AND', 7, 10, 
+  *  'PLH', 5, 'N', 500,
+  *  '<', 12, 13,
+  *  'AND', 11, 14,
+  *  'OR', 6, 15
+  *]
+  */
   let expectedArray = [
     'PLH', 0,                    'N',
     1,     '==',                 0,
     1,     'PLH',                0,
-    'N',   16045690984833335000, '==',
+    'N',   0xdeadbeefdeadbeef, '==',
     3,     4,                    'AND',
     2,     5,                    'PLH',
     1,     'N',                  1,

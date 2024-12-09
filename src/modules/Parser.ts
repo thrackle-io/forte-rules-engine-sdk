@@ -440,10 +440,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
             retVal.push(expression[0].trim())
             var sliced = expression.slice(1)
             // Ensure sliced array is smaller than original
-            // if (sliced.length >= expression.length) {
-            //     console.warn("Potential infinite recursion detected");
-            //     return;
-            // }
             mem.push(iterator.value)
             iterator.value += 1
             convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, foreignCalls)
