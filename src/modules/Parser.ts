@@ -200,32 +200,6 @@ export function parseSyntax(syntax: string) {
 
     var names = parseFunctionArguments(functionSignature)
     condition = parseForeignCalls(condition, names.length, names)
-<<<<<<< HEAD
-    parseTrackers(condition, names.length, names)
-
-    // Create the initial Abstract Syntax Tree (AST) splitting on AND
-    var array = convertToTree(condition, "AND")
-    if(array.length == 0) {
-        // If array is empty the top level conditional must be an OR instead of an AND
-        array = convertToTree(condition, "OR")
-    }
-    
-    if(array.length == 1) {
-        array = array[0]
-    } else if(array.length == 0) {
-        // If the array is still empty than a single top level statement without an AND or OR was used.
-        array.push(condition)
-    }
-    
-    if(array.length > 0) {
-        // Recursively iterate over the tree splitting on the available operators
-        for(var matchCase of matchArray) {
-            iterate(array, matchCase)
-        }
-        removeArrayWrappers(array)
-        intify(array)
-    }
-=======
     effectSplit = parseForeignCalls(effectSplit, names.length, names)
     parseTrackers(condition + effectSplit, names.length, names)
 
@@ -233,7 +207,6 @@ export function parseSyntax(syntax: string) {
     
 
     var retVal = interpretToInstructionSet(condition, names)
->>>>>>> dee81d3 (expand interpretor to include all kinds of effects)
 
     var excludeArray = []
     for(var name of names) {
