@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, buildForeignCallArgumentMapping } from '../src/index.ts';
+import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, buildForeignCallArgumentMapping } from '../src/index.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
@@ -428,7 +428,6 @@ test('Evaluate complex expression with placeholders', () => {
    value < 500 
   ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
   let retVal = parseSyntax(str)
-  console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
@@ -531,4 +530,50 @@ test('Tests building foreign call argument mapping', () => {
   
   var retVal = buildForeignCallArgumentMapping(fc, strings, trackers)
   expect(retVal).toEqual(expected)
-  });
+});
+
+test('Evaluate a simple syntax string for a revert effect', () => {
+  var str = "(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert --> addValue(uint256 value) --> uint256 value"
+  var retVal = parseSyntax(str)
+  expect(retVal.effect.type).toBe(EffectType.REVERT);
+  expect(retVal.effect.value).toBeUndefined();
+  expect(retVal.effect.instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string for a revert effect with message', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert("Didn't pass the sniff test") --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.effect.type).toBe(EffectType.REVERT);
+  expect(retVal.effect.text).toEqual("Didn't pass the sniff test");
+  expect(retVal.effect.instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string for a event effect', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit SomethingWentWrong("Something wrong") --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.effect.type).toBe(EffectType.EVENT);
+  expect(retVal.effect.text).toEqual("Something wrong");
+  expect(retVal.effect.instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string for a event effect without text', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Goodvibes() --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.effect.type).toBe(EffectType.EVENT);
+  expect(retVal.effect.text).toEqual("");
+  expect(retVal.effect.instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string for an event effect with an instruction set', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> FC:updateOracle(value) AND FC:alert(value)  --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.effect.type).toBe(EffectType.EXPRESSION);
+  expect(retVal.effect.text).toEqual("");
+  console.log(retVal.effect.instructionSet)
+  expect(retVal.effect.instructionSet).toEqual([
+    'PLH', 1,
+    'PLH', 2,
+    'AND', 0, 1,
+  ])
+
+})

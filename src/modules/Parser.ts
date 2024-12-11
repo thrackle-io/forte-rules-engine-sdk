@@ -3,7 +3,19 @@ import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSe
 type Tuple = {
     i: string;
     s: string;
-  }
+}
+
+export enum EffectType {
+    REVERT = "revert",
+    EXPRESSION = "expression",
+    EVENT = "event"
+}
+
+type Effect = {
+    type: EffectType;
+    text?: string;
+    instructionSet?: any[]
+}
 
 type ForeignCallDefinition = {
     name: string;
@@ -183,8 +195,12 @@ export function parseSyntax(syntax: string) {
 
     var functionSignature = initialSplit[2]
 
+    var effectSplit = initialSplit[1]
+
+
     var names = parseFunctionArguments(functionSignature)
     condition = parseForeignCalls(condition, names.length, names)
+<<<<<<< HEAD
     parseTrackers(condition, names.length, names)
 
     // Create the initial Abstract Syntax Tree (AST) splitting on AND
@@ -209,12 +225,16 @@ export function parseSyntax(syntax: string) {
         removeArrayWrappers(array)
         intify(array)
     }
+=======
+    effectSplit = parseForeignCalls(effectSplit, names.length, names)
+    parseTrackers(condition + effectSplit, names.length, names)
 
-    var retVal: any[] = []
-    var mem: any[] = []
-    const iter = { value: 0 };
-    // Convert the AST into the Instruction Set Syntax 
-    convertToInstructionSet(retVal, mem, array, iter, names)//, FCs)
+    let effect = parseEffect(effectSplit, names)
+    
+
+    var retVal = interpretToInstructionSet(condition, names)
+>>>>>>> dee81d3 (expand interpretor to include all kinds of effects)
+
     var excludeArray = []
     for(var name of names) {
         excludeArray.push(name.name)
@@ -224,7 +244,63 @@ export function parseSyntax(syntax: string) {
     excludeArray.push(...operandArray)
     var rawData: any[] = []
     buildRawData(retVal, excludeArray, rawData)
-    return {instructionSet: retVal, rawData: rawData}
+    return {instructionSet: retVal, rawData: rawData, effect: effect}
+}
+
+function interpretToInstructionSet(syntax: string, names: any[]) {
+        // Create the initial Abstract Syntax Tree (AST) splitting on AND
+        var array = convertToTree(syntax, "AND")
+        if(array.length == 0) {
+            // If array is empty the top level conditional must be an OR instead of an AND
+            array = convertToTree(syntax, "OR")
+        }
+        
+        if(array.length == 1) {
+            array = array[0]
+        } else if(array.length == 0) {
+            // If the array is still empty than a single top level statement without an AND or OR was used.
+            array.push(syntax)
+        }
+        
+        if(array.length > 0) {
+            // Recursively iterate over the tree splitting on the available operators
+            for(var matchCase of matchArray) {
+                iterate(array, matchCase)
+            }
+            removeArrayWrappers(array)
+            intify(array)
+        }
+    
+        var retVal: any[] = []
+        var mem: any[] = []
+        const iter = { value: 0 };
+        // Convert the AST into the Instruction Set Syntax 
+        convertToInstructionSet(retVal, mem, array, iter, names)
+        return retVal
+}
+
+function parseEffect(effect: string, names: any[]) {
+    var effectType = EffectType.REVERT
+    var effectText = ""
+    var effectInstructionSet: any[] = []
+    const revertTextPattern = /(revert)\("([^"]*)"\)/;
+    const emitTextPattern = /emit\s+\w+\("([^"]*)"\)/;
+
+    if(effect.includes("emit")) {
+        effectType = EffectType.EVENT
+        const match = effect.match(emitTextPattern);
+        effectText = match ? match[1] : "";
+    } else if (effect.includes("revert")) {
+        effectType = EffectType.REVERT
+        const match = effect.match(revertTextPattern);
+        effectText = match ? match[2] : "";
+    } else {
+        effectType = EffectType.EXPRESSION
+        effectInstructionSet = interpretToInstructionSet(effect, names)
+        
+    }
+
+    return {type: effectType, text: effectText, instructionSet: effectInstructionSet}
 }
 
 // Parse the function signature string and build the placeholder data structure
@@ -279,6 +355,11 @@ function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
     for (const match of matches) {
         const fullFcExpr = match[0];
         
+        if (names.indexOf(match) !== -1) {
+            let ph = names[names.indexOf(match)].fcPlaceholder
+            processedCondition = processedCondition.replace(fullFcExpr, ph)
+            continue
+        }
         // Create a unique placeholder for this FC expression
         const placeholder = `FC:${iter}`;
         processedCondition = processedCondition.replace(fullFcExpr, placeholder);
