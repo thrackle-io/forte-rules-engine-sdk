@@ -165,13 +165,12 @@ var expectedArray = [
   'OR', 8, 15
 ]
 
-var expectedRawDataArray = [
-     {
-       "dataType": "string",
-       "iSetIndex": 24,
-       "rawData": "test",
-     },
-   ]
+var expectedRawDataArray =  { 
+  "argumentTypes": [1],
+  "instructionSetIndex": [24],
+  "dataValues": [toBytes("test")],
+}
+   
 
 var str = "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
 var retVal = parseSyntax(str)
@@ -493,42 +492,44 @@ test('Tests building foreign call argument mapping', () => {
     {name: 'trackerTest', rawType: "address"}
   ]
   
-  var expected = {
-    foreignCallIndex: 0,
-    mappings: [
-      { 
-        PTEnumeration: 0, functionSignatureArg: {
-          PTEnumeration: 0,
-          typeSpecificIndex: 0,
-          trackerValue: false,
-          foreignCallReturnValue: false
-        } 
-      }, { 
-        PTEnumeration: 2, functionSignatureArg:  {
-          PTEnumeration: 2,
-          typeSpecificIndex: 4,
-          trackerValue: false,
-          foreignCallReturnValue: false
-        }
-      }, { 
-          PTEnumeration: 0, functionSignatureArg: {
-            PTEnumeration: 0,
-            typeSpecificIndex: 3,
+  var expected = [
+    { 
+      foreignCallIndex: 0,
+      mappings: [
+        { 
+          functionCallArgumentType: 0, functionSignatureArg: {
+            pType: 0,
+            typeSpecificIndex: 0,
             trackerValue: false,
-            foreignCallReturnValue: false
+            foreignCall: false
           } 
-      }, { 
-          PTEnumeration: 0, functionSignatureArg: {
-            PTEnumeration: 0,
-            foreignCallReturnValue: false,
-            trackerValue: true,
-            typeSpecificIndex: 6,
+        }, { 
+          functionCallArgumentType: 2, functionSignatureArg:  {
+            pType: 2,
+            typeSpecificIndex: 4,
+            trackerValue: false,
+            foreignCall: false
+          }
+        }, { 
+          functionCallArgumentType: 0, functionSignatureArg: {
+              pType: 0,
+              typeSpecificIndex: 3,
+              trackerValue: false,
+              foreignCall: false
+            } 
+        }, { 
+          functionCallArgumentType: 0, functionSignatureArg: {
+              pType: 0,
+              foreignCall: false,
+              trackerValue: true,
+              typeSpecificIndex: 6,
+          },
         },
-      },
-    ]
-  }
+      ]
+    }
+  ]
   
-  var retVal = buildForeignCallArgumentMapping(fc, strings, trackers)
+  var retVal = buildForeignCallArgumentMapping([0], fc, strings, trackers)
   expect(retVal).toEqual(expected)
 });
 
@@ -569,7 +570,6 @@ test('Evaluate a simple syntax string for an event effect with an instruction se
   var retVal = parseSyntax(str)
   expect(retVal.effect.type).toBe(EffectType.EXPRESSION);
   expect(retVal.effect.text).toEqual("");
-  console.log(retVal.effect.instructionSet)
   expect(retVal.effect.instructionSet).toEqual([
     'PLH', 1,
     'PLH', 2,

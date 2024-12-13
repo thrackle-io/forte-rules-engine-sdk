@@ -1,17 +1,14 @@
-import { createTestClient, http, walletActions, publicActions, getAddress, decodeFunctionResult } from 'viem'
+
+import { createTestClient, http, walletActions, publicActions, testActions, Address, decodeFunctionResult, getAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
 import RulesEngineRunLogicJson from "../src/abis/RulesStorage.json";
-
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
-
-import { createBlankPolicy, getRulesEngineContract, executePolicyBatch } from "../src/modules/ContractInteraction";
-
+import { createBlankPolicy, executePolicyBatch, createNewRule, getRulesEngineContract } from "../src/modules/ContractInteraction";
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
 const DiamondAddress: `0x${string}` = `0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9`
 
 const rulesEngineAbi = RulesEngineRunLogicJson.abi
-
 const client = createTestClient({
     chain: foundry,
     mode: 'anvil',
@@ -21,6 +18,7 @@ const client = createTestClient({
 const account = privateKeyToAccount(
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
   );
+
 
 // Take snapshot
 export const takeSnapshot = async () => {
@@ -59,5 +57,14 @@ describe('Rules Engine Interactions', () => {
         })
 
         expect(Number(policyId)).toBeGreaterThan(0)
+    })
+    test('Can create a rule', async () => {
+        const ruleId = await createNewRule(client, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract, client), [], []);
+        expect(ruleId).toBeGreaterThan(0);
+    })
+    test('Can create a rule with a foreign call', async () => {
+        const ruleId = await createNewRule(client, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], []);
+        expect(ruleId).toBeGreaterThan(0);
+
     })
 })
