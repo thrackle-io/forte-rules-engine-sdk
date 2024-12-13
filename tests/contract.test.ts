@@ -1,16 +1,16 @@
-import { createTestClient, http, walletActions, publicActions } from 'viem'
+import { createTestClient, http, walletActions, publicActions, getAddress, decodeFunctionResult } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
-import RulesEngineRunLogicJson from "../src/artifacts/src/RulesEngineRunLogic.sol/RulesEngineRunLogic.json";
+import RulesEngineRunLogicJson from "../src/abis/RulesStorage.json";
 
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 
-import { createBlankPolicy, getRulesEngineContract } from "../src/modules/ContractInteraction";
+import { createBlankPolicy, getRulesEngineContract, executePolicyBatch } from "../src/modules/ContractInteraction";
 
-
+// Hardcoded address of the diamond in diamondDeployedAnvilState.json
+const DiamondAddress: `0x${string}` = `0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9`
 
 const rulesEngineAbi = RulesEngineRunLogicJson.abi
-const rulesEngineBytecode = RulesEngineRunLogicJson.bytecode as `0x${string}`
 
 const client = createTestClient({
     chain: foundry,
@@ -33,21 +33,13 @@ export const revertToSnapshot = async (snapshotId: any) => {
     await client.revert({ id: snapshotId })
 }
 
-export const deployRulesEngine = async () => {
-    const rulesEngine = await client.deployContract({
-        abi: rulesEngineAbi,
-        bytecode: rulesEngineBytecode,
-        account: account
-    })
-    return rulesEngine;
-}
-
 describe('Rules Engine Interactions', () => {
-    let rulesEngineContract: `0x${string}`;
+    const rulesEngineContract: `0x${string}` = DiamondAddress;
+    // Vanity address for now, lets try to eventually deploy a real token contract and use that here instead
+    const policyApplicant: `0x${string}` = getAddress('0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef');
     let snapshotId: `0x${string}`;
 
     beforeAll(async () => {
-        rulesEngineContract = await deployRulesEngine();
         snapshotId = await takeSnapshot();
     })
 
@@ -56,7 +48,16 @@ describe('Rules Engine Interactions', () => {
     })
 
     test('Can create a blank policy', async () => {
-        const policyId = await createBlankPolicy(client, rulesEngineContract, getRulesEngineContract(rulesEngineContract, client));
-        expect(policyId).toBeGreaterThan(0);
+        const callsAndResult = await createBlankPolicy(client, policyApplicant, getRulesEngineContract(rulesEngineContract, client));
+        expect(callsAndResult.result).toBeGreaterThan(0)
+        const result = await executePolicyBatch(client, getRulesEngineContract(rulesEngineContract, client), account, callsAndResult.calls);
+        const policyId = await client.readContract({
+            address: rulesEngineContract,
+            abi: rulesEngineAbi,
+            functionName: "getAppliedPolicyIds",
+            args: [policyApplicant]
+        })
+
+        expect(Number(policyId)).toBeGreaterThan(0)
     })
 })
