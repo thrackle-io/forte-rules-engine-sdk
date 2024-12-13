@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Anvil
         run: |
-          anvil -p 8545 &
+          anvil -p 8545 --load-state diamondDeployedAnvilState.json &
           sleep 3
         id: build
 
