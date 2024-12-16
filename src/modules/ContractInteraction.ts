@@ -14,8 +14,8 @@ import { parseSyntax, TrackerDefinition, buildForeignCallList, buildForeignCallL
 
 import { privateKeyToAccount } from 'viem/accounts';
 
-import RulesEngineRunLogicArtifact from "../abis/RulesStorage.json";
-import RulesDiamondArtifact from "../abis/RulesDiamond.json";
+import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
+import RulesDiamondArtifact from "../abis/RulesEngineMainFacet.json";
 
 const account = privateKeyToAccount(
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", // TODO: This is a foundry private key, replace with being read from .env/config
@@ -25,6 +25,10 @@ const RulesEngineABI = RulesEngineRunLogicArtifact.abi
 
 type RulesEngineContract = GetContractReturnType<typeof RulesEngineABI>;
 
+type FCNameToID = {
+    id: number
+    name: string
+}
 
 export const getRulesEngineContract = (address: Address, client: WalletClient & PublicClient): RulesEngineContract => getContract({
   address,
@@ -95,27 +99,12 @@ export const executePolicyBatch = async (
 
 }
 
-type FCNameToID = {
-    id: number
-    name: string
-}
-
 export const createNewRule = async (client: WalletClient & PublicClient, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
     try {
         var effect = buildAnEffectStruct(ruleSyntax)
-        const addEffect = await client.simulateContract({
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
-            functionName: "updateEffect",
-            args: [effect],
-        });
-    
-        await client.writeContract({
-            ...addEffect.request,
-            account
-        });
 
-        var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, addEffect.result)
+        var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, effect)
+        console.log(rule)
         const addRule = await client.simulateContract({
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
@@ -141,7 +130,7 @@ export function buildAnEffectStruct(ruleSyntax: string) {
     cleanInstructionSet(output.effect.instructionSet)
 
     const effect = {
-        effectId: 0,
+        valid: true,
         effectType: output.effect.type,
         text: output.effect.text,
         instructionSet: output.effect.instructionSet
@@ -150,7 +139,7 @@ export function buildAnEffectStruct(ruleSyntax: string) {
     return effect
 }
 
-export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], effectId: number) {
+export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], effect: any) {
     var output = parseSyntax(ruleSyntax)
     var fcList = buildForeignCallList(ruleSyntax.split('-->')[0])
     var fcNames = buildForeignCallListRaw(ruleSyntax.split('-->')[0])
@@ -185,16 +174,16 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
 
     cleanInstructionSet(output.instructionSet)
 
-    var rule =  {
+    const rule =  {
         instructionSet: output.instructionSet,
         rawData: rawData,          
         placeHolders: output.placeHolders,
         effectPlaceHolders: output.effect.placeholders,
         fcArgumentMappingsConditions: fcmapping,
         fcArgumentMappingsEffects: fcEffectMapping,
-        posEffects: [effectId],
+        posEffects: [effect],
         negEffects: []
-    } 
+    } as const
 
     return rule
 }

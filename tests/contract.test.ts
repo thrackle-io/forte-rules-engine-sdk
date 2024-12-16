@@ -2,7 +2,7 @@
 import { createTestClient, http, walletActions, publicActions, testActions, Address, decodeFunctionResult, getAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
-import RulesEngineRunLogicJson from "../src/abis/RulesStorage.json";
+import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import { createBlankPolicy, executePolicyBatch, createNewRule, getRulesEngineContract } from "../src/modules/ContractInteraction";
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
