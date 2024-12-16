@@ -6,9 +6,10 @@ type Tuple = {
 }
 
 export enum EffectType {
-    REVERT = "revert",
-    EXPRESSION = "expression",
-    EVENT = "event"
+    REVERT = 0,
+    EVENT = 1,
+    EXPRESSION = 2
+    
 }
 
 type Effect = {
@@ -18,6 +19,7 @@ type Effect = {
 }
 
 type ForeignCallDefinition = {
+
     name: string;
     address: Address;
     signature: ByteArray;
@@ -26,14 +28,14 @@ type ForeignCallDefinition = {
 }
 
 type PlaceholderStruct = {
-    PTEnumeration: number;
+    pType: number;
     typeSpecificIndex: number;
     trackerValue: boolean;
-    foreignCallReturnValue: boolean;
+    foreignCall: boolean;
 }
 
 type IndividualArugmentMapping = {
-    PTEnumeration: number;
+    functionCallArgumentType: number;
     functionSignatureArg: PlaceholderStruct;
 }
 
@@ -48,9 +50,15 @@ type FunctionArgument = {
     rawType: string
 }
 
-type TrackerDefinition = {
+export type TrackerDefinition = {
     name: string
     rawType: string
+}
+
+type RawData = {
+    instructionSetIndex: number[]
+    argumentTypes: number[]
+    dataValues: ByteArray[]
 }
 
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
@@ -125,7 +133,38 @@ export function parseForeignCallDefinition(syntax: string) {
         returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())} as ForeignCallDefinition
 }
 
-export function buildForeignCallArgumentMapping(fCalls: string[], argumentNames: FunctionArgument[], trackers: TrackerDefinition[]) {
+export function buildForeignCallList(condition: string) {
+        // Use a regular expression to find all FC expressions
+        const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+        const matches = condition.matchAll(fcRegex);
+        let processedCondition = condition
+        var names: string[] = []
+        // Convert matches iterator to array to process all at once
+        for (const match of matches) {
+            const fullFcExpr = match[0];
+            var nameAndArgs = fullFcExpr.split(':')[1]
+            var name = nameAndArgs.split('(')[0]
+            names.push(name)
+        }
+        return names
+}
+
+export function buildForeignCallListRaw(condition: string) {
+    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+    const matches = condition.matchAll(fcRegex);
+    let processedCondition = condition
+    var names: string[] = []
+    // Convert matches iterator to array to process all at once
+    for (const match of matches) {
+        const fullFcExpr = match[0];
+        names.push(fullFcExpr)
+    }
+    return names
+}
+
+export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: string[], argumentNames: FunctionArgument[], trackers: TrackerDefinition[]) {
+    var retVal: ForeignCallArgumentMappings[] = []
+    var iter = 0
     for(var foreignCall of fCalls) {
         var cleaned = cleanString(foreignCall)
         var initialSplit = cleaned.split('(')
@@ -133,7 +172,7 @@ export function buildForeignCallArgumentMapping(fCalls: string[], argumentNames:
         var parameterSplit = parameters.split(',')
         var callName = initialSplit[0]
         var mappings: IndividualArugmentMapping[] = []
-        
+
         for(var parameter of parameterSplit) {
             var found = false
             parameter = parameter.trim()
@@ -155,12 +194,16 @@ export function buildForeignCallArgumentMapping(fCalls: string[], argumentNames:
                 }
             }
         }
-        var foreignCallMappings : ForeignCallArgumentMappings = {
-            foreignCallIndex: 0,
-            mappings: mappings
+        if(mappings.length > 0) {
+            var foreignCallMappings : ForeignCallArgumentMappings = {
+                foreignCallIndex: fCallIDs[iter],
+                mappings: mappings
+            }
+            retVal.push(foreignCallMappings)
         }
-        return foreignCallMappings
+        iter++
     }
+    return retVal
 }
 
 function buildIndividualMapping(parameter: string, argumentIterator: number, argTracker: any, mappings: IndividualArugmentMapping[], tracker: boolean) {
@@ -172,13 +215,13 @@ function buildIndividualMapping(parameter: string, argumentIterator: number, arg
             }
         }
         var placeholder: PlaceholderStruct = {
-            PTEnumeration: enumer,
+            pType: enumer,
             typeSpecificIndex: argumentIterator,
             trackerValue: tracker,
-            foreignCallReturnValue: false
+            foreignCall: false
         }
         var individualMapping: IndividualArugmentMapping = {
-            PTEnumeration: enumer,
+            functionCallArgumentType: enumer,
             functionSignatureArg: placeholder
         }
         mappings.push(individualMapping)
@@ -199,13 +242,12 @@ export function parseSyntax(syntax: string) {
 
 
     var names = parseFunctionArguments(functionSignature)
+    var effectNames = Array.from(names)
     condition = parseForeignCalls(condition, names.length, names)
-    effectSplit = parseForeignCalls(effectSplit, names.length, names)
+    effectSplit = parseForeignCalls(effectSplit, effectNames.length, effectNames)
     parseTrackers(condition + effectSplit, names.length, names)
-
-    let effect = parseEffect(effectSplit, names)
     
-
+    let effect = parseEffect(effectSplit, effectNames)
     var retVal = interpretToInstructionSet(condition, names)
 
     var excludeArray = []
@@ -216,8 +258,9 @@ export function parseSyntax(syntax: string) {
     excludeArray.push(...matchArray)
     excludeArray.push(...operandArray)
     var rawData: any[] = []
-    buildRawData(retVal, excludeArray, rawData)
-    return {instructionSet: retVal, rawData: rawData, effect: effect}
+
+    var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
+    return {instructionSet: retVal.instructionSet, rawData: raw, effect: effect, placeHolders: retVal.placeHolders}
 }
 
 function interpretToInstructionSet(syntax: string, names: any[]) {
@@ -244,18 +287,20 @@ function interpretToInstructionSet(syntax: string, names: any[]) {
             intify(array)
         }
     
-        var retVal: any[] = []
+        var instructionSet: any[] = []
         var mem: any[] = []
+        var placeHolders: PlaceholderStruct[] = []
         const iter = { value: 0 };
         // Convert the AST into the Instruction Set Syntax 
-        convertToInstructionSet(retVal, mem, array, iter, names)
-        return retVal
+        convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders)
+        return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
 function parseEffect(effect: string, names: any[]) {
     var effectType = EffectType.REVERT
     var effectText = ""
     var effectInstructionSet: any[] = []
+    var placeholders: PlaceholderStruct[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
     const emitTextPattern = /emit\s+\w+\("([^"]*)"\)/;
 
@@ -269,15 +314,16 @@ function parseEffect(effect: string, names: any[]) {
         effectText = match ? match[2] : "";
     } else {
         effectType = EffectType.EXPRESSION
-        effectInstructionSet = interpretToInstructionSet(effect, names)
-        
+        var effectStruct = interpretToInstructionSet(effect, names)
+        effectInstructionSet = effectStruct.instructionSet
+        placeholders = effectStruct.placeHolders
     }
 
-    return {type: effectType, text: effectText, instructionSet: effectInstructionSet}
+    return {type: effectType, text: effectText, instructionSet: effectInstructionSet, placeholders: placeholders}
 }
 
 // Parse the function signature string and build the placeholder data structure
-function parseFunctionArguments(functionSignature: string) {
+export function parseFunctionArguments(functionSignature: string) {
     var start = functionSignature.lastIndexOf("(")
     var substr = functionSignature.substring(start+1, functionSignature.indexOf(")", start))
     var params = substr.split(", ");
@@ -305,7 +351,7 @@ function parseFunctionArguments(functionSignature: string) {
     return names
 }
 
-function parseTrackers(condition: string, nextIndex: number, names: any[]) {
+export function parseTrackers(condition: string, nextIndex: number, names: any[]) {
     const trRegex = /TR:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
 
@@ -516,6 +562,10 @@ function intify(array: any[]) {
 // Build the rawData array that contains the string representations of strings and addresses and
 // convert them to numbers in the instruction set.
 function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArray: any[]) {
+    var raw : RawData
+    var instructionSetArray: number[] = []
+    var argumentTypes: number[] = [] // string: 1
+    var dataValues: ByteArray[] = []
     let iter = 0
     while(iter < instructionSet.length) {
             // Only capture values that aren't naturally numbers
@@ -525,6 +575,9 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
                 if(!excludeArray.includes(instructionSet[iter].trim())) {
                     // Create the raw data entry
                     rawDataArray.push({rawData: instructionSet[iter].trim(), iSetIndex: iter, dataType: "string"})
+                    instructionSetArray.push(iter)
+                    argumentTypes.push(1)
+                    dataValues.push(toBytes(instructionSet[iter].trim()))
                     if(!operandArray.includes(instructionSet[iter].trim())) {
                         // Convert the string to a keccak356 has then to a uint256
                         instructionSet[iter] = hexToNumber(keccak256(encodePacked(['string'], [instructionSet[iter].trim()])))
@@ -533,10 +586,16 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
             } 
         iter++
     }
+    raw = {
+        instructionSetIndex: instructionSetArray,
+        argumentTypes: argumentTypes,
+        dataValues: dataValues
+    }
+    return raw
 }
 
 // Convert AST to Instruction Set Syntax
-function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[]) { 
+function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[]) { 
     if (!expression || expression.length === 0) {
         return;
     }
@@ -558,19 +617,48 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     
                 retVal.push("PLH")
                 retVal.push(parameter.tIndex)
+                var placeHolderEnum = 0
+                var tracker = false
+                if(parameter.rawType == "address") {
+                    placeHolderEnum = 0
+                } else if (parameter.raw == "string") {
+                    placeHolderEnum = 1
+                } else if(parameter.rawType == "uint256") {
+                    placeHolderEnum = 2
+                } else if(parameter.rawType == "tracker") {
+                    placeHolderEnum = 0
+                    tracker = true
+                }
+
+                var placeHolder : PlaceholderStruct = {
+                    pType: placeHolderEnum,
+                    typeSpecificIndex: parameter.tIndex,
+                    trackerValue: tracker,
+                    foreignCall: false
+                }
+                placeHolders.push(placeHolder)
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
                 iterator.value += 1
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
             } else if(parameter.fcPlaceholder) {
                 if(parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
                     retVal.push("PLH")
                     retVal.push(parameter.tIndex)
+
+                    var placeHolder : PlaceholderStruct = {
+                        pType: 0,
+                        typeSpecificIndex: parameter.tIndex,
+                        trackerValue: false,
+                        foreignCall: true
+                    }
+                    placeHolders.push(placeHolder)
+
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
                     iterator.value += 1
-                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
                 }
             }
         }
@@ -578,7 +666,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
             if(matchArray.includes(expression[0].trim()) ) {
                 foundMatch = true
                 var sliced = expression.slice(1)
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
                 retVal.push(expression[0])
                 retVal.push(mem[mem.length - 2])
                 retVal.push(mem[mem.length - 1])
@@ -594,7 +682,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
             var sliced = expression.slice(1)
             mem.push(iterator.value)
             iterator.value += 1
-            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
         }
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
@@ -605,13 +693,13 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
-        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames)
+        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
     // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
     // and recursively run starting at the next index
     } else if(Array.isArray(expression[0])) {
-        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames)
+        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, placeHolders)
         expression = expression.slice(1)
-        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames)
+        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames, placeHolders)
     }
 }
 
