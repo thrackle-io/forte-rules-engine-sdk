@@ -259,8 +259,8 @@ export function parseSyntax(syntax: string) {
     excludeArray.push(...operandArray)
     var rawData: any[] = []
 
-    var raw = buildRawData(retVal.instrucitonSet, excludeArray, rawData)
-    return {instructionSet: retVal.instrucitonSet, rawData: raw, effect: effect, placeHolders: retVal.placeHolders}
+    var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
+    return {instructionSet: retVal.instructionSet, rawData: raw, effect: effect, placeHolders: retVal.placeHolders}
 }
 
 function interpretToInstructionSet(syntax: string, names: any[]) {
@@ -293,7 +293,7 @@ function interpretToInstructionSet(syntax: string, names: any[]) {
         const iter = { value: 0 };
         // Convert the AST into the Instruction Set Syntax 
         convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders)
-        return {instrucitonSet: instructionSet, placeHolders: placeHolders}
+        return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
 function parseEffect(effect: string, names: any[]) {
@@ -315,7 +315,7 @@ function parseEffect(effect: string, names: any[]) {
     } else {
         effectType = EffectType.EXPRESSION
         var effectStruct = interpretToInstructionSet(effect, names)
-        effectInstructionSet = effectStruct.instrucitonSet
+        effectInstructionSet = effectStruct.instructionSet
         placeholders = effectStruct.placeHolders
     }
 
