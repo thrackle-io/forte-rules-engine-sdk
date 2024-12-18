@@ -2,12 +2,14 @@ import {
     getContract, 
     Address,
     GetContractReturnType,
+    toFunctionSelector,
     PublicClient,
     WalletClient,
     BaseError,
     ContractFunctionRevertedError,
     encodeFunctionData,
-    PrivateKeyAccount
+    PrivateKeyAccount,
+    toBytes
 } from "viem";
 
 import { parseSyntax, TrackerDefinition, buildForeignCallList, buildForeignCallListRaw, buildForeignCallArgumentMapping, parseFunctionArguments } from '../index';
@@ -69,6 +71,31 @@ export const createBlankPolicy = async (
     return {calls, result: addPolicy.result}
 }
 
+export const updatePolicy = async (
+    client: WalletClient & PublicClient, 
+    rulesEngineContract: RulesEngineContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
+        try {
+            const updatePolicy = await client.simulateContract({
+                address: rulesEngineContract.address,
+                abi: rulesEngineContract.abi,
+                functionName: "updatePolicy",
+                args: [ policyId, signatures, ids, ruleIds ],
+            });
+            
+    
+            await client.writeContract({
+                ...updatePolicy.request,
+                account
+            });
+    
+            return updatePolicy.result;
+        } catch (error) {
+            console.error(error);
+            return -1;
+        }
+
+    }
+
 export const executeBatch = async (
     client: WalletClient & PublicClient,
     rulesEngineContract: RulesEngineContract,
@@ -112,6 +139,29 @@ export const addNewRuleToBatch = async (client: WalletClient & PublicClient, rul
                 args: [ 0, rule ],
             })
         )
+}
+
+export const createFunctionSignature = async (client: WalletClient & PublicClient, functionSignature: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+    try {
+        //TODO: Update to use PT for actual function parameters, currently hard coded to expected demo signature parameters
+        const addRule = await client.simulateContract({
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "updateFunctionSignature",
+            args: [ 0, functionSignature, [0, 2] ],
+        });
+        
+
+        await client.writeContract({
+            ...addRule.request,
+            account
+        });
+
+        return addRule.result;
+    } catch (error) {
+        console.error(error);
+        return -1;
+    }
 }
 
 export const createNewRule = async (client: WalletClient & PublicClient, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
@@ -198,7 +248,7 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         posEffects: [effect],
         negEffects: []
     } as const
-
+    console.log(rule)
     return rule
 }
 

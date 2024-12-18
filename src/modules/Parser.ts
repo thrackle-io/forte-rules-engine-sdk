@@ -610,13 +610,14 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
         var foundMatch = false
-
+        var plhIndex = 0
         for(var parameter of parameterNames) {
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
     
                 retVal.push("PLH")
-                retVal.push(parameter.tIndex)
+                retVal.push(plhIndex)
+                plhIndex += 1
                 var placeHolderEnum = 0
                 var tracker = false
                 if(parameter.rawType == "address") {
@@ -645,8 +646,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 if(parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
                     retVal.push("PLH")
-                    retVal.push(parameter.tIndex)
-
+                    retVal.push(plhIndex)
+                    plhIndex += 1
                     var placeHolder : PlaceholderStruct = {
                         pType: 0,
                         typeSpecificIndex: parameter.tIndex,
