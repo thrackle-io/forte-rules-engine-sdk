@@ -269,7 +269,7 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
  * ]
  * 
  * Instruction Set Syntax:
- * [ 'PLH, 2, 
+ * [ 'PLH, 0, 
  *   'N', 100, 
  *   '>', 0, 1, 
  *   'PLH', 1, 
@@ -278,7 +278,7 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
  *   'AND', 2, 5, 
  */
   let expectedArray = [
-    'PLH', 2, 'N', 100,
+    'PLH', 0, 'N', 100,
     '>', 0, 1,
     'PLH', 1, 'N', 100, '==',
     3, 4, 'AND', 2, 5
@@ -307,37 +307,37 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
   * 
   * Instruction Set Syntax:
   * [
-  *  'PLH', 2, 
+  * 'PLH', 0, 
   *  'N', 1,
-  *  '==', 0, 1,
-  *  'PLH', 0,
-  *  'N', 0xdeadbeefdeadbeef, '==',
-  *  3, 4, 'AND',
-  *  2, 5, 'PLH',
-  *  3, 'PLH', 4,
-  *  'N', 1, 
-  *  '==', 8, 9, 
-  *  'AND', 7, 10, 
-  *  'PLH', 5, 'N', 500,
-  *  '<', 12, 13,
-  *  'AND', 11, 14,
-  *  'OR', 6, 15
-  *]
+  * '==', 0, 1,
+  * 'PLH', 1,
+  * 'N', 0xdeadbeefdeadbeef, '==',
+  * 3, 4, 'AND',
+  * 2, 5, 'PLH',
+  * 2, 'PLH', 3,
+  * 'N', 1, 
+  * '==', 8, 9, 
+  * 'AND', 7, 10, 
+  * 'PLH', 4, 'N', 500,
+  * '<', 12, 13,
+  * 'AND', 11, 14,
+  * 'OR', 6, 15
+  ]
   */
 
   let expectedArray = [
-    'PLH', 2, 
+    'PLH', 0, 
     'N', 1,
     '==', 0, 1,
-    'PLH', 0,
+    'PLH', 1,
     'N', 0xdeadbeefdeadbeef, '==',
     3, 4, 'AND',
     2, 5, 'PLH',
-    3, 'PLH', 4,
+    2, 'PLH', 3,
     'N', 1, 
     '==', 8, 9, 
     'AND', 7, 10, 
-    'PLH', 5, 'N', 500,
+    'PLH', 4, 'N', 500,
     '<', 12, 13,
     'AND', 11, 14,
     'OR', 6, 15
@@ -382,15 +382,15 @@ test('Evaluate complex expression with placeholders', () => {
   *  'PLH', 0,
   *  'N', 1,
   *  '==', 0, 1,
-  *  'PLH', 0,
+  *  'PLH', 1,
   *  'N', 0xdeadbeefdeadbeef, '==',
   *  3, 4, 'AND',
   *  2, 5, 'PLH',
-  *  3, 'PLH', 4,
+  *  2, 'PLH', 3,
   *  'N', 1, 
   *  '==', 8, 9, 
   *  'AND', 7, 10, 
-  *  'PLH', 5, 'N', 500,
+  *  'PLH', 4, 'N', 500,
   *  '<', 12, 13,
   *  'AND', 11, 14,
   *  'OR', 6, 15
@@ -399,16 +399,16 @@ test('Evaluate complex expression with placeholders', () => {
   let expectedArray = [
     'PLH', 0,                    'N',
     1,     '==',                 0,
-    1,     'PLH',                0,
+    1,     'PLH',                1,
     'N',   0xdeadbeefdeadbeef, '==',
     3,     4,                    'AND',
     2,     5,                    'PLH',
-    1,     'N',                  1,
+    2,     'N',                  1,
     '==',  7,                    8,
-    'PLH', 0,                    'N',
+    'PLH', 3,                    'N',
     1,     '==',                 10,
     11,    'AND',                9,
-    12,    'PLH',                1,
+    12,    'PLH',                4,
     'N',   500,                  '<',
     14,    15,                   'AND',
     13,    16,                   'OR',
@@ -449,25 +449,25 @@ test('Evaluates a simple syntax string (using AND + OR operators, trackers and f
  * ]
  * 
  * Instruction Set Syntax:
-  'PLH', 3, 'N',
-  4, '+', 0, 1,
-  'N', 5, '>', 2,
-  3, 'PLH', 4, 'N',
-  5, '==', 5, 6,
-  'AND', 4, 7, 'PLH',
-  1, 'PLH', 5, '==',
-  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
-  13, 'OR', 11, 14,
-  'OR', 8, 15
+ * 'PLH', 0, 'N',
+ *  4, '+', 0, 1,
+ * 'N', 5, '>', 2,
+ *  3, 'PLH', 1, 'N',
+ *  5, '==', 5, 6,
+ * 'AND', 4, 7, 'PLH',
+ *  2, 'PLH', 3, '==',
+ *  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
+ *  13, 'OR', 11, 14,
+ * 'OR', 8, 15
  */
 var expectedArray = [
-  'PLH', 3, 'N',
+  'PLH', 0, 'N',
   4, '+', 0, 1,
   'N', 5, '>', 2,
-  3, 'PLH', 4, 'N',
+  3, 'PLH', 1, 'N',
   5, '==', 5, 6,
   'AND', 4, 7, 'PLH',
-  1, 'PLH', 5, '==',
+  2, 'PLH', 3, '==',
   9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
   13, 'OR', 11, 14,
   'OR', 8, 15
@@ -571,8 +571,8 @@ test('Evaluate a simple syntax string for an event effect with an instruction se
   expect(retVal.effect.type).toBe(EffectType.EXPRESSION);
   expect(retVal.effect.text).toEqual("");
   expect(retVal.effect.instructionSet).toEqual([
+    'PLH', 0,
     'PLH', 1,
-    'PLH', 2,
     'AND', 0, 1,
   ])
 

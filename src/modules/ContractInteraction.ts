@@ -9,7 +9,7 @@ import {
     ContractFunctionRevertedError,
     encodeFunctionData,
     PrivateKeyAccount,
-    toBytes
+    stringToHex
 } from "viem";
 
 import { parseSyntax, TrackerDefinition, buildForeignCallList, buildForeignCallListRaw, buildForeignCallArgumentMapping, parseFunctionArguments } from '../index';
@@ -143,12 +143,23 @@ export const addNewRuleToBatch = async (client: WalletClient & PublicClient, rul
 
 export const createFunctionSignature = async (client: WalletClient & PublicClient, functionSignature: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
     try {
-        //TODO: Update to use PT for actual function parameters, currently hard coded to expected demo signature parameters
+        var argsRaw = parseFunctionArguments(functionSignature)
+        var args = []
+        for(var arg of argsRaw) {
+            if(arg.rawType == "uint256") {
+                args.push(2)
+            } else if(arg.rawType == "string") {
+                args.push(1)
+            } else if(arg.rawType == "address") {
+                args.push(0)
+            }
+        }
+
         const addRule = await client.simulateContract({
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
             functionName: "updateFunctionSignature",
-            args: [ 0, functionSignature, [0, 2] ],
+            args: [ 0, stringToHex(functionSignature), args ],
         });
         
 
@@ -248,7 +259,6 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         posEffects: [effect],
         negEffects: []
     } as const
-    console.log(rule)
     return rule
 }
 

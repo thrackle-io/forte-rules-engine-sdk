@@ -292,7 +292,9 @@ function interpretToInstructionSet(syntax: string, names: any[]) {
         var placeHolders: PlaceholderStruct[] = []
         const iter = { value: 0 };
         // Convert the AST into the Instruction Set Syntax 
+        plhIndex = 0
         convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders)
+        console.log(placeHolders)
         return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
@@ -593,7 +595,7 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
     }
     return raw
 }
-
+var plhIndex = 0
 // Convert AST to Instruction Set Syntax
 function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[]) { 
     if (!expression || expression.length === 0) {
@@ -610,7 +612,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
         var foundMatch = false
-        var plhIndex = 0
+        
         for(var parameter of parameterNames) {
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
