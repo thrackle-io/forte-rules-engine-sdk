@@ -6,7 +6,7 @@ import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import { createBlankPolicy, executeBatch, createNewRule, addNewRuleToBatch, getRulesEngineContract } from "../src/modules/ContractInteraction";
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
-const DiamondAddress: `0x${string}` = `0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9`
+const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
 const rulesEngineAbi = RulesEngineRunLogicJson.abi
 const client = createTestClient({
