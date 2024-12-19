@@ -159,7 +159,7 @@ export const createFunctionSignature = async (client: WalletClient & PublicClien
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
             functionName: "updateFunctionSignature",
-            args: [ 0, stringToHex(functionSignature), args ],
+            args: [ 0, toFunctionSelector(functionSignature), args ],
         });
         
 

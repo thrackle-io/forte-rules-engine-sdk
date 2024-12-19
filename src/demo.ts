@@ -31,10 +31,12 @@ const account = privateKeyToAccount(
     console.log("policy Id: ", policyId)
     var functionId = await createFunctionSignature(client, "transfer(address,uint256) returns (bool)", getRulesEngineContract(rulesEngineContract, client))
     console.log("function ID: ", functionId)
+    console.log(toFunctionSelector("transfer(address,uint256) returns (bool)"))
+    console.log(stringToHex("transfer(address,uint256) returns (bool)"))
     var ruleId = await createNewRule(client, 'value > 500 --> revert("value > 500") --> transfer(address to, uint256 value)', getRulesEngineContract(rulesEngineContract, client), [], [])
     var ruleIds = [[ruleId]]
     var functionIds = [functionId]
-    var functionSignatures = [stringToHex("transfer(address,uint256) returns (bool)")]
+    var functionSignatures = [toFunctionSelector("transfer(address,uint256) returns (bool)")]
     var policyIdUpdate = await updatePolicy(client, getRulesEngineContract(rulesEngineContract, client), policyId as number, functionSignatures, functionIds, ruleIds)
     console.log(policyIdUpdate)
 }
