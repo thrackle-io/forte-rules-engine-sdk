@@ -12,7 +12,8 @@ import {
     stringToHex
 } from "viem";
 
-import { parseSyntax, TrackerDefinition, buildForeignCallList, buildForeignCallListRaw, buildForeignCallArgumentMapping, parseFunctionArguments } from '../index';
+import { parseSyntax, TrackerDefinition, buildForeignCallList, buildForeignCallListRaw, 
+    buildForeignCallArgumentMapping, parseFunctionArguments, cleanInstructionSet } from '../index';
 
 import { privateKeyToAccount } from 'viem/accounts';
 
@@ -260,25 +261,4 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         negEffects: []
     } as const
     return rule
-}
-
-function cleanInstructionSet(instructionSet: any[]) {
-    var iter = 0
-    for(var val of instructionSet) {
-        if(val == 'N') {
-            instructionSet[iter] = 0
-        } else if(val == '+') {
-            instructionSet[iter] = 1
-        } else if(val == '>') {
-            instructionSet[iter] = 6
-        } else if(val == '==') {
-            instructionSet[iter] = 7
-        } else if(val == 'AND') {
-            instructionSet[iter] = 8
-        } else if(val == 'PLH') {
-            instructionSet[iter] = 11
-        }
-
-        iter++
-    }
 }

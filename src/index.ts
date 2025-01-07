@@ -5,10 +5,13 @@ export {
     parseForeignCallDefinition, 
     EffectType, 
     TrackerDefinition, 
+    RawDataReverseInterp,
     buildForeignCallArgumentMapping, 
     buildForeignCallList, 
     buildForeignCallListRaw, 
-    parseFunctionArguments 
+    parseFunctionArguments,
+    reverseParseRule,
+    cleanInstructionSet
 } from './modules/Parser';
 
 export { createNewRule, getRulesEngineContract } from './modules/ContractInteraction';
