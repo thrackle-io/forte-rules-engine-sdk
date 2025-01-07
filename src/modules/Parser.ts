@@ -50,7 +50,7 @@ type FunctionArgument = {
     rawType: string
 }
 
-export type RawDataReverseInterp = {
+export type stringReplacement = {
     instructionSetIndex: number
     originalData: string
 }
@@ -212,7 +212,7 @@ export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: stri
     return retVal
 }
 
-export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: RawDataReverseInterp[]) {
+export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
     var currentAction = -1
     var currentActionIndex = 0
     var currentMemAddress = 0
@@ -226,51 +226,39 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
             switch(currentAction) {
                 case 0: 
                     currentActionIndex = 1;
-                    console.log("N ")
                     break;
                 case 1:
                     currentActionIndex = 2;
-                    console.log("ADD ")
                     break;
                 case 2:
                     currentActionIndex = 2;
-                    console.log("SUB ")
                     break;
                 case 3:
                     currentActionIndex = 2;
-                    console.log("MUL ")
                     break;
                 case 4:
                     currentActionIndex = 2;
-                    console.log("DIV ")
                     break;
                 case 5:
                     currentActionIndex = 2;
-                    console.log("LT ")
                     break;
                 case 6:
                     currentActionIndex = 2;
-                    console.log("GT ")
                     break;
                 case 7:
                     currentActionIndex = 2;
-                    console.log("EQ ")
                     break;
                 case 8:
                     currentActionIndex = 2;
-                    console.log("AND")
                     break;
                 case 9: 
                     currentActionIndex = 2;
-                    console.log("OR")
                     break;
                 case 10: 
                     currentActionIndex = 1;
-                    console.log("NOT ")
                     break;
                 case 11:
                     currentActionIndex = 1;
-                    console.log("PLH")
                     break;
                 default:
                     currentActionIndex = 0;
@@ -279,7 +267,6 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
         } else {
             switch(currentAction) {
                 case 0:
-                    console.log(instruction)
                     var found = false
                     for(var raw of stringReplacements) {
                         if(raw.instructionSetIndex == instructionNumber) {
@@ -374,14 +361,12 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
                     if(currentActionIndex == 1) {
                         var currentString = "NOT " + currentInstructionValues[0]
                         memAddressesMap.push({memAddr: currentMemAddress, value: currentString})
-                        console.log(currentString)
                         retVal = currentString
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 11:
-                    console.log(placeHolderArray[instruction])
                     memAddressesMap.push({memAddr: currentMemAddress, value: placeHolderArray[instruction]})
                     currentMemAddress += 1
                     break;
@@ -446,7 +431,6 @@ function arithmeticOperatorReverseInterpretation(instruction: number, currentMem
     if(currentActionIndex == 1) {
         var currentString = currentInstructionValues[0] + symbol + currentInstructionValues[1]
         memAddressesMap.push({memAddr: currentMemAddress, value: currentString})
-        console.log(currentString)
         return currentString
     }
     return ""
@@ -462,7 +446,6 @@ function logicalOperatorReverseInterpretation(instruction: number, currentMemAdd
     if(currentActionIndex == 1) {
         var currentString = "( " + currentInstructionValues[0] + symbol + currentInstructionValues[1] + " )"
         memAddressesMap.push({memAddr: currentMemAddress, value: currentString})
-        console.log(currentString)
         return currentString
     }
     return ""

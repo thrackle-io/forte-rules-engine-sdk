@@ -5,7 +5,7 @@ export {
     parseForeignCallDefinition, 
     EffectType, 
     TrackerDefinition, 
-    RawDataReverseInterp,
+    stringReplacement,
     buildForeignCallArgumentMapping, 
     buildForeignCallList, 
     buildForeignCallListRaw, 

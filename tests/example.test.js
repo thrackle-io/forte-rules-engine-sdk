@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, RawDataReverseInterp, 
+import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, stringReplacement, 
   buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/index.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
 
