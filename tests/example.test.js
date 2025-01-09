@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
-import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, buildForeignCallArgumentMapping } from '../src/index.ts';
+import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, stringReplacement, 
+  buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/index.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
@@ -37,6 +38,22 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
   var str = "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)"
   var retVal = parseSyntax(str)
   expect(retVal.instructionSet).toEqual(expectedArray)
+});
+
+test('Reverse Interpretation for the: "Evaluates a simple syntax string (using only values and operators" test', () => {
+  let instructionSet = [
+    'N', 3, 'N', 4, '+', 0,
+     1, 'N', 5, '>', 2, 3,
+    'N', 1, 'N', 1, '==', 5,
+     6, 'N', 2, 'N', 2, '==',
+     8, 9, 'AND', 7, 10, 'AND',
+     4, 11
+  ]
+  var expectedString = "3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 )"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = []
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  expect(retVal).toEqual(expectedString)
 });
 
 test('Evaluates a complex syntax string (using only values and operators)', () => {
@@ -84,6 +101,24 @@ test('Evaluates a complex syntax string (using only values and operators)', () =
     expect(retVal.instructionSet).toEqual(expectedArray)
   });
 
+  test('Reverse Interpretation for the: "Evaluates a complex syntax string (using only values and operators)" test', () => {
+    let instructionSet = [
+      'N', 1, 'N', 1, '+', 0, 1, 'N',
+      2, '==', 2, 3, 'N', 3, 'N', 4,
+     '+', 5, 6, 'N', 5, '>', 7, 8,
+     'N', 1, 'N', 1, '==', 10,  11, 'N',
+      2, 'N', 2, '==', 13, 14, 'AND', 12,
+      15, 'AND', 9, 16, 'N', 4, 'N', 4,
+     '==', 18, 19, 'AND', 17, 20, 'AND', 4,
+      21 
+    ] 
+    var expectedString = "1 + 1 == 2 AND ( ( 3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 ) ) AND 4 == 4 )"
+    cleanInstructionSet(instructionSet)
+    var placeholderArray = []
+    var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+    expect(retVal).toEqual(expectedString)
+  });
+
 test('Evaluates a simple syntax string (using AND + OR operators)', () => {
     /*
    * Original Syntax:
@@ -120,6 +155,22 @@ test('Evaluates a simple syntax string (using AND + OR operators)', () => {
   var str = "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)  --> revert --> addValue(uint256 value)"; 
   var retVal = parseSyntax(str)
   expect(retVal.instructionSet).toEqual(expectedArray)
+});
+
+test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators)" test', () => {
+  let instructionSet = [
+    'N', 3, 'N', 4, '+', 0, 1,
+    'N', 5, '>', 2, 3, 'N', 5,
+    'N', 5, '==', 5, 6, 'AND', 4,
+    7, 'N', 1, 'N', 1, '==', 9,
+    10, 'N', 2, 'N', 3, '==', 12,
+    13, 'OR', 11, 14, 'OR', 8, 15
+  ] 
+  var expectedString = "( 3 + 4 > 5 AND 5 == 5 ) OR ( 1 == 1 OR 2 == 3 )"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = []
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  expect(retVal).toEqual(expectedString)
 });
 
 test('Evaluates a simple syntax string (using AND + OR operators and function parameters)', () => {
@@ -185,6 +236,26 @@ expect(retVal.name).toEqual("Simple Int Tracker")
 expect(retVal.type).toEqual("uint256")
 expect(retVal.defaultValue).toEqual(14)
 expect(retVal.policyId).toEqual(3)
+});
+
+test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
+  let instructionSet = [
+    'PLH', 0, 'N',
+    4, '+', 0, 1,
+    'N', 5, '>', 2,
+    3, 'N', 5, 'N',
+    5, '==', 5, 6,
+    'AND', 4, 7, 'PLH',
+    1, 'N', parseInt(keccak256('test'), 16), '==',
+    9, 10, 'PLH',  2, 'N', '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC', '==', 12,
+    13, 'OR', 11, 14,
+    'OR', 8, 15
+  ] 
+  var expectedString = "( value + 4 > 5 AND 5 == 5 ) OR ( info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = ["value", "info", "addr"]
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [{instructionSetIndex: 25, originalData: "test"}])
+  expect(retVal).toEqual(expectedString)
 });
 
 test('Creates a simple address tracker', () => {
@@ -288,6 +359,20 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
+test('Reverse Interpretation for the: "Evaluates a simple syntax string with a Foreign Call" test', () => {
+  let instructionSet = [
+    'PLH', 0, 'N', 100,
+    '>', 0, 1,
+    'PLH', 1, 'N', 100, '==',
+    3, 4, 'AND', 2, 5
+  ] 
+  var expectedString = "FC:leaderboard(to) > 100 AND value == 100"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = ["FC:leaderboard(to)", "value"]
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  expect(retVal).toEqual(expectedString)
+});
+
 test('Evaluate a complex syntax string with multiple foreign calls', () => {
   /*
   * Original Syntax:
@@ -358,6 +443,31 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
   expect(retVal.instructionSet).toEqual(expectedArray)
 
 })
+
+test('Reverse Interpretation for the: "Evaluates a simple syntax string with a Foreign Call" test', () => {
+  let instructionSet = [
+    'PLH', 0, 
+    'N', 1,
+    '==', 0, 1,
+    'PLH', 1,
+    'N', 0xdeadbeefdeadbeef, '==',
+    3, 4, 'AND',
+    2, 5, 'PLH',
+    2, 'PLH', 3,
+    'N', 1, 
+    '==', 8, 9, 
+    'AND', 7, 10, 
+    'PLH', 4, 'N', 500,
+    '<', 12, 13,
+    'AND', 11, 14,
+    'OR', 6, 15
+  ] 
+  var expectedString = "( FC:isAllowed(to) == 1 AND to == 16045690984833335000 ) OR ( ( FC:isSuperCoolGuy(to) AND FC:isRich(to) == 1 ) AND FC:creditRisk(amount) < 500 )"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = ["FC:isAllowed(to)", "to", "FC:isSuperCoolGuy(to)", "FC:isRich(to)", "FC:creditRisk(amount)" ]
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  expect(retVal).toEqual(expectedString)
+});
 
 test('Evaluate complex expression with placeholders', () => {
 
@@ -430,11 +540,36 @@ test('Evaluate complex expression with placeholders', () => {
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
+test('Reverse Interpretation for the: "Evaluate complex expression with placeholders" test', () => {
+  let instructionSet = [
+    'PLH', 0,                    'N',
+    1,     '==',                 0,
+    1,     'PLH',                1,
+    'N',   "0xdeadbeefdeadbeef", '==',
+    3,     4,                    'AND',
+    2,     5,                    'PLH',
+    2,     'N',                  1,
+    '==',  7,                    8,
+    'PLH', 3,                    'N',
+    1,     '==',                 10,
+    11,    'AND',                9,
+    12,    'PLH',                4,
+    'N',   500,                  '<',
+    14,    15,                   'AND',
+    13,    16,                   'OR',
+    6,     17
+  ]
+  var expectedString = "( to == 1 AND sender == 0xdeadbeefdeadbeef ) OR ( ( value == 1 AND to == 1 ) AND value < 500 )"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = ["to", "sender", "value", "to", "value"]
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  expect(retVal).toEqual(expectedString)
+})
 
 test('Evaluates a simple syntax string (using AND + OR operators, trackers and function parameters)', () => {
   /*
  * Original Syntax:
- * (value + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)
+ * (FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)
  * 
  * Abstract Tree Syntax:
  * [OR,
@@ -477,6 +612,26 @@ var str = "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo
 var retVal = parseSyntax(str)
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
+
+test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators, trackers and function parameters)" test', () => {
+  var instructionSet = [
+    'PLH', 0, 'N',
+    4, '+', 0, 1,
+    'N', 5, '>', 2,
+    3, 'PLH', 1, 'N',
+    5, '==', 5, 6,
+    'AND', 4, 7, 'PLH',
+    2, 'PLH', 3, '==',
+    9, 10, 'PLH', 4, 'N', "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC", '==', 12,
+    13, 'OR', 11, 14,
+    'OR', 8, 15
+  ]
+  var expectedString = "( FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5 ) OR ( info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )"
+  cleanInstructionSet(instructionSet)
+  var placeholderArray = ["FC:isAllowed(to)", "TR:testOne", "info", "TR:testTwo", "TR:testOne"]
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  expect(retVal).toEqual(expectedString)
+})
 
 test('Tests building foreign call argument mapping', () => {
   var fc = ["testCall(to, value, somethingElse, TR:trackerTest)"];
@@ -575,5 +730,11 @@ test('Evaluate a simple syntax string for an event effect with an instruction se
     'PLH', 1,
     'AND', 0, 1,
   ])
+})
 
+test('Simple Reverse Interpretation', () => {
+    var numbers = [0, 1, 0, 2, 1, 0, 1, 0, 3, 7, 2, 3, 0, 1, 11, 0, 7, 5, 6, 8, 4, 7]
+    var placeholderArray = ["value"]
+    var retVal = reverseParseRule(numbers, placeholderArray, [])
+    expect(retVal).toEqual("1 + 2 == 3 AND 1 == value")
 })
