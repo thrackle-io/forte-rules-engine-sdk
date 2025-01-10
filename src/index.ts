@@ -14,6 +14,8 @@ export {
     cleanInstructionSet
 } from './modules/Parser';
 
+import { config } from '../config';
+
 export { createNewRule, getRulesEngineContract } from './modules/ContractInteraction';
 
 export const VERSION = '0.1.0';

@@ -3,28 +3,21 @@ import {
     Address,
     GetContractReturnType,
     toFunctionSelector,
-    PublicClient,
-    WalletClient,
     BaseError,
     ContractFunctionRevertedError,
     encodeFunctionData,
-    PrivateKeyAccount,
-    stringToHex
+    PrivateKeyAccount
 } from "viem";
 
 import { parseSyntax, TrackerDefinition, buildForeignCallList, buildForeignCallListRaw, 
     buildForeignCallArgumentMapping, parseFunctionArguments, cleanInstructionSet } from '../index';
 
-import { privateKeyToAccount } from 'viem/accounts';
-
 import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
 import RulesDiamondArtifact from "../abis/RulesEngineDiamond.json";
 
-const account = privateKeyToAccount(
-  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", // TODO: This is a foundry private key, replace with being read from .env/config
-);
-
 const RulesEngineABI = RulesEngineRunLogicArtifact.abi
+
+import { config, account } from "../../config";
 
 type RulesEngineContract = GetContractReturnType<typeof RulesEngineABI>;
 
@@ -33,18 +26,20 @@ type FCNameToID = {
     name: string
 }
 
-export const getRulesEngineContract = (address: Address, client: WalletClient & PublicClient): RulesEngineContract => getContract({
+const client = config.getClient(config.chains[0])
+
+export const getRulesEngineContract = (address: Address): RulesEngineContract => getContract({
   address,
   abi: RulesEngineABI,
   client
 });
 
 export const createBlankPolicy = async (
-    client: WalletClient & PublicClient, 
     contractAddressForPolicy: Address, 
     rulesEngineContract: RulesEngineContract): Promise<{calls: any[], result: any}> => {
 
     let calls: any[] = []
+
 
     calls.push(
         encodeFunctionData({
@@ -73,9 +68,9 @@ export const createBlankPolicy = async (
 }
 
 export const updatePolicy = async (
-    client: WalletClient & PublicClient, 
     rulesEngineContract: RulesEngineContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
         try {
+
             const updatePolicy = await client.simulateContract({
                 address: rulesEngineContract.address,
                 abi: rulesEngineContract.abi,
@@ -98,12 +93,12 @@ export const updatePolicy = async (
     }
 
 export const executeBatch = async (
-    client: WalletClient & PublicClient,
     rulesEngineContract: RulesEngineContract,
     account: PrivateKeyAccount,
     calls: any[]
 ) => {
     try {
+
         const {request} = await client.simulateContract({
             address: rulesEngineContract.address,
             abi: RulesDiamondArtifact.abi,
@@ -127,7 +122,7 @@ export const executeBatch = async (
 
 }
 
-export const addNewRuleToBatch = async (client: WalletClient & PublicClient, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
+export const addNewRuleToBatch = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
 
         var effect = buildAnEffectStruct(ruleSyntax)
 
@@ -142,8 +137,9 @@ export const addNewRuleToBatch = async (client: WalletClient & PublicClient, rul
         )
 }
 
-export const createFunctionSignature = async (client: WalletClient & PublicClient, functionSignature: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const createFunctionSignature = async (functionSignature: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
     try {
+
         var argsRaw = parseFunctionArguments(functionSignature)
         var args = []
         for(var arg of argsRaw) {
@@ -176,8 +172,9 @@ export const createFunctionSignature = async (client: WalletClient & PublicClien
     }
 }
 
-export const createNewRule = async (client: WalletClient & PublicClient, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
+export const createNewRule = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
     try {
+
         var effect = buildAnEffectStruct(ruleSyntax)
         var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, effect)
         const addRule = await client.simulateContract({
