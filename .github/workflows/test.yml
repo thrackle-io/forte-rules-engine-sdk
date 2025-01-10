@@ -40,9 +40,8 @@ jobs:
         npm install -g typescript
         npm install
     - name: Run Anvil
-        run: |
-          anvil -p 8545 --load-state diamondDeployedAnvilState.json &
-          sleep 3
-        id: build
+      run: |
+        anvil -p 8545 --load-state diamondDeployedAnvilState.json &
+        sleep 3
     - name: Run Tests
       run: npm run test
