@@ -17,7 +17,7 @@ import RulesDiamondArtifact from "../abis/RulesEngineDiamond.json";
 
 const RulesEngineABI = RulesEngineRunLogicArtifact.abi
 
-import { config, account } from "../../config";
+import { getConfig, account } from "../../config";
 
 type RulesEngineContract = GetContractReturnType<typeof RulesEngineABI>;
 
@@ -26,7 +26,9 @@ type FCNameToID = {
     name: string
 }
 
-const client = config.getClient(config.chains[0])
+const config = getConfig()
+
+const client = config.getClient({chain: config.chains[0]})
 
 export const getRulesEngineContract = (address: Address): RulesEngineContract => getContract({
   address,

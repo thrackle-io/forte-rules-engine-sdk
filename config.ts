@@ -1,4 +1,4 @@
-import { createConfig } from '@wagmi/core'
+import { createConfig, Config } from '@wagmi/core'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from '@wagmi/core/chains'
 import { http, walletActions, publicActions, createTestClient, PrivateKeyAccount } from 'viem'
@@ -8,7 +8,7 @@ export const account: PrivateKeyAccount = privateKeyToAccount(foundryPrivateKey)
 
 export const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
-export const config = createConfig({
+let _config: Config = createConfig({
     chains: [foundry],
     client({ chain }) { 
       return createTestClient(
@@ -18,5 +18,13 @@ export const config = createConfig({
         }
       ).extend(walletActions).extend(publicActions)
     }, 
-  })
+})
+
+export const setupConfig = (config: Config) => {
+    _config = config
+}
+
+export const getConfig = (): Config => {
+    return _config
+}
 
