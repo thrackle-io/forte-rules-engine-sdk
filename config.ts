@@ -1,4 +1,5 @@
-import { createConfig, Config } from '@wagmi/core'
+import { createConfig, Config, connect } from '@wagmi/core'
+import { mock } from '@wagmi/connectors'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from '@wagmi/core/chains'
 import { http, walletActions, publicActions, createTestClient, PrivateKeyAccount } from 'viem'
@@ -12,13 +13,23 @@ let _config: Config = createConfig({
     chains: [foundry],
     client({ chain }) { 
       return createTestClient(
-        { chain,
+        { 
+          chain,
           transport: http('http://localhost:8545'),
-          mode: 'anvil'
+          mode: 'anvil',
+          account
         }
       ).extend(walletActions).extend(publicActions)
     }, 
+    connectors: [
+        mock({
+            accounts: [
+                '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+            ]
+        })
+    ]
 })
+
 
 export const setupConfig = (config: Config) => {
     _config = config
@@ -26,5 +37,16 @@ export const setupConfig = (config: Config) => {
 
 export const getConfig = (): Config => {
     return _config
+}
+
+export const connectConfig = async (config: Config, connectorIndex: number) => {
+    try {
+        const result = await connect(config, {
+          connector: config.connectors[connectorIndex],
+        })
+        console.log(result)
+    } catch (error) {
+        console.error(error)
+    }
 }
 
