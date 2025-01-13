@@ -1,23 +1,18 @@
-
-import { createTestClient, http, walletActions, publicActions, testActions, Address, decodeFunctionResult, getAddress } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import { foundry } from 'viem/chains'
+import { readContract } from "@wagmi/core"
+import { getAddress } from 'viem'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import { createBlankPolicy, executeBatch, createNewRule, addNewRuleToBatch, getRulesEngineContract } from "../src/modules/ContractInteraction";
+
+import { getConfig, account, DiamondAddress, connectConfig } from '../config'
+
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
-const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
 const rulesEngineAbi = RulesEngineRunLogicJson.abi
-const client = createTestClient({
-    chain: foundry,
-    mode: 'anvil',
-    transport: http('http://localhost:8545')
-}).extend(walletActions).extend(publicActions)
 
-const account = privateKeyToAccount(
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-  );
+const config = getConfig()
+
+const client = config.getClient({chainID: config.chains[0].id})
 
 
 // Take snapshot
@@ -31,13 +26,14 @@ export const revertToSnapshot = async (snapshotId: any) => {
     await client.revert({ id: snapshotId })
 }
 
-describe('Rules Engine Interactions', () => {
+describe('Rules Engine Interactions', async () => {
     const rulesEngineContract: `0x${string}` = DiamondAddress;
     // Vanity address for now, lets try to eventually deploy a real token contract and use that here instead
     const policyApplicant: `0x${string}` = getAddress('0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef');
     let snapshotId: `0x${string}`;
 
     beforeAll(async () => {
+        await connectConfig(config, 0)
         snapshotId = await takeSnapshot();
     })
 
@@ -46,26 +42,27 @@ describe('Rules Engine Interactions', () => {
     })
 
     test('Can create a blank policy', async () => {
-        const callsAndResult = await createBlankPolicy(client, policyApplicant, getRulesEngineContract(rulesEngineContract, client));
+        const callsAndResult = await createBlankPolicy(policyApplicant, getRulesEngineContract(rulesEngineContract, client));
         expect(callsAndResult.result).toBeGreaterThan(0)
-        const result = await executeBatch(client, getRulesEngineContract(rulesEngineContract, client), account, callsAndResult.calls);
-        const policyId = await client.readContract({
+        const result = await executeBatch( getRulesEngineContract(rulesEngineContract, client), account, callsAndResult.calls);
+        const policyId = await readContract(config, {
             address: rulesEngineContract,
             abi: rulesEngineAbi,
             functionName: "getAppliedPolicyIds",
             args: [policyApplicant]
         })
 
+
         expect(Number(policyId)).toBeGreaterThan(0)
     })
     test('Can create a batch of new rules', async () => {
         var transactions: any[] = []
-        addNewRuleToBatch(client, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract, client), [], [], transactions);
-        addNewRuleToBatch(client, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [], transactions);
-        const result = await executeBatch(client, getRulesEngineContract(rulesEngineContract, client), account, await transactions);
+        addNewRuleToBatch("3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [], [], transactions);
+        addNewRuleToBatch("3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [], transactions);
+        const result = await executeBatch(getRulesEngineContract(rulesEngineContract), account, await transactions);
     })
     test('Can create a new rule', async () => {
-        var ruleId = await createNewRule(client, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [])
+        var ruleId = await createNewRule("3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [])
         expect(ruleId).toBeGreaterThan(0)
     })
 })
