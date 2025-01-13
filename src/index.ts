@@ -16,6 +16,11 @@ export {
 
 export { getConfig, connectConfig, account, DiamondAddress } from '../config'
 
-export { createNewRule, getRulesEngineContract } from './modules/ContractInteraction';
+export { createNewRule, 
+    getRulesEngineContract, 
+    createForeignCall, 
+    getForeignCall, 
+    getAllForeignCalls 
+} from './modules/ContractInteraction';
 
 export const VERSION = '0.1.0';

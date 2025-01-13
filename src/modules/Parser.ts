@@ -22,7 +22,8 @@ type ForeignCallDefinition = {
 
     name: string;
     address: Address;
-    signature: ByteArray;
+    signature: string;
+    returnType: number;
     parameterTypes: number[];
     policyId: number;
 }
@@ -111,7 +112,7 @@ export function parseForeignCallDefinition(syntax: string) {
         throw new Error("Incorrect Foreign Call Syntax")
     }
     var address: Address = getAddress(initialSplit[1].trim())
-    var signature = toBytes(toFunctionSelector(initialSplit[2].trim()))
+    var signature = initialSplit[2].trim()
     var returnType = 4 // default to void
     if(!PT.some(parameter => parameter.name === initialSplit[3].trim())) {
         throw new Error("Unsupported return type")
