@@ -1,5 +1,5 @@
 import { readContract } from "@wagmi/core"
-import { getAddress } from 'viem'
+import { getAddress, toHex } from 'viem'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import { createBlankPolicy, 
@@ -9,8 +9,12 @@ import { createBlankPolicy,
     addNewRuleToBatch, 
     getRulesEngineContract, 
     getForeignCall,
-    getAllForeignCalls 
+    getAllForeignCalls,
+    createTracker,
+    getTracker,
+    getAllTrackers 
 } from "../src/modules/ContractInteraction";
+
 
 import { getConfig, account, DiamondAddress, connectConfig } from '../config'
 
@@ -73,6 +77,7 @@ describe('Rules Engine Interactions', async () => {
         var ruleId = await createNewRule("3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [])
         expect(ruleId).toBeGreaterThan(0)
     })
+
     test('Can create a new foreign call', async() => {
         var fcSyntax = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 3"
         var fcId = await createForeignCall(fcSyntax, getRulesEngineContract(rulesEngineContract))
@@ -84,5 +89,15 @@ describe('Rules Engine Interactions', async () => {
         expect(fcIdTwo).toBeGreaterThan(0)
         var fcAllRetrieve = await getAllForeignCalls(3, getRulesEngineContract(rulesEngineContract))
         expect(fcAllRetrieve?.foreignCalls.length).toBeGreaterThanOrEqual(3)
+    })
+    test('Can create a new tracker', async() => {
+        var trSyntax = "Simple String Tracker --> uint256 --> 4 --> 3";
+        var trId = await createTracker(trSyntax, getRulesEngineContract(rulesEngineContract))
+        trId = await createTracker(trSyntax, getRulesEngineContract(rulesEngineContract))
+        expect(trId).toBeGreaterThan(0)
+        var trRetrieve = await getTracker(3, trId, getRulesEngineContract(rulesEngineContract))
+        expect(trRetrieve?.trackerValue).toEqual("0x40")
+        var trAllRetrieve = await getAllTrackers(3, getRulesEngineContract(rulesEngineContract))
+        expect(trAllRetrieve?.trackers.length).toBeGreaterThanOrEqual(2)
     })
 })

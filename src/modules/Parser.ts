@@ -1,4 +1,4 @@
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex } from 'viem';
 
 type Tuple = {
     i: string;
@@ -59,7 +59,9 @@ export type stringReplacement = {
 
 export type TrackerDefinition = {
     name: string
-    rawType: string
+    type: number
+    defaultValue: string
+    policyId: number
 }
 
 type RawData = {
@@ -86,15 +88,24 @@ export function parseTrackerSyntax(syntax: string) {
     if(!supportedTrackerTypes.includes(trackerType)) {
         throw new Error("Unsupported type")
     }
-    var trackerDefaultValue: any
-    if(trackerType == "uint256" || trackerType == "address") {
+    var trackerDefaultValue: string
+    if(trackerType == "uint256") {
         if(!isNaN(Number(initialSplit[2]))) {
-            trackerDefaultValue = Number(initialSplit[2])
+            trackerDefaultValue = toHex(Number(initialSplit[2]))
         } else {
             throw new Error("Default Value doesn't match type")
         }
+    } else if(trackerType == "address") {
+        var address: Address = getAddress(initialSplit[2].trim())
+        trackerDefaultValue = toHex(address)
     } else {
-        trackerDefaultValue = initialSplit[2].trim()
+        trackerDefaultValue = toHex(initialSplit[2].trim())
+    }
+    var trackerTypeEnum = 0
+    for(var parameterType of PT) {
+        if(parameterType.name == trackerType) {
+            trackerTypeEnum = parameterType.enumeration
+        }
     }
 
     var trackerPolicyId = 0
@@ -104,7 +115,7 @@ export function parseTrackerSyntax(syntax: string) {
         throw new Error("policy Id must be an integer")
     }
 
-    return {name: initialSplit[0].trim(), type: trackerType, defaultValue: trackerDefaultValue, policyId: trackerPolicyId}
+    return {name: initialSplit[0].trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue, policyId: trackerPolicyId}
 }
 
 export function parseForeignCallDefinition(syntax: string) {
