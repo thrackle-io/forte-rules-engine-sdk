@@ -221,8 +221,8 @@ export const createForeignCall = async(fcSyntax: string, rulesEngineContract: Ru
         let foreignCallResult = addFC.result as ForeignCallCreationReturn
         return foreignCallResult.foreignCallIndex;
     } catch (error) {
-    console.error(error);
-    return -1;
+        console.error(error);
+        return -1;
     }
 }
 
@@ -244,7 +244,7 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
         let foreignCallResult = addFC.result as ForeignCallCreationReturn
         return foreignCallResult;
     } catch (error) {
-    console.error(error);
+        console.error(error);
         return null;
     }
 }
@@ -266,7 +266,7 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
         let foreignCallResult = addFC.result as ForeignCallSet
         return foreignCallResult;
     } catch (error) {
-    console.error(error);
+        console.error(error);
         return null;
     }
 

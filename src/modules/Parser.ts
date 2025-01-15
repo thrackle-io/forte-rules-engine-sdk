@@ -22,6 +22,7 @@ type ForeignCallDefinition = {
 
     name: string;
     address: Address;
+    // TODO: Eventually look to constrain this to a bytes4 (will require changes on the Aquifi Rules side as well)
     signature: string;
     returnType: number;
     parameterTypes: number[];
