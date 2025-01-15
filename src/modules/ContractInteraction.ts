@@ -273,7 +273,6 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
             args: [ policyId, foreignCallId ],
         });
         await writeContract(config, {
-
             ...addFC.request,
             account
         });
@@ -297,7 +296,6 @@ export const getTracker = async(policyId: number, trackerId: number, rulesEngine
     
 
         await writeContract(config, {
-
             ...retrieveTR.request,
             account
         });
