@@ -2,7 +2,15 @@ import { readContract } from "@wagmi/core"
 import { getAddress } from 'viem'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
-import { createBlankPolicy, executeBatch, createNewRule, addNewRuleToBatch, getRulesEngineContract } from "../src/modules/ContractInteraction";
+import { createBlankPolicy, 
+    executeBatch, 
+    createNewRule, 
+    createForeignCall, 
+    addNewRuleToBatch, 
+    getRulesEngineContract, 
+    getForeignCall,
+    getAllForeignCalls 
+} from "../src/modules/ContractInteraction";
 
 import { getConfig, account, DiamondAddress, connectConfig } from '../config'
 
@@ -64,5 +72,17 @@ describe('Rules Engine Interactions', async () => {
     test('Can create a new rule', async () => {
         var ruleId = await createNewRule("3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [])
         expect(ruleId).toBeGreaterThan(0)
+    })
+    test('Can create a new foreign call', async() => {
+        var fcSyntax = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 3"
+        var fcId = await createForeignCall(fcSyntax, getRulesEngineContract(rulesEngineContract))
+        fcId = await createForeignCall(fcSyntax, getRulesEngineContract(rulesEngineContract))
+        expect(fcId).toBeGreaterThan(0)
+        var fcRetrieve = await getForeignCall(3, fcId, getRulesEngineContract(rulesEngineContract))
+        expect(fcRetrieve?.foreignCallIndex).toEqual(fcId)
+        var fcIdTwo = await createForeignCall(fcSyntax, getRulesEngineContract(rulesEngineContract))
+        expect(fcIdTwo).toBeGreaterThan(0)
+        var fcAllRetrieve = await getAllForeignCalls(3, getRulesEngineContract(rulesEngineContract))
+        expect(fcAllRetrieve?.foreignCalls.length).toBeGreaterThanOrEqual(3)
     })
 })

@@ -301,7 +301,7 @@ var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --
 var retVal = parseForeignCallDefinition(str)
 expect(retVal.name).toEqual("Simple Foreign Call")
 expect(retVal.address).toEqual(getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"))
-expect(retVal.signature).toEqual(toBytes("0x324eef7a"))
+expect(retVal.signature).toEqual("testSig(address,string,uint256)")
 expect(retVal.returnType).toEqual(2)
 expect(retVal.parameterTypes).toEqual([0,1,2])
 expect(retVal.policyId).toEqual(3)

@@ -24,7 +24,8 @@ import {
     parseFunctionArguments, 
     cleanInstructionSet,
     getConfig,
-    account
+    account,
+    parseForeignCallDefinition
 } from '../index';
 
 import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
@@ -37,6 +38,20 @@ type RulesEngineContract = GetContractReturnType<typeof RulesEngineABI>;
 type FCNameToID = {
     id: number
     name: string
+}
+
+type ForeignCallCreationReturn = {
+
+    foreignCallAddress: string;
+    foreignCallIndex: number;
+    signature: string;
+    returnType: number;
+    parameterTypes: number[];
+}
+
+type ForeignCallSet = {
+    set: boolean,
+    foreignCalls: ForeignCallCreationReturn[]
 }
 
 const config = getConfig()
@@ -186,6 +201,77 @@ export const createFunctionSignature = async (functionSignature: string, rulesEn
         return -1;
     }
 }
+
+export const createForeignCall = async(fcSyntax: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+    try {
+        var foreignCall = parseForeignCallDefinition(fcSyntax)
+        const addFC = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "updateForeignCall",
+            args: [ foreignCall.policyId, foreignCall.address, foreignCall.signature, foreignCall.returnType, foreignCall.parameterTypes ],
+        });
+    
+
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+
+        let foreignCallResult = addFC.result as ForeignCallCreationReturn
+        return foreignCallResult.foreignCallIndex;
+    } catch (error) {
+        console.error(error);
+        return -1;
+    }
+}
+
+export const getForeignCall = async(policyId: number, foreignCallId: number, rulesEngineContract: RulesEngineContract): Promise<ForeignCallCreationReturn | null> => {
+    try {
+        const addFC = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "getForeignCall",
+            args: [ policyId, foreignCallId ],
+        });
+    
+
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+
+        let foreignCallResult = addFC.result as ForeignCallCreationReturn
+        return foreignCallResult;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const getAllForeignCalls = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<ForeignCallSet | null> => {
+    try {
+        const addFC = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "getForeignCall",
+            args: [ policyId ],
+        });
+    
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+
+        let foreignCallResult = addFC.result as ForeignCallSet
+        return foreignCallResult;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+
+}
+
 
 export const createNewRule = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
     try {
