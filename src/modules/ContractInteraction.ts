@@ -6,7 +6,8 @@ import {
     BaseError,
     ContractFunctionRevertedError,
     encodeFunctionData,
-    PrivateKeyAccount
+    PrivateKeyAccount,
+    ByteArray
 } from "viem";
 
 import {
@@ -25,7 +26,9 @@ import {
     cleanInstructionSet,
     getConfig,
     account,
-    parseForeignCallDefinition
+    parseForeignCallDefinition,
+    parseTrackerSyntax
+
 } from '../index';
 
 import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
@@ -52,6 +55,16 @@ type ForeignCallCreationReturn = {
 type ForeignCallSet = {
     set: boolean,
     foreignCalls: ForeignCallCreationReturn[]
+}
+
+type TrackerValuesSet = {
+    set: boolean;
+    trackers: TrackerTransactionType[];
+}
+
+type TrackerTransactionType = {
+    pType: number,
+    trackerValue: string
 }
 
 const config = getConfig()
@@ -226,6 +239,31 @@ export const createForeignCall = async(fcSyntax: string, rulesEngineContract: Ru
     }
 }
 
+export const createTracker = async(trSyntax: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+    try {
+        var tracker = parseTrackerSyntax(trSyntax)
+        var transactionTracker = {pType: tracker.type, trackerValue: tracker.defaultValue } as TrackerTransactionType
+        const addTR = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "addTracker",
+            args: [ tracker.policyId,  transactionTracker ],
+        });
+
+        await writeContract(config, {
+            ...addTR.request,
+            account
+        });
+
+        let trackerResult = addTR.result 
+        return trackerResult;
+    } catch (error) {
+        console.error(error);
+        return -1;
+    }
+}
+
+
 export const getForeignCall = async(policyId: number, foreignCallId: number, rulesEngineContract: RulesEngineContract): Promise<ForeignCallCreationReturn | null> => {
     try {
         const addFC = await simulateContract(config, {
@@ -234,8 +272,6 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
             functionName: "getForeignCall",
             args: [ policyId, foreignCallId ],
         });
-    
-
         await writeContract(config, {
             ...addFC.request,
             account
@@ -248,6 +284,30 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
         return null;
     }
 }
+
+export const getTracker = async(policyId: number, trackerId: number, rulesEngineContract: RulesEngineContract): Promise<TrackerTransactionType | null> => {
+    try {
+        const retrieveTR = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "getTracker",
+            args: [ policyId, trackerId ],
+        });
+    
+
+        await writeContract(config, {
+            ...retrieveTR.request,
+            account
+        });
+
+        let trackerResult = retrieveTR.result as TrackerTransactionType
+        return trackerResult;
+    } catch (error) {
+    console.error(error);
+        return null;
+    }
+}
+
 
 export const getAllForeignCalls = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<ForeignCallSet | null> => {
     try {
@@ -272,6 +332,30 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
 
 }
 
+
+
+export const getAllTrackers = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<TrackerValuesSet | null> => {
+    try {
+        const retrieveTR = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "getTracker",
+            args: [ policyId],
+        });
+    
+
+        await writeContract(config, {
+            ...retrieveTR.request,
+            account
+        });
+
+        let trackerResult = retrieveTR.result as TrackerValuesSet
+        return trackerResult;
+    } catch (error) {
+    console.error(error);
+        return null;
+    }
+}
 
 export const createNewRule = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
     try {

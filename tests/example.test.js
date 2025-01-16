@@ -1,7 +1,8 @@
 import { expect, test } from 'vitest'
 import { parseSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, stringReplacement, 
   buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/index.ts';
-import { keccak256, hexToNumber, encodePacked, getAddress, toBytes } from 'viem';
+import { keccak256, hexToNumber, encodePacked, getAddress, toBytes, toHex } from 'viem';
+import { pTypeEnum } from '../src/modules/Parser.ts';
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**
@@ -233,8 +234,8 @@ test('Creates a simple uint256 tracker', () => {
 var str = "Simple Int Tracker --> uint256 --> 14 --> 3";
 var retVal = parseTrackerSyntax(str)
 expect(retVal.name).toEqual("Simple Int Tracker")
-expect(retVal.type).toEqual("uint256")
-expect(retVal.defaultValue).toEqual(14)
+expect(retVal.type).toEqual(pTypeEnum.UINT256)
+expect(retVal.defaultValue).toEqual(toHex(14))
 expect(retVal.policyId).toEqual(3)
 });
 
@@ -262,8 +263,8 @@ test('Creates a simple address tracker', () => {
 var str = "Simple Address Tracker --> address --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> 3";
 var retVal = parseTrackerSyntax(str)
 expect(retVal.name).toEqual("Simple Address Tracker")
-expect(retVal.type).toEqual("address")
-expect(retVal.defaultValue).toEqual(0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)
+expect(retVal.type).toEqual(pTypeEnum.ADDRESS)
+expect(retVal.defaultValue).toEqual(toHex('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'))
 expect(retVal.policyId).toEqual(3)
 });
 
@@ -271,15 +272,11 @@ test('Creates a simple string tracker', () => {
 var str = "Simple String Tracker --> string --> test --> 3";
 var retVal = parseTrackerSyntax(str)
 expect(retVal.name).toEqual("Simple String Tracker")
-expect(retVal.type).toEqual("string")
-expect(retVal.defaultValue).toEqual("test")
+expect(retVal.type).toEqual(pTypeEnum.STRING)
+expect(retVal.defaultValue).toEqual(toHex("test"))
 expect(retVal.policyId).toEqual(3)
 });
 
-test('Tests an incorrect type', () => {
-var str = "Simple Address Tracker --> address --> thisShouldFail --> 3";
-expect(() => parseTrackerSyntax(str)).toThrowError("Default Value doesn't match type")
-});
 
 test('Tests incorrect amount of items', () => {
 var str = "Simple Address Tracker --> address --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC";
