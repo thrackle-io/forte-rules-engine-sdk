@@ -73,8 +73,17 @@ type RawData = {
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
 const operandArray: string[] = ['PLH', 'N']
 const supportedTrackerTypes: string[] = ['uint256', 'string', 'address']
-const PT = [ {name: 'address', enumeration: 0}, {name: 'string', enumeration: 1}, {name: 'uint256', enumeration: 2}, {name: 'bool', enumeration: 3}, 
-    {name: 'void', enumeration: 4}, {name: 'bytes', enumeration: 5} ]
+export enum pTypeEnum {
+    ADDRESS = 0,
+    STRING = 1,
+    UINT256 = 2,
+    BOOL = 3,
+    VOID = 4,
+    BYTES = 5
+}
+const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 'string', enumeration: pTypeEnum.STRING}, 
+    {name: 'uint256', enumeration: pTypeEnum.UINT256}, {name: 'bool', enumeration: pTypeEnum.BOOL}, 
+    {name: 'void', enumeration: pTypeEnum.VOID}, {name: 'bytes', enumeration: pTypeEnum.BYTES} ]
 const LC = [ {name: 'N', enumeration: 0}]
 const FC_PREFIX: string = 'FC:'
 
@@ -125,7 +134,7 @@ export function parseForeignCallDefinition(syntax: string) {
     }
     var address: Address = getAddress(initialSplit[1].trim())
     var signature = initialSplit[2].trim()
-    var returnType = 4 // default to void
+    var returnType = pTypeEnum.VOID // default to void
     if(!PT.some(parameter => parameter.name === initialSplit[3].trim())) {
         throw new Error("Unsupported return type")
     }
