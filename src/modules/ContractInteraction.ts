@@ -360,8 +360,8 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
 export const createNewRule = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
     try {
 
-        var effect = buildAnEffectStruct(ruleSyntax)
-        var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, effect)
+        var effects = buildAnEffectStruct(ruleSyntax)
+        var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, effects)
         const addRule = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
@@ -384,17 +384,32 @@ export const createNewRule = async (ruleSyntax: string, rulesEngineContract: Rul
 
 export function buildAnEffectStruct(ruleSyntax: string) {
     var output = parseSyntax(ruleSyntax)
+    var pEffects = []
+    var nEffects = []
+    for(var pEffect of output.positiveEffects) {
+        cleanInstructionSet(pEffect.instructionSet)
 
-    cleanInstructionSet(output.effect.instructionSet)
+        const effect = {
+            valid: true,
+            effectType: pEffect.type,
+            text: pEffect.text,
+            instructionSet: pEffect.instructionSet
+        } as const
+        pEffects.push(effect)
+    }
+    for(var nEffect of output.negativeEffects) {
+        cleanInstructionSet(nEffect.instructionSet)
 
-    const effect = {
-        valid: true,
-        effectType: output.effect.type,
-        text: output.effect.text,
-        instructionSet: output.effect.instructionSet
-    } as const
+        const effect = {
+            valid: true,
+            effectType: nEffect.type,
+            text: nEffect.text,
+            instructionSet: nEffect.instructionSet
+        } as const
+        nEffects.push(effect)
+    }
 
-    return effect
+    return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
 
 export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], effect: any) {
@@ -436,11 +451,11 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         instructionSet: output.instructionSet,
         rawData: rawData,          
         placeHolders: output.placeHolders,
-        effectPlaceHolders: output.effect.placeholders,
+        effectPlaceHolders: output.effectPlaceHolders,
         fcArgumentMappingsConditions: fcmapping,
         fcArgumentMappingsEffects: fcEffectMapping,
-        posEffects: [effect],
-        negEffects: []
+        posEffects: effect.positiveEffects,
+        negEffects: effect.negativeEffects
     } as const
     return rule
 }

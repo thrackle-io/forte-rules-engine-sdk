@@ -688,41 +688,92 @@ test('Tests building foreign call argument mapping', () => {
 test('Evaluate a simple syntax string for a revert effect', () => {
   var str = "(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert --> addValue(uint256 value) --> uint256 value"
   var retVal = parseSyntax(str)
-  expect(retVal.effect.type).toBe(EffectType.REVERT);
-  expect(retVal.effect.value).toBeUndefined();
-  expect(retVal.effect.instructionSet).toEqual([]);
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.positiveEffects[0].value).toBeUndefined();
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 })
 
 test('Evaluate a simple syntax string for a revert effect with message', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert("Didn't pass the sniff test") --> addValue(uint256 value) --> uint256 value`
   var retVal = parseSyntax(str)
-  expect(retVal.effect.type).toBe(EffectType.REVERT);
-  expect(retVal.effect.text).toEqual("Didn't pass the sniff test");
-  expect(retVal.effect.instructionSet).toEqual([]);
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.positiveEffects[0].text).toEqual("Didn't pass the sniff test");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 })
 
 test('Evaluate a simple syntax string for a event effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit SomethingWentWrong("Something wrong") --> addValue(uint256 value) --> uint256 value`
   var retVal = parseSyntax(str)
-  expect(retVal.effect.type).toBe(EffectType.EVENT);
-  expect(retVal.effect.text).toEqual("Something wrong");
-  expect(retVal.effect.instructionSet).toEqual([]);
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].text).toEqual("Something wrong");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 })
 
 test('Evaluate a simple syntax string for a event effect without text', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Goodvibes() --> addValue(uint256 value) --> uint256 value`
   var retVal = parseSyntax(str)
-  expect(retVal.effect.type).toBe(EffectType.EVENT);
-  expect(retVal.effect.text).toEqual("");
-  expect(retVal.effect.instructionSet).toEqual([]);
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string that contains a positive and negative effect', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes() <-> neg: revert --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
+  expect(retVal.negativeEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.negativeEffects[0].text).toEqual("");
+  expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string that contains multiple positive effects and a negative effect', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes(), emit OtherGoodvibes() <-> neg: revert --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
+  expect(retVal.positiveEffects[1].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[1].text).toEqual("");
+  expect(retVal.positiveEffects[1].instructionSet).toEqual([]);
+  expect(retVal.negativeEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.negativeEffects[0].text).toEqual("");
+  expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
+})
+
+test('Evaluate a simple syntax string that contains multiple positive and negative effects', () => {
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes(), emit OtherGoodvibes() <-> neg: emit badVibes(), FC:updateOracle(value) AND FC:alert(value) --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
+  expect(retVal.positiveEffects[1].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[1].text).toEqual("");
+  expect(retVal.positiveEffects[1].instructionSet).toEqual([]);
+  expect(retVal.negativeEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.negativeEffects[0].text).toEqual("");
+  expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
+  expect(retVal.negativeEffects[1].type).toBe(EffectType.EXPRESSION)
+  expect(retVal.negativeEffects[1].text).toEqual("");
+  expect(retVal.negativeEffects[1].instructionSet).toEqual([
+    'PLH', 0,
+    'PLH', 1,
+    'AND', 0, 1,
+  ])
+  expect(retVal.effectPlaceHolders.length).toEqual(2)
+  console.log("PLACEHOLDERS: ")
+  console.log(retVal.effectPlaceHolders)
+  expect(retVal.effectPlaceHolders[0].foreignCall).toEqual(true)
+  expect(retVal.effectPlaceHolders[1].pType).toEqual(0)
 })
 
 test('Evaluate a simple syntax string for an event effect with an instruction set', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> FC:updateOracle(value) AND FC:alert(value)  --> addValue(uint256 value) --> uint256 value`
   var retVal = parseSyntax(str)
-  expect(retVal.effect.type).toBe(EffectType.EXPRESSION);
-  expect(retVal.effect.text).toEqual("");
-  expect(retVal.effect.instructionSet).toEqual([
+  expect(retVal.positiveEffects[0].type).toBe(EffectType.EXPRESSION);
+  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].instructionSet).toEqual([
     'PLH', 0,
     'PLH', 1,
     'AND', 0, 1,

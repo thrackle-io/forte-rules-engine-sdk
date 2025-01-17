@@ -507,14 +507,39 @@ export function parseSyntax(syntax: string) {
 
     var effectSplit = initialSplit[1]
 
+    var foundMultiEffect = false
+    var positiveEffects: string[] = []
+    var negativeEffects: string[] = []
+
+    foundMultiEffect = parseEffectString(effectSplit, positiveEffects, negativeEffects)
+    if(!foundMultiEffect) {
+        positiveEffects.push(effectSplit)
+    }
 
     var names = parseFunctionArguments(functionSignature)
     var effectNames = Array.from(names)
     condition = parseForeignCalls(condition, names.length, names)
-    effectSplit = parseForeignCalls(effectSplit, effectNames.length, effectNames)
+    for(var effectP in positiveEffects) {
+        positiveEffects[effectP] = parseForeignCalls(positiveEffects[effectP], effectNames.length, effectNames)
+    }
+    for(var effectN in negativeEffects) {
+        negativeEffects[effectN] = parseForeignCalls(negativeEffects[effectN], effectNames.length, effectNames)
+    }
+
     parseTrackers(condition + effectSplit, names.length, names)
-    
-    let effect = parseEffect(effectSplit, effectNames)
+    var effectPlaceHolders: PlaceholderStruct[] = []
+    var positiveEffectsFinal = []
+    var negativeEffectsFinal = []
+    for(var effectP of positiveEffects) {
+        let effect = parseEffect(effectP, effectNames, effectPlaceHolders)
+        positiveEffectsFinal.push(effect)
+
+    }
+
+    for(var effectN of negativeEffects) {
+        let effect = parseEffect(effectN, effectNames, effectPlaceHolders)
+        negativeEffectsFinal.push(effect)
+    }
     var retVal = interpretToInstructionSet(condition, names)
 
     var excludeArray = []
@@ -527,7 +552,43 @@ export function parseSyntax(syntax: string) {
     var rawData: any[] = []
 
     var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
-    return {instructionSet: retVal.instructionSet, rawData: raw, effect: effect, placeHolders: retVal.placeHolders}
+    return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
+         placeHolders: retVal.placeHolders, effectPlaceHolders: effectPlaceHolders}
+}
+
+function parseEffectString(effectSplit: string, positiveEffects: string[], negativeEffects: string[]) {
+    // condition --> pos: revert <-> neg: emit, emit --> function signature
+    var foundMultiEffect = false
+
+    if(effectSplit.includes("pos:")) {
+        foundMultiEffect = true
+        if(effectSplit.includes("neg:")) {
+            // Positive Effects
+            parseIndividualEffects("pos:", effectSplit.split('<->')[0], positiveEffects)
+            // Negative Effects
+            parseIndividualEffects("neg:", effectSplit.split('<->')[1], negativeEffects)
+        } else {
+            // Positive Effects
+            parseIndividualEffects("pos:", effectSplit, positiveEffects)
+        }
+    } else if(effectSplit.includes("neg:")) {
+        foundMultiEffect = true
+        // Negative Effects
+        parseIndividualEffects("neg:", effectSplit, negativeEffects)
+    }
+    return foundMultiEffect
+}
+
+function parseIndividualEffects(splitString: string, effectSplit: string, effects: string[]) {
+    effectSplit = effectSplit.replace(splitString, "")
+    if(effectSplit.includes(",")) {
+        var innerEffectsSplit = effectSplit.split(',')
+        for(var strPos of innerEffectsSplit) {
+            effects.push(strPos.trim())
+        }
+    } else {
+        effects.push(effectSplit)
+    }
 }
 
 function interpretToInstructionSet(syntax: string, names: any[]) {
@@ -553,7 +614,6 @@ function interpretToInstructionSet(syntax: string, names: any[]) {
             removeArrayWrappers(array)
             intify(array)
         }
-    
         var instructionSet: any[] = []
         var mem: any[] = []
         var placeHolders: PlaceholderStruct[] = []
@@ -561,15 +621,13 @@ function interpretToInstructionSet(syntax: string, names: any[]) {
         // Convert the AST into the Instruction Set Syntax 
         plhIndex = 0
         convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders)
-        console.log(placeHolders)
         return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
-function parseEffect(effect: string, names: any[]) {
+function parseEffect(effect: string, names: any[], placeholders: PlaceholderStruct[]) {
     var effectType = EffectType.REVERT
     var effectText = ""
     var effectInstructionSet: any[] = []
-    var placeholders: PlaceholderStruct[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
     const emitTextPattern = /emit\s+\w+\("([^"]*)"\)/;
 
@@ -585,10 +643,12 @@ function parseEffect(effect: string, names: any[]) {
         effectType = EffectType.EXPRESSION
         var effectStruct = interpretToInstructionSet(effect, names)
         effectInstructionSet = effectStruct.instructionSet
-        placeholders = effectStruct.placeHolders
+        for(var placeHolder of effectStruct.placeHolders) {
+            placeholders.push(placeHolder)
+        }
     }
 
-    return {type: effectType, text: effectText, instructionSet: effectInstructionSet, placeholders: placeholders}
+    return {type: effectType, text: effectText, instructionSet: effectInstructionSet}
 }
 
 // Parse the function signature string and build the placeholder data structure
