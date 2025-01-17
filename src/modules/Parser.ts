@@ -564,53 +564,31 @@ function parseEffectString(effectSplit: string, positiveEffects: string[], negat
         foundMultiEffect = true
         if(effectSplit.includes("neg:")) {
             // Positive Effects
-            var innerEffectSplitPos = effectSplit.split('<->')[0]
-            innerEffectSplitPos = innerEffectSplitPos.replace("pos:", "")
-            if(innerEffectSplitPos.includes(",")) {
-                var innerInnerEffectSplitPos = innerEffectSplitPos.split(',')
-                for(var strPos of innerInnerEffectSplitPos) {
-                    positiveEffects.push(strPos.trim())
-                }
-            } else {
-                positiveEffects.push(innerEffectSplitPos)
-            }
+            parseIndividualEffects("pos:", effectSplit.split('<->')[0], positiveEffects)
             // Negative Effects
-            var innerEffectSplitNeg = effectSplit.split('<->')[1]
-            innerEffectSplitNeg = innerEffectSplitNeg.replace("neg:", "")
-            if(innerEffectSplitNeg.includes(",")) {
-                var innerInnerEffectSplitNeg = innerEffectSplitNeg.split(',')
-                for(var strNeg of innerInnerEffectSplitNeg) {
-                    negativeEffects.push(strNeg.trim())
-                }
-            } else {
-                negativeEffects.push(innerEffectSplitNeg)
-            }
+            parseIndividualEffects("neg:", effectSplit.split('<->')[1], negativeEffects)
         } else {
             // Positive Effects
-            effectSplit = effectSplit.replace("pos:", "")
-            if(effectSplit.includes(",")) {
-                var innerInnerEffectSplitPos = effectSplit.split(',')
-                for(var strPos of innerInnerEffectSplitPos) {
-                    positiveEffects.push(strPos.trim())
-                }
-            } else {
-                positiveEffects.push(effectSplit)
-            }
+            parseIndividualEffects("pos:", effectSplit, positiveEffects)
         }
     } else if(effectSplit.includes("neg:")) {
         foundMultiEffect = true
         // Negative Effects
-        effectSplit = effectSplit.replace("neg:", "")
-        if(effectSplit.includes(",")) {
-            var innerInnerEffectSplitNeg = effectSplit.split(',')
-            for(var strNeg of innerInnerEffectSplitNeg) {
-                negativeEffects.push(strNeg.trim())
-            }
-        } else {
-            negativeEffects.push(effectSplit)
-        }
+        parseIndividualEffects("neg:", effectSplit, negativeEffects)
     }
     return foundMultiEffect
+}
+
+function parseIndividualEffects(splitString: string, effectSplit: string, effects: string[]) {
+    effectSplit = effectSplit.replace(splitString, "")
+    if(effectSplit.includes(",")) {
+        var innerEffectsSplit = effectSplit.split(',')
+        for(var strPos of innerEffectsSplit) {
+            effects.push(strPos.trim())
+        }
+    } else {
+        effects.push(effectSplit)
+    }
 }
 
 function interpretToInstructionSet(syntax: string, names: any[]) {
