@@ -231,12 +231,11 @@ expect(retVal.rawData).toEqual(expectedRawDataArray)
 });
 
 test('Creates a simple uint256 tracker', () => {
-var str = "Simple Int Tracker --> uint256 --> 14 --> 3";
+var str = "Simple Int Tracker --> uint256 --> 14";
 var retVal = parseTrackerSyntax(str)
 expect(retVal.name).toEqual("Simple Int Tracker")
 expect(retVal.type).toEqual(pTypeEnum.UINT256)
 expect(retVal.defaultValue).toEqual(toHex(14))
-expect(retVal.policyId).toEqual(3)
 });
 
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
@@ -260,67 +259,59 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
 });
 
 test('Creates a simple address tracker', () => {
-var str = "Simple Address Tracker --> address --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> 3";
+var str = "Simple Address Tracker --> address --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC";
 var retVal = parseTrackerSyntax(str)
 expect(retVal.name).toEqual("Simple Address Tracker")
 expect(retVal.type).toEqual(pTypeEnum.ADDRESS)
 expect(retVal.defaultValue).toEqual(toHex('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'))
-expect(retVal.policyId).toEqual(3)
 });
 
 test('Creates a simple string tracker', () => {
-var str = "Simple String Tracker --> string --> test --> 3";
+var str = "Simple String Tracker --> string --> test";
 var retVal = parseTrackerSyntax(str)
 expect(retVal.name).toEqual("Simple String Tracker")
 expect(retVal.type).toEqual(pTypeEnum.STRING)
 expect(retVal.defaultValue).toEqual(toHex("test"))
-expect(retVal.policyId).toEqual(3)
 });
 
 
 test('Tests incorrect amount of items', () => {
-var str = "Simple Address Tracker --> address --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC";
+var str = "Simple Address Tracker --> address";
 expect(() => parseTrackerSyntax(str)).toThrowError("Incorrect Tracker Definition Syntax")
 });
 
 test('Tests unsupported type', () => {
-var str = "Simple String Tracker --> bool --> test --> 3";
+var str = "Simple String Tracker --> bool --> test";
 expect(() => parseTrackerSyntax(str)).toThrowError("Unsupported type")
 });
 
-test('Tests incorrectly formated Policy Id', () => {
-var str = "Simple String Tracker --> string --> test --> otherTest";
-expect(() => parseTrackerSyntax(str)).toThrowError("policy Id must be an integer")
-});
-
 test('Creates a simple foreign call', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 3";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256";
 var retVal = parseForeignCallDefinition(str)
 expect(retVal.name).toEqual("Simple Foreign Call")
 expect(retVal.address).toEqual(getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"))
 expect(retVal.signature).toEqual("testSig(address,string,uint256)")
 expect(retVal.returnType).toEqual(2)
 expect(retVal.parameterTypes).toEqual([0,1,2])
-expect(retVal.policyId).toEqual(3)
 });
 
 test('Tests incorrect amount of items for Foreign Call', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256";
 expect(() => parseForeignCallDefinition(str)).toThrowError("Incorrect Foreign Call Syntax")
 });
 
 test('Tests incorrect format for address', () => {
-var str = "Simple Foreign Call --> test --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 3";
+var str = "Simple Foreign Call --> test --> testSig(address,string,uint256) --> uint256 --> address, string, uint256";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Address "test" is invalid')
 });
 
 test('Tests unsupported return type', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> notAnInt --> address, string, uint256 --> 3";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> notAnInt --> address, string, uint256";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported return type')
 });
 
 test('Tests unsupported argument type', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, notAnInt, uint256 --> 3";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, notAnInt, uint256";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported argument type')
 });
 

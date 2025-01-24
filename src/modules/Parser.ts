@@ -61,7 +61,6 @@ export type TrackerDefinition = {
     name: string
     type: number
     defaultValue: string
-    policyId: number
 }
 
 type RawData = {
@@ -89,7 +88,7 @@ const FC_PREFIX: string = 'FC:'
 
 export function parseTrackerSyntax(syntax: string) {
     var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 4) {
+    if(initialSplit.length != 3) {
         throw new Error("Incorrect Tracker Definition Syntax")
     }
     let trackerName = initialSplit[0]
@@ -117,19 +116,12 @@ export function parseTrackerSyntax(syntax: string) {
         }
     }
 
-    var trackerPolicyId = 0
-    if(!isNaN(Number(initialSplit[3]))) {
-        trackerPolicyId = Number(initialSplit[3])
-    } else {
-        throw new Error("policy Id must be an integer")
-    }
-
-    return {name: initialSplit[0].trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue, policyId: trackerPolicyId}
+    return {name: initialSplit[0].trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
 }
 
 export function parseForeignCallDefinition(syntax: string) {
     var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 6) {
+    if(initialSplit.length != 5) {
         throw new Error("Incorrect Foreign Call Syntax")
     }
     var address: Address = getAddress(initialSplit[1].trim())
@@ -158,7 +150,7 @@ export function parseForeignCallDefinition(syntax: string) {
     }
 
     return {name: initialSplit[0].trim(), address: address, signature: signature, 
-        returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())} as ForeignCallDefinition
+        returnType: returnType, parameterTypes: parameterTypes} as ForeignCallDefinition
 }
 
 export function buildForeignCallList(condition: string) {

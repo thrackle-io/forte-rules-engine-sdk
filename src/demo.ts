@@ -2,7 +2,7 @@ import { createTestClient, http, walletActions, publicActions, testActions, Addr
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
-import { createBlankPolicy, executeBatch, createNewRule, addNewRuleToBatch, updatePolicy, getRulesEngineContract, createFunctionSignature } from "../src/modules/ContractInteraction";
+import { createBlankPolicyBatch, executeBatch, createNewRule, addNewRuleToBatch, updatePolicy, getRulesEngineContract, createFunctionSignature } from "../src/modules/ContractInteraction";
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
 const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
@@ -20,7 +20,7 @@ const account = privateKeyToAccount(
   async function main() {
     const rulesEngineContract: `0x${string}` = DiamondAddress;
     const policyApplicant: `0x${string}` = getAddress('0xa513E6E4b8f2a923D98304ec87F64353C4D5C853');
-    const callsAndResult = await createBlankPolicy(client, policyApplicant, getRulesEngineContract(rulesEngineContract, client));
+    const callsAndResult = await createBlankPolicyBatch(client, policyApplicant, getRulesEngineContract(rulesEngineContract, client));
     const result = await executeBatch(client, getRulesEngineContract(rulesEngineContract, client), account, callsAndResult.calls);
     const policyId = await client.readContract({
         address: rulesEngineContract,
