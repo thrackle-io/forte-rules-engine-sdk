@@ -28,7 +28,6 @@ import {
     account,
     parseForeignCallDefinition,
     parseTrackerSyntax,
-    parsePolicy
 } from '../index';
 
 import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
@@ -65,6 +64,13 @@ type TrackerValuesSet = {
 type TrackerTransactionType = {
     pType: number,
     trackerValue: string
+}
+
+interface PolicyJSON {
+    Policy: string;
+    ForeignCalls: string[];
+    Trackers: string[];
+    Rules: string[];
 }
 
 const config = getConfig()
@@ -145,16 +151,31 @@ export const createBlankPolicy = async (
 }
 
 export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, contractAddressForPolicy: Address): Promise<number> => {
-    const policyId = await createBlankPolicy(contractAddressForPolicy, rulesEngineContract)
-
-    const policyJSON = parsePolicy(policySyntax)
-    var fcIds = []
-    var trs = []
-    var ruleIds = []
+    var fcIds: FCNameToID[] = []
+    let trackers: TrackerDefinition[] = []
+    let ruleIds = []
     let ruleToFunctionSignature = new Map<string, number[]>();
     let functionSignatures: string[] = []
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
+    let functionSignatureSelectors = []
+
+    // Policy Syntax Description 
+    // -----------------------------------------------------------
+    // {
+    // "Policy": "Policy Name",
+    // ForeignCalls:
+    // ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 3"],
+    // 
+    // Trackers:
+    // ["Simple String Tracker --> string --> test --> 3"],
+    //
+    // Rules:
+    // [""]
+    // }
+    // -----------------------------------------------------------
+    let policyJSON: PolicyJSON = JSON.parse(policySyntax);
+    const policyId = await createBlankPolicy(contractAddressForPolicy, rulesEngineContract)
 
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
@@ -166,7 +187,7 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
         const trId = await createTracker(tracker, rulesEngineContract, policyId)
-        trs.push(trackerStruct)
+        trackers.push(trackerStruct)
     }
 
     for(var rule of policyJSON.Rules) {
@@ -178,7 +199,7 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
             functionSignatureIds.push(fsId)
         }
         
-        const ruleId = await createNewRule(rule, rulesEngineContract, fcIds, trs)
+        const ruleId = await createNewRule(rule, rulesEngineContract, fcIds, trackers)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
             ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -186,17 +207,17 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
             ruleToFunctionSignature.set(functionSignature, [ruleId])
         }
     }
-    var functionSignaturesFinal = []
+    
     for(var fs of functionSignatures) {
         if(ruleToFunctionSignature.has(fs)) {
             rulesDoubleMapping.push(ruleToFunctionSignature.get(fs))
         } else {
             rulesDoubleMapping.push([])
         }
-        functionSignaturesFinal.push(toFunctionSelector(fs))
+        functionSignatureSelectors.push(toFunctionSelector(fs))
     }
 
-    var result = await updatePolicy(rulesEngineContract, policyId, functionSignaturesFinal, functionSignatureIds, rulesDoubleMapping)
+    var result = await updatePolicy(rulesEngineContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
 
     return result
 } 

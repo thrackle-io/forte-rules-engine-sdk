@@ -11,8 +11,7 @@ export {
     buildForeignCallListRaw, 
     parseFunctionArguments,
     reverseParseRule,
-    cleanInstructionSet,
-    parsePolicy
+    cleanInstructionSet
 } from './modules/Parser';
 
 export { getConfig, connectConfig, account, DiamondAddress } from '../config'

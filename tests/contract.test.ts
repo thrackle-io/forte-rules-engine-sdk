@@ -102,20 +102,6 @@ describe('Rules Engine Interactions', async () => {
         expect(trAllRetrieve?.trackers.length).toBeGreaterThanOrEqual(2)
     })
     test('Can create a full policy', async() => {
-            // Policy Syntax Description 
-    // -----------------------------------------------------------
-    // {
-    // "Policy": "Policy Name",
-    // ForeignCalls:
-    // ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 3"],
-    // 
-    // Trackers:
-    // ["Simple String Tracker --> string --> test --> 3"],
-    //
-    // Rules:
-    // [""]
-    // }
-    // -----------------------------------------------------------
         var policyJSON = '\
         {\
         "Policy": "Test Policy", \
