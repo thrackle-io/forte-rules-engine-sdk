@@ -61,7 +61,6 @@ export type TrackerDefinition = {
     name: string
     type: number
     defaultValue: string
-    policyId: number
 }
 
 type RawData = {
@@ -87,9 +86,35 @@ const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 'string',
 const LC = [ {name: 'N', enumeration: 0}]
 const FC_PREFIX: string = 'FC:'
 
+interface PolicyJSON {
+    Policy: string;
+    ForeignCalls: string[];
+    Trackers: string[];
+    Rules: string[];
+}
+
+export function parsePolicy(syntax: string) {
+    // Policy Syntax Description 
+    // -----------------------------------------------------------
+    // {
+    // "Policy": "Policy Name",
+    // ForeignCalls:
+    // ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 3"],
+    // 
+    // Trackers:
+    // ["Simple String Tracker --> string --> test --> 3"],
+    //
+    // Rules:
+    // [""]
+    // }
+    // -----------------------------------------------------------
+    let json: PolicyJSON = JSON.parse(syntax);
+    return json
+}
+
 export function parseTrackerSyntax(syntax: string) {
     var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 4) {
+    if(initialSplit.length != 3) {
         throw new Error("Incorrect Tracker Definition Syntax")
     }
     let trackerName = initialSplit[0]
@@ -117,19 +142,12 @@ export function parseTrackerSyntax(syntax: string) {
         }
     }
 
-    var trackerPolicyId = 0
-    if(!isNaN(Number(initialSplit[3]))) {
-        trackerPolicyId = Number(initialSplit[3])
-    } else {
-        throw new Error("policy Id must be an integer")
-    }
-
-    return {name: initialSplit[0].trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue, policyId: trackerPolicyId}
+    return {name: initialSplit[0].trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
 }
 
 export function parseForeignCallDefinition(syntax: string) {
     var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 6) {
+    if(initialSplit.length != 5) {
         throw new Error("Incorrect Foreign Call Syntax")
     }
     var address: Address = getAddress(initialSplit[1].trim())
@@ -158,7 +176,7 @@ export function parseForeignCallDefinition(syntax: string) {
     }
 
     return {name: initialSplit[0].trim(), address: address, signature: signature, 
-        returnType: returnType, parameterTypes: parameterTypes, policyId: Number(initialSplit[5].trim())} as ForeignCallDefinition
+        returnType: returnType, parameterTypes: parameterTypes} as ForeignCallDefinition
 }
 
 export function buildForeignCallList(condition: string) {
