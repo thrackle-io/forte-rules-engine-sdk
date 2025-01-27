@@ -57,6 +57,11 @@ export type stringReplacement = {
     originalData: string
 }
 
+export type trackerIndexNameMapping = {
+    trackerName: string
+    trackerIndex: number
+}
+
 export type TrackerDefinition = {
     name: string
     type: number
@@ -69,7 +74,8 @@ type RawData = {
     dataValues: ByteArray[]
 }
 
-const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*']
+const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=']
+const truMatchArray: string[] = ['+=', '-=', '*=', '/=']
 const operandArray: string[] = ['PLH', 'N']
 const supportedTrackerTypes: string[] = ['uint256', 'string', 'address']
 export enum pTypeEnum {
@@ -489,7 +495,7 @@ function buildIndividualMapping(parameter: string, argumentIterator: number, arg
     return false
 }
 
-export function parseSyntax(syntax: string) {
+export function parseSyntax(syntax: string, indexMap: trackerIndexNameMapping[]) {
     // Split the initial syntax string into condition, effect and function signature 
     syntax = cleanString(syntax)
     var initialSplit = syntax.split('-->')
@@ -509,8 +515,10 @@ export function parseSyntax(syntax: string) {
     }
 
     var names = parseFunctionArguments(functionSignature)
-    var effectNames = Array.from(names)
+    
     condition = parseForeignCalls(condition, names.length, names)
+    parseTrackers(condition + effectSplit, names.length, names)
+    var effectNames = Array.from(names)
     for(var effectP in positiveEffects) {
         positiveEffects[effectP] = parseForeignCalls(positiveEffects[effectP], effectNames.length, effectNames)
     }
@@ -518,21 +526,20 @@ export function parseSyntax(syntax: string) {
         negativeEffects[effectN] = parseForeignCalls(negativeEffects[effectN], effectNames.length, effectNames)
     }
 
-    parseTrackers(condition + effectSplit, names.length, names)
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
     for(var effectP of positiveEffects) {
-        let effect = parseEffect(effectP, effectNames, effectPlaceHolders)
+        let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
         positiveEffectsFinal.push(effect)
 
     }
 
     for(var effectN of negativeEffects) {
-        let effect = parseEffect(effectN, effectNames, effectPlaceHolders)
+        let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
         negativeEffectsFinal.push(effect)
     }
-    var retVal = interpretToInstructionSet(condition, names)
+    var retVal = interpretToInstructionSet(condition, names, indexMap)
 
     var excludeArray = []
     for(var name of names) {
@@ -583,7 +590,7 @@ function parseIndividualEffects(splitString: string, effectSplit: string, effect
     }
 }
 
-function interpretToInstructionSet(syntax: string, names: any[]) {
+function interpretToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[]) {
         // Create the initial Abstract Syntax Tree (AST) splitting on AND
         var array = convertToTree(syntax, "AND")
         if(array.length == 0) {
@@ -612,11 +619,11 @@ function interpretToInstructionSet(syntax: string, names: any[]) {
         const iter = { value: 0 };
         // Convert the AST into the Instruction Set Syntax 
         plhIndex = 0
-        convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders)
+        convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders, indexMap)
         return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
-function parseEffect(effect: string, names: any[], placeholders: PlaceholderStruct[]) {
+function parseEffect(effect: string, names: any[], placeholders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) {
     var effectType = EffectType.REVERT
     var effectText = ""
     var effectInstructionSet: any[] = []
@@ -633,7 +640,7 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         effectText = match ? match[2] : "";
     } else {
         effectType = EffectType.EXPRESSION
-        var effectStruct = interpretToInstructionSet(effect, names)
+        var effectStruct = interpretToInstructionSet(effect, names, indexMap)
         effectInstructionSet = effectStruct.instructionSet
         for(var placeHolder of effectStruct.placeHolders) {
             placeholders.push(placeHolder)
@@ -674,11 +681,23 @@ export function parseFunctionArguments(functionSignature: string) {
 
 export function parseTrackers(condition: string, nextIndex: number, names: any[]) {
     const trRegex = /TR:[a-zA-Z]+/g
+    const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
 
     if(matches != null) {
         var uniq = [...new Set(matches)];
         for(var match of uniq!) {
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            nextIndex++
+        }
+    }
+
+    var matchesUpdate = condition.match(truRegex)
+
+    if(matchesUpdate != null) {
+        var uniq = [...new Set(matchesUpdate)];
+        for(var match of uniq!) {
+            match = match.replace("TRU:", "TR:")
             names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
             nextIndex++
         }
@@ -915,8 +934,9 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
     return raw
 }
 var plhIndex = 0
+var truIndex = -1
 // Convert AST to Instruction Set Syntax
-function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[]) { 
+function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) { 
     if (!expression || expression.length === 0) {
         return;
     }
@@ -962,7 +982,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
                 iterator.value += 1
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
             } else if(parameter.fcPlaceholder) {
                 if(parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
@@ -980,7 +1000,35 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
                     iterator.value += 1
-                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
+                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                }
+            } else if(expression[0].trim().includes('TRU:')) {
+                foundMatch = true
+                var trackerName = expression[0].replace('TRU:', 'TR:')
+                var values = trackerName.split(' ')
+                if(values[1] == parameter.name) {
+                    retVal.push("PLH")
+                    retVal.push(plhIndex)
+                    plhIndex += 1
+
+                    var placeHolder : PlaceholderStruct = {
+                        pType: 0,
+                        typeSpecificIndex: parameter.tIndex,
+                        trackerValue: true,
+                        foreignCall: false
+                    }
+                    for(var ind of indexMap) {
+                        if(parameter.name == ind.trackerName) {
+                            truIndex = ind.trackerIndex
+                        }
+                    }
+                    
+                    placeHolders.push(placeHolder)
+                    var sliced = expression.slice(1)
+                    mem.push(iterator.value)
+                    iterator.value += 1
+                    convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+
                 }
             }
         }
@@ -988,13 +1036,37 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
             if(matchArray.includes(expression[0].trim()) ) {
                 foundMatch = true
                 var sliced = expression.slice(1)
-                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
-                retVal.push(expression[0])
+                convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                if(truMatchArray.includes(expression[0].trim())) {
+                    switch(expression[0].trim()) {
+                        case '+=':
+                            retVal.push('+')
+                            break
+                        case '-=':
+                            retVal.push('-')
+                            break
+                        case '*=':
+                            retVal.push('*')
+                            break
+                        case '/=':
+                            retVal.push('/')
+                            break
+                    }
+                } else {
+                    retVal.push(expression[0])
+                }
                 retVal.push(mem[mem.length - 2])
                 retVal.push(mem[mem.length - 1])
                 mem.pop()
                 mem.pop()
-                mem.push(iterator.value)
+                
+                if(truMatchArray.includes(expression[0].trim())) {
+                    retVal.push('TRU')
+                    retVal.push(truIndex)
+                    retVal.push(iterator.value)
+                } else {
+                    mem.push(iterator.value)
+                }
                 iterator.value += 1
             }
         }
@@ -1004,7 +1076,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
             var sliced = expression.slice(1)
             mem.push(iterator.value)
             iterator.value += 1
-            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
+            convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
         }
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
@@ -1015,13 +1087,13 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
-        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders)
+        convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
     // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
     // and recursively run starting at the next index
     } else if(Array.isArray(expression[0])) {
-        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, placeHolders)
+        convertToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, placeHolders, indexMap)
         expression = expression.slice(1)
-        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames, placeHolders)
+        convertToInstructionSet(retVal, mem, expression, iterator, parameterNames, placeHolders, indexMap)
     }
 }
 

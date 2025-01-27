@@ -37,7 +37,7 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
      4, 11
   ]
   var str = "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)"
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -98,7 +98,7 @@ test('Evaluates a complex syntax string (using only values and operators)', () =
     '==', 18, 19, 'AND', 17, 20, 'AND', 4,
      21 ] 
     var str = "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4) --> revert --> addValue(uint256 value)"
-    var retVal = parseSyntax(str)
+    var retVal = parseSyntax(str, [])
     expect(retVal.instructionSet).toEqual(expectedArray)
   });
 
@@ -154,7 +154,7 @@ test('Evaluates a simple syntax string (using AND + OR operators)', () => {
     13, 'OR', 11, 14, 'OR', 8, 15
   ]
   var str = "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)  --> revert --> addValue(uint256 value)"; 
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -225,7 +225,7 @@ var expectedRawDataArray =  {
    
 
 var str = "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
-var retVal = parseSyntax(str)
+var retVal = parseSyntax(str, [])
 expect(retVal.instructionSet).toEqual(expectedArray)
 expect(retVal.rawData).toEqual(expectedRawDataArray)
 });
@@ -343,7 +343,7 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
     3, 4, 'AND', 2, 5
   ]
   let str = "FC:leaderboard(to) > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value"
-  let retVal = parseSyntax(str)
+  let retVal = parseSyntax(str, [])
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
@@ -427,7 +427,7 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
     AND 
     FC:creditRisk(amount) < 500 
    ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
-  let retVal = parseSyntax(str)
+  let retVal = parseSyntax(str, [])
   expect(retVal.instructionSet).toEqual(expectedArray)
 
 })
@@ -524,7 +524,7 @@ test('Evaluate complex expression with placeholders', () => {
    AND 
    value < 500 
   ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
-  let retVal = parseSyntax(str)
+  let retVal = parseSyntax(str, [])
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
@@ -597,7 +597,7 @@ var expectedArray = [
 ]
 
 var str = "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)";
-var retVal = parseSyntax(str)
+var retVal = parseSyntax(str, [])
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -678,7 +678,7 @@ test('Tests building foreign call argument mapping', () => {
 
 test('Evaluate a simple syntax string for a revert effect', () => {
   var str = "(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert --> addValue(uint256 value) --> uint256 value"
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
   expect(retVal.positiveEffects[0].value).toBeUndefined();
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -686,7 +686,7 @@ test('Evaluate a simple syntax string for a revert effect', () => {
 
 test('Evaluate a simple syntax string for a revert effect with message', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert("Didn't pass the sniff test") --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
   expect(retVal.positiveEffects[0].text).toEqual("Didn't pass the sniff test");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -694,7 +694,7 @@ test('Evaluate a simple syntax string for a revert effect with message', () => {
 
 test('Evaluate a simple syntax string for a event effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit SomethingWentWrong("Something wrong") --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Something wrong");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -702,7 +702,7 @@ test('Evaluate a simple syntax string for a event effect', () => {
 
 test('Evaluate a simple syntax string for a event effect without text', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Goodvibes() --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -710,7 +710,7 @@ test('Evaluate a simple syntax string for a event effect without text', () => {
 
 test('Evaluate a simple syntax string that contains a positive and negative effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes() <-> neg: revert --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -721,7 +721,7 @@ test('Evaluate a simple syntax string that contains a positive and negative effe
 
 test('Evaluate a simple syntax string that contains multiple positive effects and a negative effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes(), emit OtherGoodvibes() <-> neg: revert --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -735,7 +735,7 @@ test('Evaluate a simple syntax string that contains multiple positive effects an
 
 test('Evaluate a simple syntax string that contains multiple positive and negative effects', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes(), emit OtherGoodvibes() <-> neg: emit badVibes(), FC:updateOracle(value) AND FC:alert(value) --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -753,15 +753,13 @@ test('Evaluate a simple syntax string that contains multiple positive and negati
     'AND', 0, 1,
   ])
   expect(retVal.effectPlaceHolders.length).toEqual(2)
-  console.log("PLACEHOLDERS: ")
-  console.log(retVal.effectPlaceHolders)
   expect(retVal.effectPlaceHolders[0].foreignCall).toEqual(true)
   expect(retVal.effectPlaceHolders[1].pType).toEqual(0)
 })
 
 test('Evaluate a simple syntax string for an event effect with an instruction set', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> FC:updateOracle(value) AND FC:alert(value)  --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str)
+  var retVal = parseSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EXPRESSION);
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([
@@ -777,3 +775,19 @@ test('Simple Reverse Interpretation', () => {
     var retVal = reverseParseRule(numbers, placeholderArray, [])
     expect(retVal).toEqual("1 + 2 == 3 AND 1 == value")
 })
+
+test('Evaluates a simple effect involving a tracker update (TRU))', () => {
+
+var expectedArray = [
+  'PLH', 0,     'PLH',
+  1,     '-',  0,
+  1,     'TRU', 4,
+  2
+]
+
+var str = "value > 5  --> TRU:testOne -= value --> addValue(uint256 value, string info, address addr)";
+var retVal = parseSyntax(str, [{trackerIndex: 4, trackerName: "TR:testOne"}])
+expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray)
+expect(retVal.effectPlaceHolders.length).toEqual(2)
+expect(retVal.effectPlaceHolders[0].trackerValue).toEqual(true)
+});
