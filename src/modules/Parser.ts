@@ -68,7 +68,7 @@ export type TrackerDefinition = {
     defaultValue: string
 }
 
-type RawData = {
+export type RawData = {
     instructionSetIndex: number[]
     argumentTypes: number[]
     dataValues: ByteArray[]
@@ -86,7 +86,7 @@ export enum pTypeEnum {
     VOID = 4,
     BYTES = 5
 }
-const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 'string', enumeration: pTypeEnum.STRING}, 
+export const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 'string', enumeration: pTypeEnum.STRING}, 
     {name: 'uint256', enumeration: pTypeEnum.UINT256}, {name: 'bool', enumeration: pTypeEnum.BOOL}, 
     {name: 'void', enumeration: pTypeEnum.VOID}, {name: 'bytes', enumeration: pTypeEnum.BYTES} ]
 const LC = [ {name: 'N', enumeration: 0}]
@@ -233,6 +233,7 @@ export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: stri
 }
 
 export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
+    console.log(instructionSet)
     var currentAction = -1
     var currentActionIndex = 0
     var currentMemAddress = 0
@@ -242,7 +243,7 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
     var instructionNumber = 0
     for (var instruction of instructionSet) {
         if(currentAction == -1) {
-            currentAction = instruction;
+            currentAction = Number(instruction);
             switch(currentAction) {
                 case 0: 
                     currentActionIndex = 1;
@@ -628,12 +629,13 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
     var effectText = ""
     var effectInstructionSet: any[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
-    const emitTextPattern = /emit\s+\w+\("([^"]*)"\)/;
+    // const emitTextPattern = /emit\s+\w+\("([^"]*)"\)/;
+    const emitTextPattern = /emit\s+\w+"([^"]*)"/;
 
     if(effect.includes("emit")) {
         effectType = EffectType.EVENT
         const match = effect.match(emitTextPattern);
-        effectText = match ? match[1] : "";
+        effectText = effect.replace("emit ", "").trim()
     } else if (effect.includes("revert")) {
         effectType = EffectType.REVERT
         const match = effect.match(revertTextPattern);

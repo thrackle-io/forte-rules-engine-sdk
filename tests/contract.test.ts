@@ -13,7 +13,8 @@ import { createBlankPolicyBatch,
     createTracker,
     getTracker,
     getAllTrackers, 
-    createFullPolicy
+    createFullPolicy,
+    retrieveFullPolicy
 } from "../src/modules/ContractInteraction";
 
 
@@ -109,8 +110,8 @@ describe('Rules Engine Interactions', async () => {
         "Trackers": ["Simple String Tracker --> string --> test"], \
         "Rules": ["value > 500 --> revert() --> transfer(address to, uint256 value)"]\
         }'
-        console.log(policyJSON)
-        console.log(JSON.parse(policyJSON))
+        // console.log(policyJSON)
+        // console.log(JSON.parse(policyJSON))
         var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant)
         expect(result).toBeGreaterThanOrEqual(0)
         var resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
@@ -118,4 +119,21 @@ describe('Rules Engine Interactions', async () => {
         var resultTR = await getAllTrackers(result, getRulesEngineContract(rulesEngineContract, client))
         expect(resultTR?.trackers.length).toEqual(1)
     })
+    test('Can retrieve a full policy', async() => {
+        var policyJSON = '\
+        {\
+        "Policy": "Test Policy", \
+        "ForeignCalls": ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"], \
+        "Trackers": ["Simple String Tracker --> string --> test"], \
+        "Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value)"]\
+        }'
+        // console.log(policyJSON)
+        // console.log(JSON.parse(policyJSON))
+        var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant)
+        await retrieveFullPolicy(result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)"}, 
+            {hex: '0x71308757', functionSignature: "testSig(address)"}
+        ],getRulesEngineContract(rulesEngineContract, client))
+    })
+
+
 })

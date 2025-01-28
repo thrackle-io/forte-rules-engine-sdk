@@ -693,26 +693,26 @@ test('Evaluate a simple syntax string for a revert effect with message', () => {
 })
 
 test('Evaluate a simple syntax string for a event effect', () => {
-  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit SomethingWentWrong("Something wrong") --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str, [])
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Something wrong --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Something wrong");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 })
 
 test('Evaluate a simple syntax string for a event effect without text', () => {
-  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Goodvibes() --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str, [])
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Goodvibes --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
-  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 })
 
 test('Evaluate a simple syntax string that contains a positive and negative effect', () => {
-  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes() <-> neg: revert --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str, [])
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes <-> neg: revert --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
-  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
   expect(retVal.negativeEffects[0].type).toBe(EffectType.REVERT);
   expect(retVal.negativeEffects[0].text).toEqual("");
@@ -720,13 +720,13 @@ test('Evaluate a simple syntax string that contains a positive and negative effe
 })
 
 test('Evaluate a simple syntax string that contains multiple positive effects and a negative effect', () => {
-  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes(), emit OtherGoodvibes() <-> neg: revert --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str, [])
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes, emit OtherGoodvibes <-> neg: revert --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
-  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
   expect(retVal.positiveEffects[1].type).toBe(EffectType.EVENT);
-  expect(retVal.positiveEffects[1].text).toEqual("");
+  expect(retVal.positiveEffects[1].text).toEqual("OtherGoodvibes");
   expect(retVal.positiveEffects[1].instructionSet).toEqual([]);
   expect(retVal.negativeEffects[0].type).toBe(EffectType.REVERT);
   expect(retVal.negativeEffects[0].text).toEqual("");
@@ -734,16 +734,16 @@ test('Evaluate a simple syntax string that contains multiple positive effects an
 })
 
 test('Evaluate a simple syntax string that contains multiple positive and negative effects', () => {
-  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes(), emit OtherGoodvibes() <-> neg: emit badVibes(), FC:updateOracle(value) AND FC:alert(value) --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseSyntax(str, [])
+  var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes, emit OtherGoodvibes <-> neg: emit badVibes, FC:updateOracle(value) AND FC:alert(value) --> addValue(uint256 value) --> uint256 value`
+  var retVal = parseSyntax(str)
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
-  expect(retVal.positiveEffects[0].text).toEqual("");
+  expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
   expect(retVal.positiveEffects[1].type).toBe(EffectType.EVENT);
-  expect(retVal.positiveEffects[1].text).toEqual("");
+  expect(retVal.positiveEffects[1].text).toEqual("OtherGoodvibes");
   expect(retVal.positiveEffects[1].instructionSet).toEqual([]);
   expect(retVal.negativeEffects[0].type).toBe(EffectType.EVENT);
-  expect(retVal.negativeEffects[0].text).toEqual("");
+  expect(retVal.negativeEffects[0].text).toEqual("badVibes");
   expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
   expect(retVal.negativeEffects[1].type).toBe(EffectType.EXPRESSION)
   expect(retVal.negativeEffects[1].text).toEqual("");

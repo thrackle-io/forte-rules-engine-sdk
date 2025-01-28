@@ -6,6 +6,8 @@ export {
     EffectType, 
     TrackerDefinition, 
     stringReplacement,
+    RawData,
+    PT,
     buildForeignCallArgumentMapping, 
     buildForeignCallList, 
     buildForeignCallListRaw, 
