@@ -14,11 +14,12 @@ import {
 import {
     simulateContract,
     writeContract, 
-    readContract
+    readContract,
+    call
 } from "@wagmi/core";
 
 import { 
-    parseSyntax, 
+    parseRuleSyntax, 
     TrackerDefinition, 
     buildForeignCallList, 
     buildForeignCallListRaw, 
@@ -31,6 +32,10 @@ import {
     parseTrackerSyntax,
     RawData,
     reverseParseRule,
+    RuleStruct,
+    convertRuleStructToString,
+    convertForeignCallStructsToStrings,
+    convertTrackerStructsToStrings,
     PT
 } from '../index';
 
@@ -46,53 +51,14 @@ type FCNameToID = {
     name: string
 }
 
-type ForeignCallCreationReturn = {
-
-    foreignCallAddress: string;
-    foreignCallIndex: number;
-    signature: string;
-    returnType: number;
-    parameterTypes: number[];
-}
-
 type RuleStorageSet = {
     set: boolean, 
     rule: any
 }
 
-type ForeignCallSet = {
-    set: boolean,
-    foreignCalls: ForeignCallCreationReturn[]
-}
-
-type TrackerValuesSet = {
-    set: boolean;
-    trackers: TrackerTransactionType[];
-}
-
-type RuleStorageSet = {
-    set: boolean;
-}
-
-type TrackerTransactionType = {
-    pType: number,
-    trackerValue: string
-}
-
 type hexToFunctionSignature = {
     hex: string,
     functionSignature: string
-}
-
-type RuleStruct = {
-    instructionSet: number[],
-    rawData: RawData,          
-    placeHolders: any[],
-    effectPlaceHolders: any[],
-    fcArgumentMappingsConditions: any[],
-    fcArgumentMappingsEffects: any[],
-    posEffects: any[],
-    negEffects: any[]
 }
 
 interface PolicyJSON {
@@ -196,7 +162,6 @@ export const retrieveRule = async(ruleId: number, rulesEngineContract: RulesEngi
 
         let ruleResult = retrieveRule.result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct
-        console.log(ruleS)
         return ruleS
 
     } catch (error) {
@@ -234,7 +199,6 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
             }
         }
 
-        console.log(ruleIds2DArray)
         var iter = 0
         var ruleStrings = []
         for(var innerArray of ruleIds2DArray) {
@@ -248,54 +212,9 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
             for (var ruleId of innerArray) {
                 console.log(ruleId)
                 var ruleS = await retrieveRule(ruleId, rulesEngineContract)
-                var plhArray = []
+                var plhArray: string[] = []
                 if(ruleS != null) {
-                    var names = parseFunctionArguments(functionString)
-
-                    for(var plh of ruleS!.placeHolders) {
-                        console.log(names[plh.typeSpecificIndex].name)
-                        plhArray.push(names[plh.typeSpecificIndex].name)
-                    }
-                    var effectString = ""
-                    if(ruleS.posEffects.length > 1 || ruleS.negEffects.length > 0) {
-                        effectString += "pos: "
-                    }
-                    var posIter = 0
-                    for(var pos of ruleS.posEffects) {
-                        if(posIter > 0) {
-                            effectString += ", "
-                        }
-                        if(pos.effectType == 0) {
-                            effectString += "revert(" + pos.text + ")"
-                        } else if(pos.effectType == 1) {
-                            effectString += "emit " + pos.text 
-                        }
-                        posIter += 1
-                    }
-
-                    if(ruleS.negEffects.length > 0) {
-                        effectString += " <-> neg: "
-                        var negIter = 0
-                        for(var neg of ruleS.negEffects) {
-                            if(negIter > 0) {
-                                effectString += ", "
-                            }
-                            if(neg.effectType == 0) {
-                                effectString += "revert(" + neg.text + ")"
-                            } else if(neg.effectType == 1) {
-                                effectString += "emit " + neg.text 
-                            }
-                            negIter+= 1
-                        }
-                    }
-
-                    var outputString = ""
-                    outputString += reverseParseRule(ruleS!.instructionSet, plhArray, [])
-                    outputString += " --> "
-                    outputString += effectString
-                    outputString += " --> "
-                    outputString += functionString
-                    ruleStrings.push(outputString)
+                    ruleStrings.push(convertRuleStructToString(functionString, ruleS, plhArray))
                 }
                 
             }
@@ -303,80 +222,13 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
         }
 
         var foreignCalls: ForeignCallSet | null = await getAllForeignCalls(policyId, rulesEngineContract)
-        var callStrings = []
-        console.log("foreignCalls: ", foreignCalls)
-        var fcIter = 1
-        if(foreignCalls != null) {
-            for(var call of foreignCalls.foreignCalls) {
-                console.log(call)
-                var signatureString = ""
-                for(var mapping of functionSignatureMappings) {
-                    if(mapping.hex == call.signature) {
-                        signatureString = mapping.functionSignature
-                    }
-                }
-                var returnTypeString = ""
-                var parameterStrings = []
+        var callStrings: string[] = []
+        convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
 
-                for(var parameterType of PT) {
-                    if(call.returnType == parameterType.enumeration) {
-                        returnTypeString = parameterType.name
-                    }
-                }
-
-                for(var param of call.parameterTypes) {
-                    for(var parameterType of PT) {
-                        if(param == parameterType.enumeration) {
-                            parameterStrings.push(parameterType.name)
-                        }
-                    }
-                }
-
-                var outputString = ""
-                outputString += "Foreign Call " + String(fcIter) + " --> "
-                outputString += call.foreignCallAddress
-                outputString += " --> "
-                outputString += signatureString
-                outputString += " --> "
-                outputString += returnTypeString
-                outputString += " --> "
-                var innerIter = 0
-                for(var str of parameterStrings) {
-                    if(innerIter > 0) {
-                        outputString += ", "
-                    }
-                    outputString += str
-                    innerIter++
-                }
-
-                callStrings.push(outputString)
-                fcIter += 1
-            }
-        }
 
         var trackers: TrackerValuesSet | null = await getAllTrackers(policyId, rulesEngineContract)
-        console.log(trackers)
-        var trackerStrings = []
-        var trackerIter = 1
-        if(trackers != null) {
-            for(var tracker of trackers.trackers) {
-
-                var trackerType = ""
-                for(var parameterType of PT) {
-                    if(tracker.pType == parameterType.enumeration) {
-                        trackerType = parameterType.name
-                    }
-                }
-
-                var outputString = ""
-                outputString += "Tracker " + String(trackerIter) + " --> "
-                outputString += trackerType
-                outputString += " --> "
-                outputString += tracker.trackerValue
-                trackerStrings.push(outputString)
-                trackerIter += 1
-            }
-        }
+        var trackerStrings: string[] = []
+        convertTrackerStructsToStrings(trackers, trackerStrings)
 
         var jsonObj = {
             Trackers: trackerStrings,
@@ -739,7 +591,7 @@ export const createNewRule = async (ruleSyntax: string, rulesEngineContract: Rul
 }
 
 export function buildAnEffectStruct(ruleSyntax: string) {
-    var output = parseSyntax(ruleSyntax)
+    var output = parseRuleSyntax(ruleSyntax)
     var pEffects = []
     var nEffects = []
     for(var pEffect of output.positiveEffects) {
@@ -769,7 +621,7 @@ export function buildAnEffectStruct(ruleSyntax: string) {
 }
 
 export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], effect: any) {
-    var output = parseSyntax(ruleSyntax)
+    var output = parseRuleSyntax(ruleSyntax)
     var fcList = buildForeignCallList(ruleSyntax.split('-->')[0])
     var fcNames = buildForeignCallListRaw(ruleSyntax.split('-->')[0])
     var fcIDs = []

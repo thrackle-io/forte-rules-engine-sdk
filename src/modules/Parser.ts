@@ -1,5 +1,8 @@
 import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex } from 'viem';
 
+// Types:
+// --------------------------------------------------------------------------------------------------
+
 type Tuple = {
     i: string;
     s: string;
@@ -16,6 +19,17 @@ type Effect = {
     type: EffectType;
     text?: string;
     instructionSet?: any[]
+}
+
+export type RuleStruct = {
+    instructionSet: number[],
+    rawData: RawData,          
+    placeHolders: any[],
+    effectPlaceHolders: any[],
+    fcArgumentMappingsConditions: any[],
+    fcArgumentMappingsEffects: any[],
+    posEffects: any[],
+    negEffects: any[]
 }
 
 type ForeignCallDefinition = {
@@ -74,6 +88,30 @@ export type RawData = {
     dataValues: ByteArray[]
 }
 
+export type ForeignCallSet = {
+    set: boolean,
+    foreignCalls: ForeignCallCreationReturn[]
+}
+
+export type TrackerValuesSet = {
+    set: boolean;
+    trackers: TrackerTransactionType[];
+}
+
+type ForeignCallCreationReturn = {
+
+    foreignCallAddress: string;
+    foreignCallIndex: number;
+    signature: string;
+    returnType: number;
+    parameterTypes: number[];
+}
+
+type TrackerTransactionType = {
+    pType: number,
+    trackerValue: string
+}
+
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=']
 const truMatchArray: string[] = ['+=', '-=', '*=', '/=']
 const operandArray: string[] = ['PLH', 'N']
@@ -91,6 +129,71 @@ export const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 's
     {name: 'void', enumeration: pTypeEnum.VOID}, {name: 'bytes', enumeration: pTypeEnum.BYTES} ]
 const LC = [ {name: 'N', enumeration: 0}]
 const FC_PREFIX: string = 'FC:'
+// --------------------------------------------------------------------------------------------------
+
+
+// External Parsing Functions:
+// --------------------------------------------------------------------------------------------------
+
+export function parseRuleSyntax(syntax: string, indexMap: trackerIndexNameMapping[]) {
+    // Split the initial syntax string into condition, effect and function signature 
+    syntax = cleanString(syntax)
+    var initialSplit = syntax.split('-->')
+    var condition = initialSplit[0]
+
+    var functionSignature = initialSplit[2]
+
+    var effectSplit = initialSplit[1]
+
+    var foundMultiEffect = false
+    var positiveEffects: string[] = []
+    var negativeEffects: string[] = []
+
+    foundMultiEffect = parseEffectString(effectSplit, positiveEffects, negativeEffects)
+    if(!foundMultiEffect) {
+        positiveEffects.push(effectSplit)
+    }
+
+    var names = parseFunctionArguments(functionSignature)
+    
+    condition = parseForeignCalls(condition, names.length, names)
+    parseTrackers(condition + effectSplit, names.length, names)
+    var effectNames = Array.from(names)
+    for(var effectP in positiveEffects) {
+        positiveEffects[effectP] = parseForeignCalls(positiveEffects[effectP], effectNames.length, effectNames)
+    }
+    for(var effectN in negativeEffects) {
+        negativeEffects[effectN] = parseForeignCalls(negativeEffects[effectN], effectNames.length, effectNames)
+    }
+
+    var effectPlaceHolders: PlaceholderStruct[] = []
+    var positiveEffectsFinal = []
+    var negativeEffectsFinal = []
+    for(var effectP of positiveEffects) {
+        let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
+        positiveEffectsFinal.push(effect)
+
+    }
+
+    for(var effectN of negativeEffects) {
+        let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
+        negativeEffectsFinal.push(effect)
+    }
+    var retVal = interpretToInstructionSet(condition, names, indexMap)
+
+    var excludeArray = []
+    for(var name of names) {
+        excludeArray.push(name.name)
+    }
+
+    excludeArray.push(...matchArray)
+    excludeArray.push(...operandArray)
+    var rawData: any[] = []
+
+    var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
+    return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
+         placeHolders: retVal.placeHolders, effectPlaceHolders: effectPlaceHolders}
+}
 
 export function parseTrackerSyntax(syntax: string) {
     var initialSplit = syntax.split('-->')
@@ -157,79 +260,6 @@ export function parseForeignCallDefinition(syntax: string) {
 
     return {name: initialSplit[0].trim(), address: address, signature: signature, 
         returnType: returnType, parameterTypes: parameterTypes} as ForeignCallDefinition
-}
-
-export function buildForeignCallList(condition: string) {
-        // Use a regular expression to find all FC expressions
-        const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
-        const matches = condition.matchAll(fcRegex);
-        let processedCondition = condition
-        var names: string[] = []
-        // Convert matches iterator to array to process all at once
-        for (const match of matches) {
-            const fullFcExpr = match[0];
-            var nameAndArgs = fullFcExpr.split(':')[1]
-            var name = nameAndArgs.split('(')[0]
-            names.push(name)
-        }
-        return names
-}
-
-export function buildForeignCallListRaw(condition: string) {
-    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
-    const matches = condition.matchAll(fcRegex);
-    let processedCondition = condition
-    var names: string[] = []
-    // Convert matches iterator to array to process all at once
-    for (const match of matches) {
-        const fullFcExpr = match[0];
-        names.push(fullFcExpr)
-    }
-    return names
-}
-
-export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: string[], argumentNames: FunctionArgument[], trackers: TrackerDefinition[]) {
-    var retVal: ForeignCallArgumentMappings[] = []
-    var iter = 0
-    for(var foreignCall of fCalls) {
-        var cleaned = cleanString(foreignCall)
-        var initialSplit = cleaned.split('(')
-        var parameters = cleanString(initialSplit[1].replace(')', ''))
-        var parameterSplit = parameters.split(',')
-        var callName = initialSplit[0]
-        var mappings: IndividualArugmentMapping[] = []
-
-        for(var parameter of parameterSplit) {
-            var found = false
-            parameter = parameter.trim()
-
-            var argumentIterator = 0
-            for (var arugment of argumentNames) {
-                if(buildIndividualMapping(parameter, argumentIterator, arugment, mappings, false)) {
-                    found = true
-                    break
-                }
-                argumentIterator+=1
-            }
-            if(!found) {
-                for(var tracker of trackers) {
-                    if(buildIndividualMapping(parameter, argumentIterator, tracker, mappings, true)) {
-                        break
-                    }
-                    argumentIterator+=1
-                }
-            }
-        }
-        if(mappings.length > 0) {
-            var foreignCallMappings : ForeignCallArgumentMappings = {
-                foreignCallIndex: fCallIDs[iter],
-                mappings: mappings
-            }
-            retVal.push(foreignCallMappings)
-        }
-        iter++
-    }
-    return retVal
 }
 
 export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
@@ -409,6 +439,84 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
     return retVal
 }
 
+// --------------------------------------------------------------------------------------------------
+
+
+// External Helper Functions
+// --------------------------------------------------------------------------------------------------
+export function buildForeignCallList(condition: string) {
+        // Use a regular expression to find all FC expressions
+        const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+        const matches = condition.matchAll(fcRegex);
+        let processedCondition = condition
+        var names: string[] = []
+        // Convert matches iterator to array to process all at once
+        for (const match of matches) {
+            const fullFcExpr = match[0];
+            var nameAndArgs = fullFcExpr.split(':')[1]
+            var name = nameAndArgs.split('(')[0]
+            names.push(name)
+        }
+        return names
+}
+
+export function buildForeignCallListRaw(condition: string) {
+    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+    const matches = condition.matchAll(fcRegex);
+    let processedCondition = condition
+    var names: string[] = []
+    // Convert matches iterator to array to process all at once
+    for (const match of matches) {
+        const fullFcExpr = match[0];
+        names.push(fullFcExpr)
+    }
+    return names
+}
+
+export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: string[], argumentNames: FunctionArgument[], trackers: TrackerDefinition[]) {
+    var retVal: ForeignCallArgumentMappings[] = []
+    var iter = 0
+    for(var foreignCall of fCalls) {
+        var cleaned = cleanString(foreignCall)
+        var initialSplit = cleaned.split('(')
+        var parameters = cleanString(initialSplit[1].replace(')', ''))
+        var parameterSplit = parameters.split(',')
+        var callName = initialSplit[0]
+        var mappings: IndividualArugmentMapping[] = []
+
+        for(var parameter of parameterSplit) {
+            var found = false
+            parameter = parameter.trim()
+
+            var argumentIterator = 0
+            for (var arugment of argumentNames) {
+                if(buildIndividualMapping(parameter, argumentIterator, arugment, mappings, false)) {
+                    found = true
+                    break
+                }
+                argumentIterator+=1
+            }
+            if(!found) {
+                for(var tracker of trackers) {
+                    if(buildIndividualMapping(parameter, argumentIterator, tracker, mappings, true)) {
+                        break
+                    }
+                    argumentIterator+=1
+                }
+            }
+        }
+        if(mappings.length > 0) {
+            var foreignCallMappings : ForeignCallArgumentMappings = {
+                foreignCallIndex: fCallIDs[iter],
+                mappings: mappings
+            }
+            retVal.push(foreignCallMappings)
+        }
+        iter++
+    }
+    return retVal
+}
+
 export function cleanInstructionSet(instructionSet: any[]) {
     var iter = 0
     for(var val of instructionSet) {
@@ -442,6 +550,215 @@ export function cleanInstructionSet(instructionSet: any[]) {
     }
 }
 
+export function convertRuleStructToString(functionString: string, ruleS: RuleStruct, plhArray: string[]) {
+    var names = parseFunctionArguments(functionString)
+
+    for(var plh of ruleS!.placeHolders) {
+        console.log(names[plh.typeSpecificIndex].name)
+        plhArray.push(names[plh.typeSpecificIndex].name)
+    }
+    var effectString = ""
+    if(ruleS.posEffects.length > 1 || ruleS.negEffects.length > 0) {
+        effectString += "pos: "
+    }
+    var posIter = 0
+    for(var pos of ruleS.posEffects) {
+        if(posIter > 0) {
+            effectString += ", "
+        }
+        if(pos.effectType == 0) {
+            effectString += "revert(" + pos.text + ")"
+        } else if(pos.effectType == 1) {
+            effectString += "emit " + pos.text 
+        }
+        posIter += 1
+    }
+
+    if(ruleS.negEffects.length > 0) {
+        effectString += " <-> neg: "
+        var negIter = 0
+        for(var neg of ruleS.negEffects) {
+            if(negIter > 0) {
+                effectString += ", "
+            }
+            if(neg.effectType == 0) {
+                effectString += "revert(" + neg.text + ")"
+            } else if(neg.effectType == 1) {
+                effectString += "emit " + neg.text 
+            }
+            negIter+= 1
+        }
+    }
+
+    var outputString = ""
+    outputString += reverseParseRule(ruleS!.instructionSet, plhArray, [])
+    outputString += " --> "
+    outputString += effectString
+    outputString += " --> "
+    outputString += functionString
+    return outputString
+    
+}
+
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallSet | null, functionSignatureMappings: hexToFunctionSignature[]) {
+    var fcIter = 1
+    if(foreignCalls != null) {
+        for(var call of foreignCalls.foreignCalls) {
+            var signatureString = ""
+            for(var mapping of functionSignatureMappings) {
+                if(mapping.hex == call.signature) {
+                    signatureString = mapping.functionSignature
+                }
+            }
+            var returnTypeString = ""
+            var parameterStrings = []
+
+            for(var parameterType of PT) {
+                if(call.returnType == parameterType.enumeration) {
+                    returnTypeString = parameterType.name
+                }
+            }
+
+            for(var param of call.parameterTypes) {
+                for(var parameterType of PT) {
+                    if(param == parameterType.enumeration) {
+                        parameterStrings.push(parameterType.name)
+                    }
+                }
+            }
+
+            var outputString = ""
+            outputString += "Foreign Call " + String(fcIter) + " --> "
+            outputString += call.foreignCallAddress
+            outputString += " --> "
+            outputString += signatureString
+            outputString += " --> "
+            outputString += returnTypeString
+            outputString += " --> "
+            var innerIter = 0
+            for(var str of parameterStrings) {
+                if(innerIter > 0) {
+                    outputString += ", "
+                }
+                outputString += str
+                innerIter++
+            }
+
+            callStrings.push(outputString)
+            fcIter += 1
+        }
+    }
+}
+
+export function convertTrackerStructsToStrings(trackers: TrackerValuesSet | null, trackerStrings: string[]) {
+    var trackerIter = 1
+    if(trackers != null) {
+        for(var tracker of trackers.trackers) {
+
+            var trackerType = ""
+            for(var parameterType of PT) {
+                if(tracker.pType == parameterType.enumeration) {
+                    trackerType = parameterType.name
+                }
+            }
+
+            var outputString = ""
+            outputString += "Tracker " + String(trackerIter) + " --> "
+            outputString += trackerType
+            outputString += " --> "
+            outputString += tracker.trackerValue
+            trackerStrings.push(outputString)
+            trackerIter += 1
+        }
+    }
+}
+
+// Parse the function signature string and build the placeholder data structure
+export function parseFunctionArguments(functionSignature: string) {
+    var start = functionSignature.lastIndexOf("(")
+    var substr = functionSignature.substring(start+1, functionSignature.indexOf(")", start))
+    var params = substr.split(", ");
+    var names = []
+    var typeIndex = 0
+    var addressIndex = 0
+    var uint256Index = 0
+    var stringIndex = 0
+
+    for(var param of params) {
+        var typeName = param.split(" ");
+        if(typeName[0].trim() == "uint256") {
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
+            uint256Index++
+        } else if(typeName[0].trim() == "string") {
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
+            stringIndex++
+        } else if(typeName[0].trim() == "address") {
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
+            addressIndex++
+        }
+        typeIndex++
+    }
+
+    return names
+}
+
+export function parseTrackers(condition: string, nextIndex: number, names: any[]) {
+    const trRegex = /TR:[a-zA-Z]+/g
+    const truRegex = /TRU:[a-zA-Z]+/g
+    var matches = condition.match(trRegex)
+
+    if(matches != null) {
+        var uniq = [...new Set(matches)];
+        for(var match of uniq!) {
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            nextIndex++
+        }
+    }
+
+    var matchesUpdate = condition.match(truRegex)
+
+    if(matchesUpdate != null) {
+        var uniq = [...new Set(matchesUpdate)];
+        for(var match of uniq!) {
+            match = match.replace("TRU:", "TR:")
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            nextIndex++
+        }
+    }
+}
+
+function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
+    let iter = 0
+    // Use a regular expression to find all FC expressions
+    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+    const matches = condition.matchAll(fcRegex);
+    let processedCondition = condition
+    // Convert matches iterator to array to process all at once
+    for (const match of matches) {
+        const fullFcExpr = match[0];
+        
+        if (names.indexOf(match) !== -1) {
+            let ph = names[names.indexOf(match)].fcPlaceholder
+            processedCondition = processedCondition.replace(fullFcExpr, ph)
+            continue
+        }
+        // Create a unique placeholder for this FC expression
+        const placeholder = `FC:${iter}`;
+        processedCondition = processedCondition.replace(fullFcExpr, placeholder);
+        names.push({name: match, tIndex: nextIndex, rawType: "foreign call", fcPlaceholder: placeholder})
+        iter++;
+        nextIndex++;
+    }
+
+    condition = processedCondition
+    return condition
+}
+
+// --------------------------------------------------------------------------------------------------
+
+
+// Internal Helper Functions
+// --------------------------------------------------------------------------------------------------
 function arithmeticOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[], 
     currentActionIndex: number, currentInstructionValues: any[], symbol: string) {
     for(var memValue of memAddressesMap) {
@@ -494,66 +811,6 @@ function buildIndividualMapping(parameter: string, argumentIterator: number, arg
         return true
     }
     return false
-}
-
-export function parseSyntax(syntax: string, indexMap: trackerIndexNameMapping[]) {
-    // Split the initial syntax string into condition, effect and function signature 
-    syntax = cleanString(syntax)
-    var initialSplit = syntax.split('-->')
-    var condition = initialSplit[0]
-
-    var functionSignature = initialSplit[2]
-
-    var effectSplit = initialSplit[1]
-
-    var foundMultiEffect = false
-    var positiveEffects: string[] = []
-    var negativeEffects: string[] = []
-
-    foundMultiEffect = parseEffectString(effectSplit, positiveEffects, negativeEffects)
-    if(!foundMultiEffect) {
-        positiveEffects.push(effectSplit)
-    }
-
-    var names = parseFunctionArguments(functionSignature)
-    
-    condition = parseForeignCalls(condition, names.length, names)
-    parseTrackers(condition + effectSplit, names.length, names)
-    var effectNames = Array.from(names)
-    for(var effectP in positiveEffects) {
-        positiveEffects[effectP] = parseForeignCalls(positiveEffects[effectP], effectNames.length, effectNames)
-    }
-    for(var effectN in negativeEffects) {
-        negativeEffects[effectN] = parseForeignCalls(negativeEffects[effectN], effectNames.length, effectNames)
-    }
-
-    var effectPlaceHolders: PlaceholderStruct[] = []
-    var positiveEffectsFinal = []
-    var negativeEffectsFinal = []
-    for(var effectP of positiveEffects) {
-        let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
-        positiveEffectsFinal.push(effect)
-
-    }
-
-    for(var effectN of negativeEffects) {
-        let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
-        negativeEffectsFinal.push(effect)
-    }
-    var retVal = interpretToInstructionSet(condition, names, indexMap)
-
-    var excludeArray = []
-    for(var name of names) {
-        excludeArray.push(name.name)
-    }
-
-    excludeArray.push(...matchArray)
-    excludeArray.push(...operandArray)
-    var rawData: any[] = []
-
-    var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
-    return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
-         placeHolders: retVal.placeHolders, effectPlaceHolders: effectPlaceHolders}
 }
 
 function parseEffectString(effectSplit: string, positiveEffects: string[], negativeEffects: string[]) {
@@ -650,87 +907,6 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
     }
 
     return {type: effectType, text: effectText, instructionSet: effectInstructionSet}
-}
-
-// Parse the function signature string and build the placeholder data structure
-export function parseFunctionArguments(functionSignature: string) {
-    var start = functionSignature.lastIndexOf("(")
-    var substr = functionSignature.substring(start+1, functionSignature.indexOf(")", start))
-    var params = substr.split(", ");
-    var names = []
-    var typeIndex = 0
-    var addressIndex = 0
-    var uint256Index = 0
-    var stringIndex = 0
-
-    for(var param of params) {
-        var typeName = param.split(" ");
-        if(typeName[0].trim() == "uint256") {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            uint256Index++
-        } else if(typeName[0].trim() == "string") {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            stringIndex++
-        } else if(typeName[0].trim() == "address") {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            addressIndex++
-        }
-        typeIndex++
-    }
-
-    return names
-}
-
-export function parseTrackers(condition: string, nextIndex: number, names: any[]) {
-    const trRegex = /TR:[a-zA-Z]+/g
-    const truRegex = /TRU:[a-zA-Z]+/g
-    var matches = condition.match(trRegex)
-
-    if(matches != null) {
-        var uniq = [...new Set(matches)];
-        for(var match of uniq!) {
-            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
-            nextIndex++
-        }
-    }
-
-    var matchesUpdate = condition.match(truRegex)
-
-    if(matchesUpdate != null) {
-        var uniq = [...new Set(matchesUpdate)];
-        for(var match of uniq!) {
-            match = match.replace("TRU:", "TR:")
-            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
-            nextIndex++
-        }
-    }
-}
-
-function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
-    let iter = 0
-    // Use a regular expression to find all FC expressions
-    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
-    const matches = condition.matchAll(fcRegex);
-    let processedCondition = condition
-    // Convert matches iterator to array to process all at once
-    for (const match of matches) {
-        const fullFcExpr = match[0];
-        
-        if (names.indexOf(match) !== -1) {
-            let ph = names[names.indexOf(match)].fcPlaceholder
-            processedCondition = processedCondition.replace(fullFcExpr, ph)
-            continue
-        }
-        // Create a unique placeholder for this FC expression
-        const placeholder = `FC:${iter}`;
-        processedCondition = processedCondition.replace(fullFcExpr, placeholder);
-        names.push({name: match, tIndex: nextIndex, rawType: "foreign call", fcPlaceholder: placeholder})
-        iter++;
-        nextIndex++;
-    }
-
-    condition = processedCondition
-    return condition
 }
 
 // Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
@@ -937,6 +1113,7 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
 }
 var plhIndex = 0
 var truIndex = -1
+
 // Convert AST to Instruction Set Syntax
 function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) { 
     if (!expression || expression.length === 0) {
@@ -1104,3 +1281,5 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
 function cleanString(str: string) {
     return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
+
+// --------------------------------------------------------------------------------------------------
