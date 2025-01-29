@@ -886,12 +886,9 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
     var effectText = ""
     var effectInstructionSet: any[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
-    // const emitTextPattern = /emit\s+\w+\("([^"]*)"\)/;
-    const emitTextPattern = /emit\s+\w+"([^"]*)"/;
 
     if(effect.includes("emit")) {
         effectType = EffectType.EVENT
-        const match = effect.match(emitTextPattern);
         effectText = effect.replace("emit ", "").trim()
     } else if (effect.includes("revert")) {
         effectType = EffectType.REVERT

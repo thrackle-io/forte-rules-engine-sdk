@@ -170,7 +170,7 @@ export const retrieveRule = async(ruleId: number, rulesEngineContract: RulesEngi
     } 
 }
 
-export const retrieveFullPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[], rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const retrieveFullPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[], rulesEngineContract: RulesEngineContract): Promise<string> => {
 
     try {
         const retrievePolicy = await simulateContract(config, {
@@ -235,14 +235,14 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
             ForeignCalls: callStrings,
             Rules: ruleStrings
         }
-        console.log(JSON.stringify(jsonObj))
+        return JSON.stringify(jsonObj)
 
     } catch (error) {
         console.error(error);
-            return -1;
+            return "";
     }    
 
-    return -1
+    return ""
 }
 
 export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, contractAddressForPolicy: Address): Promise<number> => {
