@@ -480,7 +480,7 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
             functionName: "getForeignCall",
             args: [ policyId, foreignCallId ],
         });
-        await writeContract(config, {
+        await readContract(config, {
             ...addFC.request,
             account
         });
@@ -503,7 +503,7 @@ export const getTracker = async(policyId: number, trackerId: number, rulesEngine
         });
     
 
-        await writeContract(config, {
+        await readContract(config, {
             ...retrieveTR.request,
             account
         });
@@ -526,7 +526,7 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
             args: [ policyId ],
         });
     
-        await writeContract(config, {
+        await readContract(config, {
             ...addFC.request,
             account
         });
@@ -552,7 +552,7 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
         });
     
 
-        await writeContract(config, {
+        await readContract(config, {
             ...retrieveTR.request,
             account
         });
