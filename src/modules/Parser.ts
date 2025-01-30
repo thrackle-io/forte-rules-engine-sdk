@@ -1131,30 +1131,41 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         for(var parameter of parameterNames) {
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
-    
-                retVal.push("PLH")
-                retVal.push(plhIndex)
-                plhIndex += 1
-                var placeHolderEnum = 0
-                var tracker = false
-                if(parameter.rawType == "address") {
-                    placeHolderEnum = 0
-                } else if (parameter.raw == "string") {
-                    placeHolderEnum = 1
-                } else if(parameter.rawType == "uint256") {
-                    placeHolderEnum = 2
-                } else if(parameter.rawType == "tracker") {
-                    placeHolderEnum = 0
-                    tracker = true
+                var plhIter = 0
+                var copyFound = false
+                for(var place of placeHolders) {
+                    if(place.typeSpecificIndex == parameter.tIndex) {
+                        retVal.push("PLH")
+                        retVal.push(plhIter)
+                        copyFound = true
+                    }
+                    plhIter += 1
                 }
+                if(!copyFound) { 
+                    retVal.push("PLH")
+                    retVal.push(plhIndex)
+                    plhIndex += 1
+                    var placeHolderEnum = 0
+                    var tracker = false
+                    if(parameter.rawType == "address") {
+                        placeHolderEnum = 0
+                    } else if (parameter.raw == "string") {
+                        placeHolderEnum = 1
+                    } else if(parameter.rawType == "uint256") {
+                        placeHolderEnum = 2
+                    } else if(parameter.rawType == "tracker") {
+                        placeHolderEnum = 0
+                        tracker = true
+                    }
 
-                var placeHolder : PlaceholderStruct = {
-                    pType: placeHolderEnum,
-                    typeSpecificIndex: parameter.tIndex,
-                    trackerValue: tracker,
-                    foreignCall: false
+                    var placeHolder : PlaceholderStruct = {
+                        pType: placeHolderEnum,
+                        typeSpecificIndex: parameter.tIndex,
+                        trackerValue: tracker,
+                        foreignCall: false
+                    }
+                    placeHolders.push(placeHolder)
                 }
-                placeHolders.push(placeHolder)
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
                 iterator.value += 1

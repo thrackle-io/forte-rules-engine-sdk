@@ -497,16 +497,16 @@ test('Evaluate complex expression with placeholders', () => {
   let expectedArray = [
     'PLH', 0,                    'N',
     1,     '==',                 0,
-    1,     'PLH',                1,
+    1,     'PLH',                0,
     'N',   0xdeadbeefdeadbeef, '==',
     3,     4,                    'AND',
     2,     5,                    'PLH',
-    2,     'N',                  1,
+    1,     'N',                  1,
     '==',  7,                    8,
-    'PLH', 3,                    'N',
+    'PLH', 0,                    'N',
     1,     '==',                 10,
     11,    'AND',                9,
-    12,    'PLH',                4,
+    12,    'PLH',                1,
     'N',   500,                  '<',
     14,    15,                   'AND',
     13,    16,                   'OR',
@@ -591,7 +591,7 @@ var expectedArray = [
   5, '==', 5, 6,
   'AND', 4, 7, 'PLH',
   2, 'PLH', 3, '==',
-  9, 10, 'PLH', 4, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
+  9, 10, 'PLH', 1, 'N', 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC, '==', 12,
   13, 'OR', 11, 14,
   'OR', 8, 15
 ]
@@ -694,7 +694,7 @@ test('Evaluate a simple syntax string for a revert effect with message', () => {
 
 test('Evaluate a simple syntax string for a event effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Something wrong --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseRuleSyntax(str)
+  var retVal = parseRuleSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Something wrong");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -702,7 +702,7 @@ test('Evaluate a simple syntax string for a event effect', () => {
 
 test('Evaluate a simple syntax string for a event effect without text', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> emit Goodvibes --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseRuleSyntax(str)
+  var retVal = parseRuleSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -710,7 +710,7 @@ test('Evaluate a simple syntax string for a event effect without text', () => {
 
 test('Evaluate a simple syntax string that contains a positive and negative effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes <-> neg: revert --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseRuleSyntax(str)
+  var retVal = parseRuleSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -721,7 +721,7 @@ test('Evaluate a simple syntax string that contains a positive and negative effe
 
 test('Evaluate a simple syntax string that contains multiple positive effects and a negative effect', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes, emit OtherGoodvibes <-> neg: revert --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseRuleSyntax(str)
+  var retVal = parseRuleSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -735,7 +735,7 @@ test('Evaluate a simple syntax string that contains multiple positive effects an
 
 test('Evaluate a simple syntax string that contains multiple positive and negative effects', () => {
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> pos: emit Goodvibes, emit OtherGoodvibes <-> neg: emit badVibes, FC:updateOracle(value) AND FC:alert(value) --> addValue(uint256 value) --> uint256 value`
-  var retVal = parseRuleSyntax(str)
+  var retVal = parseRuleSyntax(str, [])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -790,4 +790,20 @@ var retVal = parseRuleSyntax(str, [{trackerIndex: 4, trackerName: "TR:testOne"}]
 expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray)
 expect(retVal.effectPlaceHolders.length).toEqual(2)
 expect(retVal.effectPlaceHolders[0].trackerValue).toEqual(true)
+});
+
+test('Multiple copies of the same placeholder test', () => {
+
+var expectedArray = [
+  'PLH', 0,    'N',  4,   '+',   0,
+  1,     'N',  5,    '>', 2,     3,
+  'PLH', 0,    'N',  5,   '==',  5,
+  6,     'OR', 4,    7,   'PLH', 0,
+  'PLH', 1,    '==', 9,   10,    'OR',
+  8,     11
+]
+
+var str = "(value + 4 > 5 OR value == 5) OR value == TR:testTwo  --> revert --> addValue(uint256 value, string info, address addr)";
+var retVal = parseRuleSyntax(str, [])
+expect(retVal.instructionSet).toEqual(expectedArray)
 });

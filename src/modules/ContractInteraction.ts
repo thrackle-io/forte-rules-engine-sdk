@@ -242,7 +242,6 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
             return "";
     }    
 
-    return ""
 }
 
 export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, contractAddressForPolicy: Address): Promise<number> => {
@@ -652,8 +651,6 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         argumentTypes: output.rawData.argumentTypes,
         dataValues: output.rawData.dataValues,
     }
-
-    console.log("rawData: ", rawData)
 
     cleanInstructionSet(output.instructionSet)
 
