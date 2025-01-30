@@ -1,17 +1,25 @@
 // index.ts
 export { 
-    parseSyntax, 
+    parseRuleSyntax, 
     parseTrackerSyntax, 
     parseForeignCallDefinition, 
     EffectType, 
     TrackerDefinition, 
     stringReplacement,
+    RawData,
+    PT,
+    RuleStruct,
+    ForeignCallSet,
+    TrackerValuesSet,
     buildForeignCallArgumentMapping, 
     buildForeignCallList, 
     buildForeignCallListRaw, 
     parseFunctionArguments,
     reverseParseRule,
-    cleanInstructionSet
+    cleanInstructionSet,
+    convertRuleStructToString,
+    convertForeignCallStructsToStrings,
+    convertTrackerStructsToStrings
 } from './modules/Parser';
 
 export { getConfig, connectConfig, account, DiamondAddress } from '../config'

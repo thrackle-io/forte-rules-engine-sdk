@@ -7,17 +7,19 @@ import {
     ContractFunctionRevertedError,
     encodeFunctionData,
     PrivateKeyAccount,
-    ByteArray
+    ByteArray,
+    hexToString
 } from "viem";
 
 import {
     simulateContract,
     writeContract, 
-    readContract
+    readContract,
+    call
 } from "@wagmi/core";
 
 import { 
-    parseSyntax, 
+    parseRuleSyntax, 
     TrackerDefinition, 
     buildForeignCallList, 
     buildForeignCallListRaw, 
@@ -28,6 +30,13 @@ import {
     account,
     parseForeignCallDefinition,
     parseTrackerSyntax,
+    RawData,
+    reverseParseRule,
+    RuleStruct,
+    convertRuleStructToString,
+    convertForeignCallStructsToStrings,
+    convertTrackerStructsToStrings,
+    PT
 } from '../index';
 
 import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
@@ -42,28 +51,14 @@ type FCNameToID = {
     name: string
 }
 
-type ForeignCallCreationReturn = {
-
-    foreignCallAddress: string;
-    foreignCallIndex: number;
-    signature: string;
-    returnType: number;
-    parameterTypes: number[];
+type RuleStorageSet = {
+    set: boolean, 
+    rule: any
 }
 
-type ForeignCallSet = {
-    set: boolean,
-    foreignCalls: ForeignCallCreationReturn[]
-}
-
-type TrackerValuesSet = {
-    set: boolean;
-    trackers: TrackerTransactionType[];
-}
-
-type TrackerTransactionType = {
-    pType: number,
-    trackerValue: string
+type hexToFunctionSignature = {
+    hex: string,
+    functionSignature: string
 }
 
 interface PolicyJSON {
@@ -148,6 +143,106 @@ export const createBlankPolicy = async (
     }
 
     return addPolicy.result
+}
+
+export const retrieveRule = async(ruleId: number, rulesEngineContract: RulesEngineContract): Promise<RuleStruct | null> => {
+    
+    try {
+        const retrieveRule = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "getRule",
+            args: [ ruleId],
+        });
+
+        await writeContract(config, {
+            ...retrieveRule.request,
+            account
+        });
+
+        let ruleResult = retrieveRule.result as RuleStorageSet
+        let ruleS = ruleResult.rule as RuleStruct
+        return ruleS
+
+    } catch (error) {
+        console.error(error);
+            return null;
+    } 
+}
+
+export const retrieveFullPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[], rulesEngineContract: RulesEngineContract): Promise<string> => {
+
+    try {
+        const retrievePolicy = await simulateContract(config, {
+            address: rulesEngineContract.address,
+            abi: rulesEngineContract.abi,
+            functionName: "getPolicy",
+            args: [ policyId],
+        });
+
+        await writeContract(config, {
+            ...retrievePolicy.request,
+            account
+        });
+
+        let policyResult = retrievePolicy.result
+        let functionSignatures: any = policyResult[0]
+        let functionIds = policyResult[1]
+        let ruleIds2DArray: any = policyResult[2]
+
+        for(var fs of functionSignatures) {
+            console.log(fs)
+            for(var mapping of functionSignatureMappings) {
+                if(mapping.hex == fs) {
+                    console.log(mapping.functionSignature)
+                }
+            }
+        }
+
+        var iter = 0
+        var ruleStrings = []
+        for(var innerArray of ruleIds2DArray) {
+            var functionString = ""
+            var fs = functionSignatures[iter]
+            for(var mapping of functionSignatureMappings) {
+                if(mapping.hex == fs) {
+                     functionString = mapping.functionSignature
+                }
+            }
+            for (var ruleId of innerArray) {
+                console.log(ruleId)
+                var ruleS = await retrieveRule(ruleId, rulesEngineContract)
+                var plhArray: string[] = []
+                if(ruleS != null) {
+                    ruleStrings.push(convertRuleStructToString(functionString, ruleS, plhArray))
+                }
+                
+            }
+            iter++
+        }
+
+        var foreignCalls: ForeignCallSet | null = await getAllForeignCalls(policyId, rulesEngineContract)
+        var callStrings: string[] = []
+        convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
+
+
+        var trackers: TrackerValuesSet | null = await getAllTrackers(policyId, rulesEngineContract)
+        var trackerStrings: string[] = []
+        convertTrackerStructsToStrings(trackers, trackerStrings)
+
+        var jsonObj = {
+            Trackers: trackerStrings,
+            ForeignCalls: callStrings,
+            Rules: ruleStrings
+        }
+        return JSON.stringify(jsonObj)
+
+    } catch (error) {
+        console.error(error);
+            return "";
+    }    
+
+    return ""
 }
 
 export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, contractAddressForPolicy: Address): Promise<number> => {
@@ -385,7 +480,7 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
             functionName: "getForeignCall",
             args: [ policyId, foreignCallId ],
         });
-        await writeContract(config, {
+        await readContract(config, {
             ...addFC.request,
             account
         });
@@ -408,7 +503,7 @@ export const getTracker = async(policyId: number, trackerId: number, rulesEngine
         });
     
 
-        await writeContract(config, {
+        await readContract(config, {
             ...retrieveTR.request,
             account
         });
@@ -431,7 +526,7 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
             args: [ policyId ],
         });
     
-        await writeContract(config, {
+        await readContract(config, {
             ...addFC.request,
             account
         });
@@ -457,7 +552,7 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
         });
     
 
-        await writeContract(config, {
+        await readContract(config, {
             ...retrieveTR.request,
             account
         });
@@ -496,7 +591,7 @@ export const createNewRule = async (ruleSyntax: string, rulesEngineContract: Rul
 }
 
 export function buildAnEffectStruct(ruleSyntax: string) {
-    var output = parseSyntax(ruleSyntax)
+    var output = parseRuleSyntax(ruleSyntax)
     var pEffects = []
     var nEffects = []
     for(var pEffect of output.positiveEffects) {
@@ -526,7 +621,7 @@ export function buildAnEffectStruct(ruleSyntax: string) {
 }
 
 export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], effect: any) {
-    var output = parseSyntax(ruleSyntax)
+    var output = parseRuleSyntax(ruleSyntax)
     var fcList = buildForeignCallList(ruleSyntax.split('-->')[0])
     var fcNames = buildForeignCallListRaw(ruleSyntax.split('-->')[0])
     var fcIDs = []
@@ -557,6 +652,8 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         argumentTypes: output.rawData.argumentTypes,
         dataValues: output.rawData.dataValues,
     }
+
+    console.log("rawData: ", rawData)
 
     cleanInstructionSet(output.instructionSet)
 
