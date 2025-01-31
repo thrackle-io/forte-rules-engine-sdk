@@ -286,7 +286,7 @@ expect(() => parseTrackerSyntax(str)).toThrowError("Unsupported type")
 });
 
 test('Creates a simple foreign call', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 0, 1 ,2";
 var retVal = parseForeignCallDefinition(str)
 expect(retVal.name).toEqual("Simple Foreign Call")
 expect(retVal.address).toEqual(getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"))
@@ -301,17 +301,17 @@ expect(() => parseForeignCallDefinition(str)).toThrowError("Incorrect Foreign Ca
 });
 
 test('Tests incorrect format for address', () => {
-var str = "Simple Foreign Call --> test --> testSig(address,string,uint256) --> uint256 --> address, string, uint256";
+var str = "Simple Foreign Call --> test --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 0, 1, 2";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Address "test" is invalid')
 });
 
 test('Tests unsupported return type', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> notAnInt --> address, string, uint256";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> notAnInt --> address, string, uint256 --> 0, 1, 2";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported return type')
 });
 
 test('Tests unsupported argument type', () => {
-var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, notAnInt, uint256";
+var str = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, notAnInt, uint256 --> 0, 1, 2";
 expect(() => parseForeignCallDefinition(str)).toThrowError('Unsupported argument type')
 });
 

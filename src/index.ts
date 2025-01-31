@@ -9,8 +9,6 @@ export {
     RawData,
     PT,
     RuleStruct,
-    ForeignCallSet,
-    TrackerValuesSet,
     buildForeignCallArgumentMapping, 
     buildForeignCallList, 
     buildForeignCallListRaw, 

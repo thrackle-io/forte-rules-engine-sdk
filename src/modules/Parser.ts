@@ -36,11 +36,10 @@ type ForeignCallDefinition = {
 
     name: string;
     address: Address;
-    // TODO: Eventually look to constrain this to a bytes4 (will require changes on the Aquifi Rules side as well)
     signature: string;
     returnType: number;
     parameterTypes: number[];
-    policyId: number;
+    encodedIndices: number[];
 }
 
 type PlaceholderStruct = {
@@ -88,29 +87,6 @@ export type RawData = {
     dataValues: ByteArray[]
 }
 
-export type ForeignCallSet = {
-    set: boolean,
-    foreignCalls: ForeignCallCreationReturn[]
-}
-
-export type TrackerValuesSet = {
-    set: boolean;
-    trackers: TrackerTransactionType[];
-}
-
-type ForeignCallCreationReturn = {
-
-    foreignCallAddress: string;
-    foreignCallIndex: number;
-    signature: string;
-    returnType: number;
-    parameterTypes: number[];
-}
-
-type TrackerTransactionType = {
-    pType: number,
-    trackerValue: string
-}
 
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=']
 const truMatchArray: string[] = ['+=', '-=', '*=', '/=']
@@ -230,7 +206,7 @@ export function parseTrackerSyntax(syntax: string) {
 
 export function parseForeignCallDefinition(syntax: string) {
     var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 5) {
+    if(initialSplit.length != 6) {
         throw new Error("Incorrect Foreign Call Syntax")
     }
     var address: Address = getAddress(initialSplit[1].trim())
@@ -258,8 +234,18 @@ export function parseForeignCallDefinition(syntax: string) {
         }
     }
 
+    var encodedIndices: number[] = []
+    var encodedIndecesSplit = initialSplit[5].trim().split(',')
+    for(var encodedIndex of encodedIndecesSplit) {
+        if(!isNaN(Number(encodedIndex))) {
+            encodedIndices.push(Number(encodedIndex))
+        }
+    }
+
+
+
     return {name: initialSplit[0].trim(), address: address, signature: signature, 
-        returnType: returnType, parameterTypes: parameterTypes} as ForeignCallDefinition
+        returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices} as ForeignCallDefinition
 }
 
 export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
@@ -600,10 +586,10 @@ export function convertRuleStructToString(functionString: string, ruleS: RuleStr
     
 }
 
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallSet | null, functionSignatureMappings: hexToFunctionSignature[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: hexToFunctionSignature[]) {
     var fcIter = 1
     if(foreignCalls != null) {
-        for(var call of foreignCalls.foreignCalls) {
+        for(var call of foreignCalls) {
             var signatureString = ""
             for(var mapping of functionSignatureMappings) {
                 if(mapping.hex == call.signature) {
@@ -650,10 +636,10 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
     }
 }
 
-export function convertTrackerStructsToStrings(trackers: TrackerValuesSet | null, trackerStrings: string[]) {
+export function convertTrackerStructsToStrings(trackers: any[] | null, trackerStrings: string[]) {
     var trackerIter = 1
     if(trackers != null) {
-        for(var tracker of trackers.trackers) {
+        for(var tracker of trackers) {
 
             var trackerType = ""
             for(var parameterType of PT) {
