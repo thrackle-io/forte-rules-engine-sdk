@@ -8,7 +8,11 @@ import {
     encodeFunctionData,
     PrivateKeyAccount,
     ByteArray,
-    hexToString
+    hexToString,
+    toBytes,
+    toHex,
+    toFunctionSignature
+
 } from "viem";
 
 import {
@@ -88,16 +92,16 @@ export const createBlankPolicyBatch = async (
     calls.push(
         encodeFunctionData({
             abi: rulesEngineContract.abi,
-            functionName: "updatePolicy",
-            args: [0, [], [], [[]]],
+            functionName: "createPolicy",
+            args: [[], [], [[]]],
         })
     )
 
     const addPolicy = await simulateContract(config, {
         address: rulesEngineContract.address,
         abi: rulesEngineContract.abi,
-        functionName: "updatePolicy",
-        args: [0, [], [], [[]]],
+        functionName: "createPolicy",
+        args: [[], [], [[]]],
     })
 
     calls.push(
@@ -119,8 +123,8 @@ export const createBlankPolicy = async (
     const addPolicy = await simulateContract(config, {
         address: rulesEngineContract.address,
         abi: rulesEngineContract.abi,
-        functionName: "updatePolicy",
-        args: [0, [], [], [[]]],
+        functionName: "createPolicy",
+        args: [[], [], [[]]],
     })
 
     await writeContract(config, {
@@ -162,6 +166,16 @@ export const retrieveRule = async(ruleId: number, rulesEngineContract: RulesEngi
 
         let ruleResult = retrieveRule.result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct
+
+
+        for(var posEffect of ruleS.posEffects) {
+            posEffect.text = hexToString(posEffect.text).replace(/\u0000/g, "")
+        }
+
+        for(var negEffect of ruleS.negEffects) {
+            negEffect.text = hexToString(negEffect.text).replace(/\u0000/g, "")
+        }
+
         return ruleS
 
     } catch (error) {
@@ -190,15 +204,6 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
         let functionIds = policyResult[1]
         let ruleIds2DArray: any = policyResult[2]
 
-        for(var fs of functionSignatures) {
-            console.log(fs)
-            for(var mapping of functionSignatureMappings) {
-                if(mapping.hex == fs) {
-                    console.log(mapping.functionSignature)
-                }
-            }
-        }
-
         var iter = 0
         var ruleStrings = []
         for(var innerArray of ruleIds2DArray) {
@@ -210,7 +215,6 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
                 }
             }
             for (var ruleId of innerArray) {
-                console.log(ruleId)
                 var ruleS = await retrieveRule(ruleId, rulesEngineContract)
                 var plhArray: string[] = []
                 if(ruleS != null) {
@@ -221,12 +225,12 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
             iter++
         }
 
-        var foreignCalls: ForeignCallSet | null = await getAllForeignCalls(policyId, rulesEngineContract)
+
+        var foreignCalls: any[] | null = await getAllForeignCalls(policyId, rulesEngineContract)
         var callStrings: string[] = []
         convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
 
-
-        var trackers: TrackerValuesSet | null = await getAllTrackers(policyId, rulesEngineContract)
+        var trackers: any[] | null = await getAllTrackers(policyId, rulesEngineContract)
         var trackerStrings: string[] = []
         convertTrackerStructsToStrings(trackers, trackerStrings)
 
@@ -273,14 +277,14 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
 
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
-        const fcId = await createForeignCall(foreignCall, rulesEngineContract, policyId)
+        const fcId = await createForeignCall(policyId, foreignCall, rulesEngineContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
         fcIds.push(struc)
     }
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
-        const trId = await createTracker(tracker, rulesEngineContract, policyId)
+        const trId = await createTracker(policyId, tracker, rulesEngineContract)
         trackers.push(trackerStruct)
     }
 
@@ -293,7 +297,7 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
             functionSignatureIds.push(fsId)
         }
         
-        const ruleId = await createNewRule(rule, rulesEngineContract, fcIds, trackers)
+        const ruleId = await createNewRule(policyId, rule, rulesEngineContract, fcIds)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
             ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -371,17 +375,17 @@ export const executeBatch = async (
 
 }
 
-export const addNewRuleToBatch = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
+export const addNewRuleToBatch = async (policyId: number, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
 
         var effect = buildAnEffectStruct(ruleSyntax)
 
-        var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, effect)
+        var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effect)
 
         calls.push(
             encodeFunctionData({
                 abi: rulesEngineContract.abi,
-                functionName: "updateRule",
-                args: [ 0, rule ],
+                functionName: "createRule",
+                args: [ rule ],
             })
         )
 }
@@ -421,15 +425,24 @@ export const createFunctionSignature = async (functionSignature: string, rulesEn
     }
 }
 
-export const createForeignCall = async(fcSyntax: string, rulesEngineContract: RulesEngineContract, policyId: number): Promise<number> => {
+export const createForeignCall = async(policyId: number, fcSyntax: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
     try {
         var foreignCall = parseForeignCallDefinition(fcSyntax)
+        var fc = {
+            set: true,
+            foreignCallAddress: foreignCall.address,
+            signature: toFunctionSelector(foreignCall.signature),
+            foreignCallIndex: 0,
+            returnType: foreignCall.returnType,
+            parameterTypes: foreignCall.parameterTypes,
+            typeSpecificIndices: foreignCall.encodedIndices
 
+        }
         const addFC = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
-            functionName: "updateForeignCall",
-            args: [ policyId, foreignCall.address, foreignCall.signature, foreignCall.returnType, foreignCall.parameterTypes ],
+            functionName: "createForeignCall",
+            args: [ policyId, fc ],
         });
     
 
@@ -438,22 +451,23 @@ export const createForeignCall = async(fcSyntax: string, rulesEngineContract: Ru
             account
         });
 
-        let foreignCallResult = addFC.result as ForeignCallCreationReturn
-        return foreignCallResult.foreignCallIndex;
+        
+        return addFC.result
+
     } catch (error) {
         console.error(error);
         return -1;
     }
 }
 
-export const createTracker = async(trSyntax: string, rulesEngineContract: RulesEngineContract, policyId: number): Promise<number> => {
+export const createTracker = async(policyId: number, trSyntax: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
     try {
         var tracker: TrackerDefinition = parseTrackerSyntax(trSyntax)
-        var transactionTracker = {pType: tracker.type, trackerValue: tracker.defaultValue } as TrackerTransactionType
+        var transactionTracker = {set: true, pType: tracker.type, trackerValue: tracker.defaultValue } as TrackerTransactionType
         const addTR = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
-            functionName: "addTracker",
+            functionName: "createTracker",
             args: [ policyId,  transactionTracker ],
         });
 
@@ -516,12 +530,12 @@ export const getTracker = async(policyId: number, trackerId: number, rulesEngine
 }
 
 
-export const getAllForeignCalls = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<ForeignCallSet | null> => {
+export const getAllForeignCalls = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<any[] | null> => {
     try {
         const addFC = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
-            functionName: "getForeignCall",
+            functionName: "getAllForeignCalls",
             args: [ policyId ],
         });
     
@@ -530,8 +544,7 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
             account
         });
 
-        let foreignCallResult = addFC.result as ForeignCallSet
-        return foreignCallResult;
+        return addFC.result;
     } catch (error) {
         console.error(error);
         return null;
@@ -541,12 +554,12 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
 
 
 
-export const getAllTrackers = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<TrackerValuesSet | null> => {
+export const getAllTrackers = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<any[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
-            functionName: "getTracker",
+            functionName: "getAllTrackers",
             args: [ policyId],
         });
     
@@ -556,7 +569,7 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
             account
         });
 
-        let trackerResult = retrieveTR.result as TrackerValuesSet
+        let trackerResult = retrieveTR.result
         return trackerResult;
     } catch (error) {
     console.error(error);
@@ -564,16 +577,15 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
     }
 }
 
-export const createNewRule = async (ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[]): Promise<number> => {
+export const createNewRule = async (policyId: number, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[]): Promise<number> => {
     try {
-
         var effects = buildAnEffectStruct(ruleSyntax)
-        var rule = buildARuleStruct(ruleSyntax, foreignCallNameToID, policyTrackers, effects)
+        var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
         const addRule = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
-            functionName: "updateRule",
-            args: [ 0, rule ],
+            functionName: "createRule",
+            args: [ rule ],
         });
         
 
@@ -598,8 +610,15 @@ export function buildAnEffectStruct(ruleSyntax: string) {
 
         const effect = {
             valid: true,
+            dynamicParam: false,
             effectType: pEffect.type,
-            text: pEffect.text,
+            pType: 0,
+            param: toHex(0),
+            text: toHex(toBytes(
+                pEffect.text, 
+                { size: 32 } 
+              )),
+            errorMessage: '',
             instructionSet: pEffect.instructionSet
         } as const
         pEffects.push(effect)
@@ -609,8 +628,15 @@ export function buildAnEffectStruct(ruleSyntax: string) {
 
         const effect = {
             valid: true,
+            dynamicParam: false,
             effectType: nEffect.type,
-            text: nEffect.text,
+            pType: 0,
+            param: toHex(0),
+            text: toHex(toBytes(
+                nEffect.text, 
+                { size: 32 } 
+              )),
+            errorMessage: '',
             instructionSet: nEffect.instructionSet
         } as const
         nEffects.push(effect)
@@ -619,10 +645,10 @@ export function buildAnEffectStruct(ruleSyntax: string) {
     return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
 
-export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], effect: any) {
-    var output = parseRuleSyntax(ruleSyntax)
+
+export function buildARuleStruct(policyId: number, ruleSyntax: string, foreignCallNameToID: FCNameToID[], effect: any) {
+    var output = parseRuleSyntax(ruleSyntax, [])
     var fcList = buildForeignCallList(ruleSyntax.split('-->')[0])
-    var fcNames = buildForeignCallListRaw(ruleSyntax.split('-->')[0])
     var fcIDs = []
     for(var name of fcList) {
         for(var mapping of foreignCallNameToID) {
@@ -633,7 +659,6 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
     }
 
     var fcEffectList = buildForeignCallList(ruleSyntax.split('-->')[1])
-    var fcEffectNames = buildForeignCallListRaw(ruleSyntax.split('-->')[1])
     var fcEffectIDs = []
     for(var name of fcEffectList) {
         for(var mapping of foreignCallNameToID) {
@@ -643,9 +668,6 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
         }
     }
 
-    var names = parseFunctionArguments(ruleSyntax.split('-->')[2])
-    var fcmapping = buildForeignCallArgumentMapping(fcIDs, fcNames, names, policyTrackers)
-    var fcEffectMapping = buildForeignCallArgumentMapping(fcEffectIDs, fcEffectNames, names, [])
     var rawData = {
         instructionSetIndex: output.rawData.instructionSetIndex,
         argumentTypes: output.rawData.argumentTypes,
@@ -655,14 +677,15 @@ export function buildARuleStruct(ruleSyntax: string, foreignCallNameToID: FCName
     cleanInstructionSet(output.instructionSet)
 
     const rule =  {
+        policyId: policyId,
         instructionSet: output.instructionSet,
         rawData: rawData,          
         placeHolders: output.placeHolders,
         effectPlaceHolders: output.effectPlaceHolders,
-        fcArgumentMappingsConditions: fcmapping,
-        fcArgumentMappingsEffects: fcEffectMapping,
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
     } as const
+
+
     return rule
 }
