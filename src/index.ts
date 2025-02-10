@@ -9,6 +9,7 @@ export {
     RawData,
     PT,
     RuleStruct,
+    cleanString,
     buildForeignCallArgumentMapping, 
     buildForeignCallList, 
     buildForeignCallListRaw, 
@@ -21,6 +22,9 @@ export {
 } from './modules/Parser';
 
 export { getConfig, connectConfig, account, DiamondAddress } from '../config'
+
+export { generateModifier } from './codeGeneration/generateSolidity'
+export { injectModifier } from './codeGeneration/injectModifier'
 
 export { createNewRule, 
     getRulesEngineContract, 

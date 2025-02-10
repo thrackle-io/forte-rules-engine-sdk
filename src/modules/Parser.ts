@@ -1272,7 +1272,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
 
 
 // removes newlines and extra spaces from a string
-function cleanString(str: string) {
+export function cleanString(str: string) {
     return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 

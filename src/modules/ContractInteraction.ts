@@ -40,7 +40,9 @@ import {
     convertRuleStructToString,
     convertForeignCallStructsToStrings,
     convertTrackerStructsToStrings,
-    PT
+    PT,
+    generateModifier,
+    injectModifier
 } from '../index';
 
 import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
@@ -248,7 +250,8 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
 
 }
 
-export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, contractAddressForPolicy: Address): Promise<number> => {
+export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, 
+    contractAddressForPolicy: Address, outputFileName: string, contractToModify: string): Promise<number> => {
     var fcIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
     let ruleIds = []
@@ -297,7 +300,7 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
             functionSignatureIds.push(fsId)
         }
         
-        const ruleId = await createNewRule(policyId, rule, rulesEngineContract, fcIds)
+        const ruleId = await createNewRule(policyId, rule, rulesEngineContract, fcIds, outputFileName, contractToModify)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
             ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -552,8 +555,6 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
 
 }
 
-
-
 export const getAllTrackers = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<any[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
@@ -577,7 +578,8 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
     }
 }
 
-export const createNewRule = async (policyId: number, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[]): Promise<number> => {
+export const createNewRule = async (policyId: number, ruleSyntax: string, rulesEngineContract: RulesEngineContract, 
+    foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string): Promise<number> => {
     try {
         var effects = buildAnEffectStruct(ruleSyntax)
         var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
@@ -593,6 +595,20 @@ export const createNewRule = async (policyId: number, ruleSyntax: string, rulesE
             ...addRule.request,
             account
         });
+
+        generateModifier(ruleSyntax, outputFileName)
+
+        var directoryStructure = outputFileName.split('/')
+        directoryStructure.pop()
+        var directoryString = ''
+        for(var str of directoryStructure) {
+            directoryString = directoryString + str + '/'
+        }
+        directoryString = directoryString + 'diff.diff'
+
+        if(contractToModify && contractToModify.length > 0) {
+            injectModifier(ruleSyntax.split('-->')[2].split('(')[0], ruleSyntax.split('-->')[3], contractToModify, directoryString)
+        }
 
         return addRule.result;
     } catch (error) {

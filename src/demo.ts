@@ -33,7 +33,8 @@ const account = privateKeyToAccount(
     console.log("function ID: ", functionId)
     console.log(toFunctionSelector("transfer(address,uint256) returns (bool)"))
     console.log(stringToHex("transfer(address,uint256) returns (bool)"))
-    var ruleId = await createNewRule(client, 'value > 500 --> revert("value > 500") --> transfer(address to, uint256 value)', getRulesEngineContract(rulesEngineContract, client), [], [])
+    var ruleId = await createNewRule(client, 'value > 500 --> revert("value > 500") --> transfer(address to, uint256 value)', 
+        getRulesEngineContract(rulesEngineContract, client), [], "src/codeGeneration/demoTestFile.sol", "")
     var ruleIds = [[ruleId]]
     var functionIds = [functionId]
     var functionSignatures = [toFunctionSelector("transfer(address,uint256) returns (bool)")]
