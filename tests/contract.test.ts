@@ -74,13 +74,15 @@ describe('Rules Engine Interactions', async () => {
     test('Can create a batch of new rules', async () => {
         var policyId = await createBlankPolicy(policyApplicant, getRulesEngineContract(rulesEngineContract, client))
         var transactions: any[] = []
-        addNewRuleToBatch(policyId, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [], [], transactions);
-        addNewRuleToBatch(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [], transactions);
+        addNewRuleToBatch(policyId, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value) --> uint256 value", getRulesEngineContract(rulesEngineContract), [], [], transactions);
+        addNewRuleToBatch(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], [], transactions);
         const result = await executeBatch(getRulesEngineContract(rulesEngineContract), account, await transactions);
     })
     test('Can create a new rule', async () => {
         var policyId = await createBlankPolicy(policyApplicant, getRulesEngineContract(rulesEngineContract, client))
-        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value)", getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}])
+        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
+            getRulesEngineContract(rulesEngineContract), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
+            "src/codeGeneration/contractTestCreateNewRule.sol", "")
         expect(ruleId).toBeGreaterThan(0)
     })
 
@@ -114,9 +116,10 @@ describe('Rules Engine Interactions', async () => {
         "Policy": "Test Policy", \
         "ForeignCalls": ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 0"], \
         "Trackers": ["Simple String Tracker --> string --> test"], \
-        "Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value)"]\
+        "Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value) --> address to, uint256 value"]\
         }'
-        var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant)
+        var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant,
+            "src/codeGeneration/contractTestCreateFullPolicy.sol", "")
         expect(result).toBeGreaterThanOrEqual(0)
         var resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
         expect(resultFC?.length).toEqual(1)

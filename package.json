@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/diff": "^7.0.1",
     "@wagmi/connectors": "^5.7.3",
     "@wagmi/core": "^2.16.3",
+    "diff": "^7.0.0",
     "vitest": "^2.1.4"
   },
   "devDependencies": {

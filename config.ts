@@ -15,7 +15,7 @@ let _config: Config = createConfig({
       return createTestClient(
         { 
           chain,
-          transport: http('http://localhost:8545'),
+          transport: http('http://127.0.0.1:8545'),
           mode: 'anvil',
           account
         }
