@@ -114,8 +114,11 @@ const FC_PREFIX: string = 'FC:'
 export function parseRuleSyntax(syntax: string, indexMap: trackerIndexNameMapping[]) {
     // Split the initial syntax string into condition, effect and function signature 
     syntax = cleanString(syntax)
+
     var initialSplit = syntax.split('-->')
     var condition = initialSplit[0]
+
+    condition = removeExtraParenthesis(condition)
 
     var functionSignature = initialSplit[2]
 
@@ -1274,6 +1277,61 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
 // removes newlines and extra spaces from a string
 export function cleanString(str: string) {
     return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function removeExtraParenthesis(strToClean: string) {
+    var holders: string[] = []
+    var fcHolder: string[] = []
+    var iter = 0
+
+    while(strToClean.includes('FC:')) {
+        var initialIndex = strToClean.lastIndexOf('FC:')
+        var closingIndex = strToClean.indexOf(')', initialIndex)
+        var sub = strToClean.substring(initialIndex, closingIndex + 1)
+        fcHolder.push(sub)
+        var replacement = "fcRep:" + iter
+        iter += 1
+        strToClean = strToClean.replace(sub, replacement)
+    }
+
+    iter = 0
+    while(strToClean.includes('(')) {
+        var initialIndex = strToClean.lastIndexOf('(')
+        var closingIndex = strToClean.indexOf(')', initialIndex)
+        var sub = strToClean.substring(initialIndex, closingIndex + 1)
+        var removed = false
+
+        if(sub.includes('AND') || sub.includes('OR')) {
+            holders.push(sub)
+            var replacement = "rep:" + iter
+            iter += 1
+            strToClean = strToClean.replace(sub, replacement)
+        } else {
+            removed = true
+            strToClean = strToClean.substring(0, initialIndex) + '' + strToClean.substring(initialIndex + 1);
+            strToClean = strToClean.substring(0, closingIndex - 1) + '' + strToClean.substring(closingIndex);
+        }
+    }
+    
+    var replaceCount = 0
+    while(replaceCount < holders.length) {
+        iter = 0
+        for(var hold of holders) {
+            var str = "rep:" + iter
+            if(strToClean.includes(str)) {
+                strToClean = strToClean.replace(str, holders[iter])
+                replaceCount += 1
+            }
+            iter += 1
+        }
+    }
+    iter = 0
+    for(var hold of fcHolder) {
+        var str = "fcRep:" + iter
+        strToClean = strToClean.replace(str, fcHolder[iter])
+        iter += 1
+    }
+    return strToClean
 }
 
 // --------------------------------------------------------------------------------------------------

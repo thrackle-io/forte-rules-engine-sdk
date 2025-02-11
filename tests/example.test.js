@@ -513,17 +513,7 @@ test('Evaluate complex expression with placeholders', () => {
     6,     17
   ]
 
-  let str = `( to == 1 AND to == 0xdeadbeefdeadbeef )
-  OR
-  (
-   (
-     value == 1
-     AND 
-     to == 1
-   )
-   AND 
-   value < 500 
-  ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
+  let str = `( to == 1 AND to == 0xdeadbeefdeadbeef ) OR (( value == 1 AND to == 1) AND value < 500 ) --> revert --> transfer(address to, uint256 value) --> address to, uint256 value`
   let retVal = parseRuleSyntax(str, [])
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
@@ -807,3 +797,20 @@ var str = "(value + 4 > 5 OR value == 5) OR value == TR:testTwo  --> revert --> 
 var retVal = parseRuleSyntax(str, [])
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
+
+test('Extraneous paraenthesis', () => {
+
+  var expectedArray = [
+    'PLH', 0,    'N',  4,   '+',   0,
+    1,     'N',  5,    '>', 2,     3,
+    'PLH', 0,    'N',  5,   '==',  5,
+    6,     'OR', 4,    7,   'PLH', 0,
+    'PLH', 1,    '==', 9,   10,    'OR',
+    8,     11
+  ]
+  
+  var str = "(((value + 4 > 5) OR value == 5)) OR ((value == TR:testTwo))  --> revert --> addValue(uint256 value, string info, address addr)";
+  var retVal = parseRuleSyntax(str, [])
+  console.log(retVal.instructionSet)
+  expect(retVal.instructionSet).toEqual(expectedArray)
+  });
