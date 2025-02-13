@@ -9,6 +9,19 @@ export const account: PrivateKeyAccount = privateKeyToAccount(foundryPrivateKey)
 
 export const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
+export type Init = {
+  connect?: boolean
+  connectorIndex?: number
+  config: Config
+}
+
+export const initializeRulesSdk = async ({ connect, connectorIndex, config }: Init) => {
+  setupConfig(config)
+  if (connect && connectorIndex !== undefined) {
+    await connectConfig(config, connectorIndex)
+  }
+}
+
 let _config: Config = createConfig({
     chains: [foundry],
     client({ chain }) { 
