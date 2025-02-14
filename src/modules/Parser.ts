@@ -32,7 +32,7 @@ export type RuleStruct = {
     negEffects: any[]
 }
 
-type ForeignCallDefinition = {
+export type ForeignCallDefinition = {
 
     name: string;
     address: Address;

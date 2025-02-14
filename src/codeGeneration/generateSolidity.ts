@@ -1,6 +1,6 @@
 import { 
     cleanString
-} from '../index';
+} from '../modules/Parser';
 
 import * as fs from 'fs';
 

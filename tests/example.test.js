@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { parseRuleSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, stringReplacement, 
-  buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/index.ts';
+  buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/modules/Parser.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes, toHex } from 'viem';
 import { pTypeEnum } from '../src/modules/Parser.ts';
 
