@@ -306,27 +306,31 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
 
 export const updatePolicy = async (
     rulesEngineContract: RulesEngineContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
-        try {
-
-            const updatePolicy = await simulateContract(config, {
+        var updatePolicy
+        while(true) {
+            try {
+                updatePolicy = await simulateContract(config, {
                 address: rulesEngineContract.address,
                 abi: rulesEngineContract.abi,
                 functionName: "updatePolicy",
                 args: [ policyId, signatures, ids, ruleIds ],
-            });
-            
-    
+                });
+            } catch (error) {
+                console.error(error);
+                await sleep(1000)       
+            }
+            break
+        }
+        if(updatePolicy != null) {
             await writeContract(config, {
                 ...updatePolicy.request,
                 account
             });
     
             return updatePolicy.result;
-        } catch (error) {
-            console.error(error);
-            return -1;
-        }
+        } 
 
+        return -1
     }
 
 export const executeBatch = async (
