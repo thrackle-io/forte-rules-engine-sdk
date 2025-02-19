@@ -1,0 +1,6 @@
+{
+"Policy": "Test Policy", 
+"ForeignCalls": ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 0"], 
+"Trackers": ["Simple String Tracker --> string --> test"], 
+"Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value) --> address to, uint256 value"]
+}

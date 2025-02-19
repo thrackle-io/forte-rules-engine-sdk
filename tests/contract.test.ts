@@ -2,7 +2,7 @@ import { readContract } from "@wagmi/core"
 import { getAddress, toHex } from 'viem'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
-import { createBlankPolicyBatch, 
+import {  
     executeBatch, 
     createNewRule, 
     createForeignCall, 
