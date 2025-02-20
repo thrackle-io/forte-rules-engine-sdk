@@ -75,8 +75,6 @@ interface PolicyJSON {
 
 const config = getConfig()
 
-// const client = config.getClient({chain: config.chains[0]})
-
 export const getRulesEngineContract = (address: Address, client): RulesEngineContract => getContract({
   address,
   abi: RulesEngineABI,
@@ -111,7 +109,7 @@ export const createBlankPolicy = async (
                     address: rulesEngineContract.address,
                     abi: rulesEngineContract.abi,
                     functionName: "applyPolicy",
-                    args: [contractAddressForPolicy.toLowerCase(), [Number(addPolicy.result)]],
+                    args: [contractAddressForPolicy, [Number(addPolicy.result)]],
                 })
             } catch (error) {
                 await sleep(1000);
@@ -315,7 +313,6 @@ export const updatePolicy = async (
                 args: [ policyId, signatures, ids, ruleIds ],
                 });
             } catch (error) {
-                console.error(error);
                 await sleep(1000)       
             }
             break

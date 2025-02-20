@@ -30,7 +30,6 @@ const rulesEngineAbi = RulesEngineRunLogicJson.abi
 const config = getConfig()
 
 const client = config.getClient({chainID: config.chains[0].id})
-// var policyId = 0
 
 // Take snapshot
 export const takeSnapshot = async () => {
@@ -44,10 +43,10 @@ export const revertToSnapshot = async (snapshotId: any) => {
 }
 
 
-describe.sequential('Rules Engine Interactions', async () => {
+describe('Rules Engine Interactions', async () => {
     const rulesEngineContract: `0x${string}` = DiamondAddress;
     // Vanity address for now, lets try to eventually deploy a real token contract and use that here instead
-    const policyApplicant: `0x${string}` = getAddress('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef');
+    const policyApplicant: `0x${string}` = getAddress('0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef');
     let snapshotId: `0x${string}`;
     beforeAll(async () => {
         await connectConfig(config, 0)
@@ -69,7 +68,7 @@ describe.sequential('Rules Engine Interactions', async () => {
         var policyId = await createBlankPolicy(policyApplicant, getRulesEngineContract(rulesEngineContract, client))
         var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
             getRulesEngineContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/codeGeneration/contractTestCreateNewRule.sol", "")
+            "src/testOutput/contractTestCreateNewRule.sol", "")
         expect(ruleId).toBeGreaterThan(0)
     })
     test('Can create a new foreign call', async() => {
@@ -111,7 +110,7 @@ describe.sequential('Rules Engine Interactions', async () => {
         "Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value) --> address to, uint256 value"]\
         }'
         var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant,
-            "src/codeGeneration/contractTestCreateFullPolicy.sol", "")
+            "src/testOutput/contractTestCreateFullPolicy.sol", "")
         expect(result).toBeGreaterThanOrEqual(0)
         var resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
 

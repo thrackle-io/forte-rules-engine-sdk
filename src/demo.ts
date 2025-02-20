@@ -11,11 +11,6 @@ import * as path from 'path';
 const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
 const rulesEngineAbi = RulesEngineRunLogicJson.abi
-// const client = createTestClient({
-//     chain: foundry,
-//     mode: 'anvil',
-//     transport: http('http://localhost:8545')
-// }).extend(walletActions).extend(publicActions)
 
 const config = getConfig()
 
