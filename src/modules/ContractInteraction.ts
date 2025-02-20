@@ -114,7 +114,6 @@ export const createBlankPolicy = async (
                     args: [contractAddressForPolicy.toLowerCase(), [Number(addPolicy.result)]],
                 })
             } catch (error) {
-                console.error(error);
                 await sleep(1000);
             } 
             if(applyPolicy != null) {
@@ -132,14 +131,14 @@ export const createBlankPolicy = async (
 }
 
 
-export const retrieveRule = async(ruleId: number, rulesEngineContract: RulesEngineContract): Promise<RuleStruct | null> => {
+export const retrieveRule = async(policyId: number, ruleId: number, rulesEngineContract: RulesEngineContract): Promise<RuleStruct | null> => {
     
     try {
         const retrieveRule = await simulateContract(config, {
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
             functionName: "getRule",
-            args: [ ruleId],
+            args: [ policyId, ruleId],
         });
 
         await writeContract(config, {
@@ -198,7 +197,7 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
                 }
             }
             for (var ruleId of innerArray) {
-                var ruleS = await retrieveRule(ruleId, rulesEngineContract)
+                var ruleS = await retrieveRule(policyId, ruleId, rulesEngineContract)
                 var plhArray: string[] = []
                 if(ruleS != null) {
                     ruleStrings.push(convertRuleStructToString(functionString, ruleS, plhArray))
@@ -373,7 +372,7 @@ export const addNewRuleToBatch = async (policyId: number, ruleSyntax: string, ru
             encodeFunctionData({
                 abi: rulesEngineContract.abi,
                 functionName: "createRule",
-                args: [ rule ],
+                args: [ policyId, rule ],
             })
         )
 }
@@ -572,7 +571,7 @@ export const createNewRule = async (policyId: number, ruleSyntax: string, rulesE
             address: rulesEngineContract.address,
             abi: rulesEngineContract.abi,
             functionName: "createRule",
-            args: [ rule ],
+            args: [ policyId, rule ],
         });
         
 

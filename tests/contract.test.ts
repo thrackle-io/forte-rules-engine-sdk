@@ -76,7 +76,7 @@ describe.sequential('Rules Engine Interactions', async () => {
         var policyId = await createBlankPolicy(policyApplicant, getRulesEngineContract(rulesEngineContract, client))
         var fcSyntax = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 0, 1, 2"
         var fcId = await createForeignCall(policyId, fcSyntax, getRulesEngineContract(rulesEngineContract, client))
-        expect(fcId).toEqual(0n)
+        expect(fcId).toEqual(1n)
         var fcRetrieve = await getForeignCall(policyId, fcId, getRulesEngineContract(rulesEngineContract, client))
         expect(fcRetrieve?.foreignCallIndex).toEqual(fcId)
         var fcAllRetrieve = await getAllForeignCalls(policyId, getRulesEngineContract(rulesEngineContract, client))
@@ -87,7 +87,7 @@ describe.sequential('Rules Engine Interactions', async () => {
         var policyId = await createBlankPolicy(policyApplicant, getRulesEngineContract(rulesEngineContract, client))
         expect(policyId).toBeGreaterThan(0)
         var trId = await createTracker(policyId, trSyntax, getRulesEngineContract(rulesEngineContract, client))
-        expect(trId).toEqual(0n)
+        expect(trId).toEqual(1n)
         var trAllRetrieve = await getAllTrackers(policyId, getRulesEngineContract(rulesEngineContract, client))
         while(true) {
             if(trAllRetrieve!.length < 1) {
