@@ -598,7 +598,7 @@ export const createNewRule = async (policyId: number, ruleSyntax: string, rulesE
     }
 }
 
-export function buildAnEffectStruct(ruleSyntax: string) {
+function buildAnEffectStruct(ruleSyntax: string) {
     var output = parseRuleSyntax(ruleSyntax, [])
     var pEffects = []
     var nEffects = []
@@ -643,7 +643,7 @@ export function buildAnEffectStruct(ruleSyntax: string) {
 }
 
 
-export function buildARuleStruct(policyId: number, ruleSyntax: string, foreignCallNameToID: FCNameToID[], effect: any) {
+function buildARuleStruct(policyId: number, ruleSyntax: string, foreignCallNameToID: FCNameToID[], effect: any) {
     var output = parseRuleSyntax(ruleSyntax, [])
     var fcList = buildForeignCallList(ruleSyntax.split('-->')[0])
     var fcIDs = []
@@ -674,7 +674,6 @@ export function buildARuleStruct(policyId: number, ruleSyntax: string, foreignCa
     cleanInstructionSet(output.instructionSet)
 
     const rule =  {
-        policyId: policyId,
         instructionSet: output.instructionSet,
         rawData: rawData,          
         placeHolders: output.placeHolders,
