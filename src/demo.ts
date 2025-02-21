@@ -2,16 +2,19 @@ import { createTestClient, http, walletActions, publicActions, testActions, Addr
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
-import { createBlankPolicyBatch, executeBatch, createNewRule, addNewRuleToBatch, updatePolicy, getRulesEngineContract, createFunctionSignature } from "../src/modules/ContractInteraction";
+import { createFullPolicy, getAllForeignCalls, getRulesEngineContract, sleep, getAllTrackers, retrieveFullPolicy } from "../src/modules/ContractInteraction";
+import { getConfig, connectConfig } from '../config'
+import * as fs from 'fs';
+import * as path from 'path';
+
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
 const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
 
 const rulesEngineAbi = RulesEngineRunLogicJson.abi
-const client = createTestClient({
-    chain: foundry,
-    mode: 'anvil',
-    transport: http('http://localhost:8545')
-}).extend(walletActions).extend(publicActions)
+
+const config = getConfig()
+
+const client = config.getClient({chainID: config.chains[0].id})
 
 const account = privateKeyToAccount(
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
@@ -20,26 +23,33 @@ const account = privateKeyToAccount(
   async function main() {
     const rulesEngineContract: `0x${string}` = DiamondAddress;
     const policyApplicant: `0x${string}` = getAddress('0xa513E6E4b8f2a923D98304ec87F64353C4D5C853');
-    const callsAndResult = await createBlankPolicyBatch(client, policyApplicant, getRulesEngineContract(rulesEngineContract, client));
-    const result = await executeBatch(client, getRulesEngineContract(rulesEngineContract, client), account, callsAndResult.calls);
-    const policyId = await client.readContract({
-        address: rulesEngineContract,
-        abi: rulesEngineAbi,
-        functionName: "getAppliedPolicyIds",
-        args: [policyApplicant]
-    })
-    console.log("policy Id: ", policyId)
-    var functionId = await createFunctionSignature(client, "transfer(address,uint256) returns (bool)", getRulesEngineContract(rulesEngineContract, client))
-    console.log("function ID: ", functionId)
-    console.log(toFunctionSelector("transfer(address,uint256) returns (bool)"))
-    console.log(stringToHex("transfer(address,uint256) returns (bool)"))
-    var ruleId = await createNewRule(client, 'value > 500 --> revert("value > 500") --> transfer(address to, uint256 value)', 
-        getRulesEngineContract(rulesEngineContract, client), [], "src/codeGeneration/demoTestFile.sol", "")
-    var ruleIds = [[ruleId]]
-    var functionIds = [functionId]
-    var functionSignatures = [toFunctionSelector("transfer(address,uint256) returns (bool)")]
-    var policyIdUpdate = await updatePolicy(client, getRulesEngineContract(rulesEngineContract, client), policyId as number, functionSignatures, functionIds, ruleIds)
-    console.log(policyIdUpdate)
+    await connectConfig(config, 0)
+
+    const absolutePath = path.resolve("src/demo.json")
+    const policyJSON = await fs.promises.readFile(absolutePath, 'utf-8');
+    var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant,
+        "src/demoOutput/contractTestCreateFullPolicy.sol", "src/demoOutput/UserContract.sol")
+    var resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
+
+    while(true) {
+        if(resultFC!.length < 1) {
+            await sleep(1000)
+            resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
+        } else {
+            break
+        }
+    }
+
+    var resultTR = await getAllTrackers(result, getRulesEngineContract(rulesEngineContract, client))
+    var retVal = await retrieveFullPolicy(result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)"}, 
+        {hex: '0x71308757', functionSignature: "testSig(address)"}
+    ],getRulesEngineContract(rulesEngineContract, client))
+
+    console.log("Foreign Call Count: ", resultFC?.length)
+    console.log("Tracker Count: ", resultTR?.length)
+    console.log("Reverse Interpreted Policy: ")
+    console.log(retVal)
+
 }
 
 main()

@@ -1,14 +1,14 @@
 import { 
     cleanString
-} from '../index';
+} from '../modules/Parser';
 
 import * as fs from 'fs';
+import * as path from 'path';
 
 export function generateModifier(syntax: string, outputFileName: string) { 
         syntax = cleanString(syntax)
         var initialSplit = syntax.split('-->')
-
-        const filePath = 'src/codeGeneration/Template.sol'; 
+        var absPath = path.join(__dirname, "Template.sol")
         const filePathOutput = outputFileName
         var argList = initialSplit[3]
         
@@ -31,7 +31,7 @@ export function generateModifier(syntax: string, outputFileName: string) {
         var outputString = modifierNameStr + encodeStr + thirdLine + fourthLine + finalLine
         var outputStringTwo = modifierNameAfterStr + encodeStr + fourthLine + thirdLine + finalLine
         var replaceStr = outputString + '\n\n' + outputStringTwo
-        var data = fs.readFileSync(filePath, 'utf-8')
+        var data = fs.readFileSync(absPath, 'utf-8')
         var modifiedData = data.replace('// Modifier Here', replaceStr);
         
         // Write the modified data back to the file

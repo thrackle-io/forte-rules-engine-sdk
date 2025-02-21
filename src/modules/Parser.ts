@@ -32,7 +32,7 @@ export type RuleStruct = {
     negEffects: any[]
 }
 
-type ForeignCallDefinition = {
+export type ForeignCallDefinition = {
 
     name: string;
     address: Address;
@@ -252,7 +252,6 @@ export function parseForeignCallDefinition(syntax: string) {
 }
 
 export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
-    console.log(instructionSet)
     var currentAction = -1
     var currentActionIndex = 0
     var currentMemAddress = 0
@@ -543,7 +542,6 @@ export function convertRuleStructToString(functionString: string, ruleS: RuleStr
     var names = parseFunctionArguments(functionString)
 
     for(var plh of ruleS!.placeHolders) {
-        console.log(names[plh.typeSpecificIndex].name)
         plhArray.push(names[plh.typeSpecificIndex].name)
     }
     var effectString = ""
