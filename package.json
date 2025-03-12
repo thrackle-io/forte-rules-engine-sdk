@@ -14,7 +14,7 @@
     "@wagmi/connectors": "^5.7.3",
     "@wagmi/core": "^2.16.3",
     "diff": "^7.0.0",
-    "vitest": "^2.1.4"
+    "vitest": "^3.0.8"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
