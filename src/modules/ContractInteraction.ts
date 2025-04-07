@@ -590,6 +590,35 @@ export const getAllTrackers = async(policyId: number,
     }
 }
 
+export const updateRule = async (policyId: number, ruleId: number, ruleSyntax: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+    foreignCallNameToID: FCNameToID[]): Promise<number> => {
+    var effects = buildAnEffectStruct(ruleSyntax)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
+    var addRule
+    while(true) {
+        try {
+            addRule = await simulateContract(config, {
+                address: rulesEnginePolicyContract.address,
+                abi: rulesEnginePolicyContract.abi,
+                functionName: "updateRule",
+                args: [ policyId, ruleId, rule ],
+            });
+            break
+        } catch (err) {
+            sleep(1000)
+        }
+    }
+    if(addRule != null) {
+        await writeContract(config, {
+            ...addRule.request,
+            account
+        });
+
+        return addRule.result;
+    } 
+    return -1
+}
+
 export const createNewRule = async (policyId: number, ruleSyntax: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string): Promise<number> => {
     var effects = buildAnEffectStruct(ruleSyntax)

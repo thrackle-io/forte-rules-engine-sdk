@@ -17,7 +17,8 @@ import {
     createFullPolicy,
     retrieveFullPolicy,
     createBlankPolicy,
-    sleep
+    sleep,
+    updateRule
 
 } from "../src/modules/ContractInteraction";
 
@@ -71,6 +72,16 @@ describe('Rules Engine Interactions', async () => {
             getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
             "src/testOutput/contractTestCreateNewRule.sol", "")
         expect(ruleId).toBeGreaterThan(0)
+    })
+    test('Can update an existing rule', async () => {
+        var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
+        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "")
+        expect(ruleId).toBeGreaterThan(0)
+        var updatedRuleId = await updateRule(policyId, ruleId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}])
+        expect(updatedRuleId).toEqual(ruleId)
     })
     test('Can create a new foreign call', async() => {
         var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
