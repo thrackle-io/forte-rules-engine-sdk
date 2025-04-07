@@ -7,7 +7,7 @@ import { http, walletActions, publicActions, createTestClient, PrivateKeyAccount
 const foundryPrivateKey: `0x${string}` = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 export const account: PrivateKeyAccount = privateKeyToAccount(foundryPrivateKey)
 
-export const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
+export const DiamondAddress: `0x${string}` = `0x0165878A594ca255338adfa4d48449f69242Eb8F`
 
 export type Init = {
   connect?: boolean
