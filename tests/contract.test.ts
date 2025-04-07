@@ -1,6 +1,5 @@
 import { readContract } from "@wagmi/core"
 import { getAddress, toHex } from 'viem'
-import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import {  
     executeBatch, 
@@ -26,8 +25,6 @@ import {
 import { getConfig, account, DiamondAddress, connectConfig } from '../config'
 
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
-
-const rulesEngineAbi = RulesEngineRunLogicJson.abi
 
 const config = getConfig()
 
