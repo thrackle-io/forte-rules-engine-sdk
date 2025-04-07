@@ -126,6 +126,7 @@ export const applyPolicy = async(policyId: number, contractAddressForPolicy: Add
             })
             break
         } catch (error) {
+            // TODO: Look into replacing this loop/sleep with setTimeout
             await sleep(1000);
         } 
     }
@@ -325,8 +326,8 @@ export const updatePolicy = async (
                 });
                 break
             } catch (error) {
-                await sleep(1000)  
-                // console.log(error)     
+                // TODO: Look into replacing this loop/sleep with setTimeout
+                await sleep(1000)      
             }
             
         }
@@ -412,7 +413,8 @@ export const createFunctionSignature = async (policyId: number, functionSignatur
             });
             break
         } catch (err) {
-            sleep(1000)
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
         }
     }
     if(addRule != null) {
@@ -450,7 +452,8 @@ export const createForeignCall = async(policyId: number, fcSyntax: string,
             });
             break
         } catch (err) {
-            sleep(1000)
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
         }
     }
     if(addFC != null) {
@@ -480,7 +483,8 @@ export const createTracker = async(policyId: number, trSyntax: string,
             });
             break
         } catch (err) {
-            sleep(1000)
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
         }
     }
     if(addTR != null) {
@@ -605,7 +609,8 @@ export const updateRule = async (policyId: number, ruleId: number, ruleSyntax: s
             });
             break
         } catch (err) {
-            sleep(1000)
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
         }
     }
     if(addRule != null) {
@@ -634,7 +639,8 @@ export const createNewRule = async (policyId: number, ruleSyntax: string, rulesE
             });
             break
         } catch (err) {
-            sleep(1000)
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
         }
     }
     if(addRule != null) {
