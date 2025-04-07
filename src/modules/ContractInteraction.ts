@@ -44,12 +44,15 @@ import {
 
 import { getConfig, account } from '../../config'
 
-import RulesEngineRunLogicArtifact from "../abis/RulesEngineDataFacet.json";
 import RulesDiamondArtifact from "../abis/RulesEngineDiamond.json";
+import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
+import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet.json";
 
-const RulesEngineABI = RulesEngineRunLogicArtifact.abi
+const RulesEnginePolicyABI = RulesEnginePolicyLogicArtifact.abi;
+const RulesEngineComponentABI = RulesEngineComponentLogicArtifact.abi;
 
-type RulesEngineContract = GetContractReturnType<typeof RulesEngineABI>;
+type RulesEnginePolicyContract = GetContractReturnType<typeof RulesEnginePolicyABI>;
+type RulesEngineComponentContract = GetContractReturnType<typeof RulesEngineComponentABI>;
 
 type FCNameToID = {
     id: number
@@ -75,65 +78,73 @@ interface PolicyJSON {
 
 const config = getConfig()
 
-export const getRulesEngineContract = (address: Address, client): RulesEngineContract => getContract({
-  address,
-  abi: RulesEngineABI,
-  client
-});
+export const getRulesEnginePolicyContract = (address: Address, client): RulesEnginePolicyContract => getContract({
+    address,
+    abi: RulesEnginePolicyABI,
+    client
+  });
+
+  export const getRulesEngineComponentContract = (address: Address, client): RulesEngineComponentContract => getContract({
+    address,
+    abi: RulesEngineComponentABI,
+    client
+  });
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(
         (resolve) => setTimeout(resolve, ms));
 }
 
-export const createBlankPolicy = async (
-    contractAddressForPolicy: Address, 
-    rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const createBlankPolicy = async (policyType: number, 
+    rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<number> => {
         
-
     const addPolicy = await simulateContract(config, {
-        address: rulesEngineContract.address,
-        abi: rulesEngineContract.abi,
+        address: rulesEnginePolicyContract.address,
+        abi: rulesEnginePolicyContract.abi,
         functionName: "createPolicy",
-        args: [[], []],
+        args: [[], [], policyType],
     })
     const returnHash = await writeContract(config, {
         ...addPolicy.request,
         account
     });
-    if(addPolicy.result > 0) {
-        var applyPolicy
-        while(true) {
-            try {
-                applyPolicy = await simulateContract(config, {
-                    address: rulesEngineContract.address,
-                    abi: rulesEngineContract.abi,
-                    functionName: "applyPolicy",
-                    args: [contractAddressForPolicy, [Number(addPolicy.result)]],
-                })
-                break
-            } catch (error) {
-                await sleep(1000);
-            } 
-        }
-
-        if(applyPolicy != null) {
-            await writeContract(config, {
-            ...applyPolicy.request,
-            account
-            }) 
-        }
-    }
 
     return addPolicy.result
 }
 
-export const retrieveRule = async(policyId: number, ruleId: number, rulesEngineContract: RulesEngineContract): Promise<RuleStruct | null> => {
+export const applyPolicy = async(policyId: number, contractAddressForPolicy: Address,
+    rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<number> => {
+
+    var applyPolicy
+    while(true) {
+        try {
+            applyPolicy = await simulateContract(config, {
+                address: rulesEnginePolicyContract.address,
+                abi: rulesEnginePolicyContract.abi,
+                functionName: "applyPolicy",
+                args: [contractAddressForPolicy, [policyId]],
+            })
+            break
+        } catch (error) {
+            await sleep(1000);
+        } 
+    }
+
+    if(applyPolicy != null) {
+        await writeContract(config, {
+        ...applyPolicy.request,
+        account
+        }) 
+    }
+    return applyPolicy.result
+}
+
+export const retrieveRule = async(policyId: number, ruleId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<RuleStruct | null> => {
     
     try {
         const retrieveRule = await simulateContract(config, {
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
             functionName: "getRule",
             args: [ policyId, ruleId],
         });
@@ -163,12 +174,12 @@ export const retrieveRule = async(policyId: number, ruleId: number, rulesEngineC
     } 
 }
 
-export const retrieveFullPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[], rulesEngineContract: RulesEngineContract): Promise<string> => {
-
+export const retrieveFullPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[], 
+    rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract): Promise<string> => {
     try {
         const retrievePolicy = await simulateContract(config, {
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
             functionName: "getPolicy",
             args: [ policyId],
         });
@@ -194,7 +205,7 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
                 }
             }
             for (var ruleId of innerArray) {
-                var ruleS = await retrieveRule(policyId, ruleId, rulesEngineContract)
+                var ruleS = await retrieveRule(policyId, ruleId, rulesEnginePolicyContract)
                 var plhArray: string[] = []
                 if(ruleS != null) {
                     ruleStrings.push(convertRuleStructToString(functionString, ruleS, plhArray))
@@ -205,11 +216,11 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
         }
 
 
-        var foreignCalls: any[] | null = await getAllForeignCalls(policyId, rulesEngineContract)
+        var foreignCalls: any[] | null = await getAllForeignCalls(policyId, rulesEngineComponentContract)
         var callStrings: string[] = []
         convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
 
-        var trackers: any[] | null = await getAllTrackers(policyId, rulesEngineContract)
+        var trackers: any[] | null = await getAllTrackers(policyId, rulesEngineComponentContract)
         var trackerStrings: string[] = []
         convertTrackerStructsToStrings(trackers, trackerStrings)
 
@@ -227,8 +238,9 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
 
 }
 
-export const createFullPolicy = async (rulesEngineContract: RulesEngineContract, policySyntax: string, 
-    contractAddressForPolicy: Address, outputFileName: string, contractToModify: string): Promise<number> => {
+export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
+    policySyntax: string, contractAddressForPolicy: Address, outputFileName: string, contractToModify: string, 
+    policyType: number): Promise<number> => {
     var fcIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
     let ruleIds = []
@@ -253,18 +265,18 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
     // }
     // -----------------------------------------------------------
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
-    const policyId = await createBlankPolicy(contractAddressForPolicy, rulesEngineContract)
+    const policyId = await createBlankPolicy(policyType, rulesEnginePolicyContract)
 
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
-        const fcId = await createForeignCall(policyId, foreignCall, rulesEngineContract)
+        const fcId = await createForeignCall(policyId, foreignCall, rulesEngineComponentContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
         fcIds.push(struc)
     }
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
-        const trId = await createTracker(policyId, tracker, rulesEngineContract)
+        const trId = await createTracker(policyId, tracker, rulesEngineComponentContract)
         trackers.push(trackerStruct)
     }
 
@@ -273,11 +285,11 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
         var functionSignature = rule.split('-->')[2].trim()
         if(!functionSignatures.includes(functionSignature)) {
             functionSignatures.push(functionSignature)
-            const fsId = await createFunctionSignature(policyId, functionSignature, rulesEngineContract)
+            const fsId = await createFunctionSignature(policyId, functionSignature, rulesEngineComponentContract)
             functionSignatureIds.push(fsId)
         }
         
-        const ruleId = await createNewRule(policyId, rule, rulesEngineContract, fcIds, outputFileName, contractToModify)
+        const ruleId = await createNewRule(policyId, rule, rulesEnginePolicyContract, fcIds, outputFileName, contractToModify)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
             ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -295,25 +307,26 @@ export const createFullPolicy = async (rulesEngineContract: RulesEngineContract,
         functionSignatureSelectors.push(toFunctionSelector(fs))
     }
 
-    var result = await updatePolicy(rulesEngineContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
+    var result = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
 
     return result
 } 
 
 export const updatePolicy = async (
-    rulesEngineContract: RulesEngineContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
+    rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
         var updatePolicy
         while(true) {
             try {
                 updatePolicy = await simulateContract(config, {
-                address: rulesEngineContract.address,
-                abi: rulesEngineContract.abi,
+                address: rulesEnginePolicyContract.address,
+                abi: rulesEnginePolicyContract.abi,
                 functionName: "updatePolicy",
-                args: [ policyId, signatures, ids, ruleIds ],
+                args: [ policyId, signatures, ids, ruleIds, 1 ],
                 });
                 break
             } catch (error) {
-                await sleep(1000)       
+                await sleep(1000)  
+                // console.log(error)     
             }
             
         }
@@ -330,14 +343,14 @@ export const updatePolicy = async (
     }
 
 export const executeBatch = async (
-    rulesEngineContract: RulesEngineContract,
+    rulesEnginePolicyContract: RulesEnginePolicyContract,
     account: PrivateKeyAccount,
     calls: any[]
 ) => {
     try {
 
         const {request} = await simulateContract(config, {
-            address: rulesEngineContract.address,
+            address: rulesEnginePolicyContract.address,
             abi: RulesDiamondArtifact.abi,
             functionName: "batch",
             args: [calls, true],
@@ -359,7 +372,7 @@ export const executeBatch = async (
 
 }
 
-export const addNewRuleToBatch = async (policyId: number, ruleSyntax: string, rulesEngineContract: RulesEngineContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
+export const addNewRuleToBatch = async (policyId: number, ruleSyntax: string, rulesEnginePolicyContract: RulesEnginePolicyContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
 
         var effect = buildAnEffectStruct(ruleSyntax)
 
@@ -367,14 +380,15 @@ export const addNewRuleToBatch = async (policyId: number, ruleSyntax: string, ru
 
         calls.push(
             encodeFunctionData({
-                abi: rulesEngineContract.abi,
+                abi: rulesEnginePolicyContract.abi,
                 functionName: "createRule",
                 args: [ policyId, rule ],
             })
         )
 }
 
-export const createFunctionSignature = async (policyId: number, functionSignature: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const createFunctionSignature = async (policyId: number, functionSignature: string, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
         var argsRaw = parseFunctionArguments(functionSignature)
         var args = []
         for(var arg of argsRaw) {
@@ -391,8 +405,8 @@ export const createFunctionSignature = async (policyId: number, functionSignatur
     while(true) {
         try {
             addRule = await simulateContract(config, {
-                address: rulesEngineContract.address,
-                abi: rulesEngineContract.abi,
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
                 functionName: "createFunctionSignature",
                 args: [ policyId, toFunctionSelector(functionSignature), args ],
             });
@@ -412,7 +426,8 @@ export const createFunctionSignature = async (policyId: number, functionSignatur
     return -1 
 }
 
-export const createForeignCall = async(policyId: number, fcSyntax: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const createForeignCall = async(policyId: number, fcSyntax: string, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
     var foreignCall = parseForeignCallDefinition(fcSyntax)
     var fc = {
         set: true,
@@ -428,8 +443,8 @@ export const createForeignCall = async(policyId: number, fcSyntax: string, rules
     while(true) {
         try {
             addFC = await simulateContract(config, {
-                address: rulesEngineContract.address,
-                abi: rulesEngineContract.abi,
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
                 functionName: "createForeignCall",
                 args: [ policyId, fc ],
             });
@@ -449,7 +464,8 @@ export const createForeignCall = async(policyId: number, fcSyntax: string, rules
     return -1
 }
 
-export const createTracker = async(policyId: number, trSyntax: string, rulesEngineContract: RulesEngineContract): Promise<number> => {
+export const createTracker = async(policyId: number, trSyntax: string, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
 
     var tracker: TrackerDefinition = parseTrackerSyntax(trSyntax)
     var transactionTracker = {set: true, pType: tracker.type, trackerValue: tracker.defaultValue }
@@ -457,8 +473,8 @@ export const createTracker = async(policyId: number, trSyntax: string, rulesEngi
     while(true) {
         try {
             addTR = await simulateContract(config, {
-                address: rulesEngineContract.address,
-                abi: rulesEngineContract.abi,
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
                 functionName: "createTracker",
                 args: [ policyId,  transactionTracker ],
             });
@@ -480,11 +496,12 @@ export const createTracker = async(policyId: number, trSyntax: string, rulesEngi
 }
 
 
-export const getForeignCall = async(policyId: number, foreignCallId: number, rulesEngineContract: RulesEngineContract): Promise<any | null> => {
+export const getForeignCall = async(policyId: number, foreignCallId: number, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<any | null> => {
     try {
         const addFC = await simulateContract(config, {
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
             functionName: "getForeignCall",
             args: [ policyId, foreignCallId ],
         });
@@ -501,11 +518,12 @@ export const getForeignCall = async(policyId: number, foreignCallId: number, rul
     }
 }
 
-export const getTracker = async(policyId: number, trackerId: number, rulesEngineContract: RulesEngineContract): Promise<any | null> => {
+export const getTracker = async(policyId: number, trackerId: number, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<any | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
             functionName: "getTracker",
             args: [ policyId, trackerId ],
         });
@@ -525,11 +543,12 @@ export const getTracker = async(policyId: number, trackerId: number, rulesEngine
 }
 
 
-export const getAllForeignCalls = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<any[] | null> => {
+export const getAllForeignCalls = async(policyId: number, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<any[] | null> => {
     try {
         const addFC = await simulateContract(config, {
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
             functionName: "getAllForeignCalls",
             args: [ policyId ],
         });
@@ -547,11 +566,12 @@ export const getAllForeignCalls = async(policyId: number, rulesEngineContract: R
 
 }
 
-export const getAllTrackers = async(policyId: number, rulesEngineContract: RulesEngineContract): Promise<TrackerDefinition[] | null> => {
+export const getAllTrackers = async(policyId: number, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<TrackerDefinition[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
-            address: rulesEngineContract.address,
-            abi: rulesEngineContract.abi,
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
             functionName: "getAllTrackers",
             args: [ policyId],
         });
@@ -570,7 +590,7 @@ export const getAllTrackers = async(policyId: number, rulesEngineContract: Rules
     }
 }
 
-export const createNewRule = async (policyId: number, ruleSyntax: string, rulesEngineContract: RulesEngineContract, 
+export const createNewRule = async (policyId: number, ruleSyntax: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string): Promise<number> => {
     var effects = buildAnEffectStruct(ruleSyntax)
     var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
@@ -578,8 +598,8 @@ export const createNewRule = async (policyId: number, ruleSyntax: string, rulesE
     while(true) {
         try {
             addRule = await simulateContract(config, {
-                address: rulesEngineContract.address,
-                abi: rulesEngineContract.abi,
+                address: rulesEnginePolicyContract.address,
+                abi: rulesEnginePolicyContract.abi,
                 functionName: "createRule",
                 args: [ policyId, rule ],
             });
