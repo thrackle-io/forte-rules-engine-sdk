@@ -2,7 +2,7 @@ import { createTestClient, http, walletActions, publicActions, testActions, Addr
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
 import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
-import { createFullPolicy, getAllForeignCalls, getRulesEngineContract, sleep, getAllTrackers, retrieveFullPolicy } from "../src/modules/ContractInteraction";
+import { createFullPolicy, getAllForeignCalls, getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep, getAllTrackers, retrieveFullPolicy } from "../src/modules/ContractInteraction";
 import { getConfig, connectConfig } from '../config'
 import * as fs from 'fs';
 import * as path from 'path';
@@ -27,23 +27,24 @@ const account = privateKeyToAccount(
 
     const absolutePath = path.resolve("src/demo.json")
     const policyJSON = await fs.promises.readFile(absolutePath, 'utf-8');
-    var result = await createFullPolicy(getRulesEngineContract(rulesEngineContract, client), policyJSON, policyApplicant,
-        "src/demoOutput/contractTestCreateFullPolicy.sol", "src/demoOutput/UserContract.sol")
-    var resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
+    var result = await createFullPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),
+    policyJSON, policyApplicant,
+        "src/demoOutput/contractTestCreateFullPolicy.sol", "src/demoOutput/UserContract.sol", 1)
+    var resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
 
     while(true) {
         if(resultFC!.length < 1) {
             await sleep(1000)
-            resultFC = await getAllForeignCalls(result, getRulesEngineContract(rulesEngineContract, client))
+            resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
         } else {
             break
         }
     }
 
-    var resultTR = await getAllTrackers(result, getRulesEngineContract(rulesEngineContract, client))
+    var resultTR = await getAllTrackers(result, getRulesEngineComponentContract(rulesEngineContract, client))
     var retVal = await retrieveFullPolicy(result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)"}, 
         {hex: '0x71308757', functionSignature: "testSig(address)"}
-    ],getRulesEngineContract(rulesEngineContract, client))
+    ],getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
 
     console.log("Foreign Call Count: ", resultFC?.length)
     console.log("Tracker Count: ", resultTR?.length)

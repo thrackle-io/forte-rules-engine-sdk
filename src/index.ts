@@ -1,8 +1,9 @@
 // index.ts
 
 export { createNewRule, 
-    getRulesEngineContract, 
-    createForeignCall, 
+    getRulesEnginePolicyContract, 
+    getRulesEngineComponentContract,
+    setForeignCall, 
     getForeignCall, 
     getAllForeignCalls,
     createFullPolicy,

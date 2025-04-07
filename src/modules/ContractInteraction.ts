@@ -270,14 +270,14 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
 
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
-        const fcId = await createForeignCall(policyId, foreignCall, rulesEngineComponentContract)
+        const fcId = await setForeignCall(policyId, 0, foreignCall, rulesEngineComponentContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
         fcIds.push(struc)
     }
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
-        const trId = await createTracker(policyId, tracker, rulesEngineComponentContract)
+        const trId = await setTracker(policyId, 0, tracker, rulesEngineComponentContract)
         trackers.push(trackerStruct)
     }
 
@@ -428,7 +428,7 @@ export const createFunctionSignature = async (policyId: number, functionSignatur
     return -1 
 }
 
-export const createForeignCall = async(policyId: number, fcSyntax: string, 
+export const setForeignCall = async(policyId: number, foreignCallId: number, fcSyntax: string, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
     var foreignCall = parseForeignCallDefinition(fcSyntax)
     var fc = {
@@ -444,11 +444,16 @@ export const createForeignCall = async(policyId: number, fcSyntax: string,
     var addFC
     while(true) {
         try {
-            addFC = await simulateContract(config, {
+            addFC = foreignCallId == 0 ? await simulateContract(config, {
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "createForeignCall",
                 args: [ policyId, fc ],
+            }) : await simulateContract(config, {
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
+                functionName: "updateForeignCall",
+                args: [ policyId, foreignCallId, fc ],
             });
             break
         } catch (err) {
@@ -461,13 +466,17 @@ export const createForeignCall = async(policyId: number, fcSyntax: string,
             ...addFC.request,
             account
         });
-
-        return addFC.result
+        if(foreignCallId == 0) {
+            return addFC.result
+        } else {
+            let foreignCallResult = addFC.result as any
+            return foreignCallResult.foreignCallIndex
+        }
     } 
     return -1
 }
 
-export const createTracker = async(policyId: number, trSyntax: string, 
+export const setTracker = async(policyId: number, trackerId: number, trSyntax: string, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
 
     var tracker: TrackerDefinition = parseTrackerSyntax(trSyntax)
@@ -475,11 +484,16 @@ export const createTracker = async(policyId: number, trSyntax: string,
     var addTR
     while(true) {
         try {
-            addTR = await simulateContract(config, {
+            addTR = trackerId == 0 ? await simulateContract(config, {
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "createTracker",
                 args: [ policyId,  transactionTracker ],
+            }) : await simulateContract(config, {
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
+                functionName: "updateTracker",
+                args: [ policyId,  trackerId, transactionTracker ],
             });
             break
         } catch (err) {
@@ -494,7 +508,7 @@ export const createTracker = async(policyId: number, trSyntax: string,
         });
 
         let trackerResult = addTR.result 
-        return trackerResult;
+        return trackerId == 0 ? trackerResult : trackerId;
     }
     return -1;
 }

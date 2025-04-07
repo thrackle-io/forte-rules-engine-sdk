@@ -4,13 +4,13 @@ import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import {  
     executeBatch, 
     createNewRule, 
-    createForeignCall, 
+    setForeignCall, 
     addNewRuleToBatch, 
     getRulesEnginePolicyContract,
     getRulesEngineComponentContract, 
     getForeignCall,
     getAllForeignCalls,
-    createTracker,
+    setTracker,
     getTracker,
     getAllTrackers, 
     createFullPolicy,
@@ -83,18 +83,31 @@ describe('Rules Engine Interactions', async () => {
     test('Can create a new foreign call', async() => {
         var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
         var fcSyntax = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 0, 1, 2"
-        var fcId = await createForeignCall(policyId, fcSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
+        var fcId = await setForeignCall(policyId, 0, fcSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
         expect(fcId).toEqual(1n)
         var fcRetrieve = await getForeignCall(policyId, fcId, getRulesEngineComponentContract(rulesEngineContract, client))
         expect(fcRetrieve?.foreignCallIndex).toEqual(fcId)
         var fcAllRetrieve = await getAllForeignCalls(policyId, getRulesEngineComponentContract(rulesEngineContract, client))
         expect(fcAllRetrieve?.length).toEqual(1)
     })
+    test('Can update an existing foreign call', async() => {
+        var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
+        var fcSyntax = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 0, 1, 2"
+        var fcId = await setForeignCall(policyId, 0, fcSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(fcId).toEqual(1n)
+        var fcRetrieve = await getForeignCall(policyId, fcId, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(fcRetrieve?.foreignCallIndex).toEqual(fcId)
+        var fcAllRetrieve = await getAllForeignCalls(policyId, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(fcAllRetrieve?.length).toEqual(1)
+        var updatedSyntax = "Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address,string,uint256) --> uint256 --> address, string, uint256 --> 0, 1, 2"
+        var updatedId = await setForeignCall(policyId, fcId, updatedSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(updatedId).toEqual(fcId)
+    })
     test('Can create a new tracker', async() => {
         var trSyntax = "Simple String Tracker --> uint256 --> 4";
         var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
         expect(policyId).toBeGreaterThan(0)
-        var trId = await createTracker(policyId, trSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
+        var trId = await setTracker(policyId, 0, trSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
         expect(trId).toEqual(1n)
         var trAllRetrieve = await getAllTrackers(policyId, getRulesEngineComponentContract(rulesEngineContract, client))
         while(true) {
@@ -108,6 +121,29 @@ describe('Rules Engine Interactions', async () => {
         expect(trAllRetrieve?.length).toEqual(1)
         var trRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
         expect(trRetrieve?.trackerValue).toEqual("0x40")
+    })
+    test('Can update an existing tracker', async() => {
+        var trSyntax = "Simple String Tracker --> uint256 --> 4";
+        var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
+        expect(policyId).toBeGreaterThan(0)
+        var trId = await setTracker(policyId, 0, trSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(trId).toEqual(1n)
+        var trAllRetrieve = await getAllTrackers(policyId, getRulesEngineComponentContract(rulesEngineContract, client))
+        while(true) {
+            if(trAllRetrieve!.length < 1) {
+                await sleep(1000)
+                trAllRetrieve = await getAllTrackers(policyId, getRulesEngineComponentContract(rulesEngineContract, client))
+            } else {
+                break
+            }
+        }
+        expect(trAllRetrieve?.length).toEqual(1)
+        var trRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(trRetrieve?.trackerValue).toEqual("0x40")
+        var updatedSyntax = "Simple String Tracker --> uint256 --> 5";
+        await setTracker(policyId, trId, updatedSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
+        var updatedTRRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(updatedTRRetrieve?.trackerValue).toEqual("0x50")
     })
     test('Can retrieve a full policy', async() => {
         var policyJSON = '\
