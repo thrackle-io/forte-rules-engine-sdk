@@ -428,6 +428,32 @@ export const createFunctionSignature = async (policyId: number, functionSignatur
     return -1 
 }
 
+export const deleteForeignCall = async(policyId: number, foreignCallId: number,  
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+
+    var addFC
+    try {
+        addFC = await simulateContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "deleteForeignCall",
+            args: [ policyId, foreignCallId ],
+        })
+    } catch (err) {
+        console.log(err)
+        return -1
+    }
+
+    if(addFC != null) {
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+    }
+    
+    return 0
+}
+
 export const setForeignCall = async(policyId: number, foreignCallId: number, fcSyntax: string, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
     var foreignCall = parseForeignCallDefinition(fcSyntax)
@@ -474,6 +500,32 @@ export const setForeignCall = async(policyId: number, foreignCallId: number, fcS
         }
     } 
     return -1
+}
+
+export const deleteTracker = async(policyId: number, trackerId: number,  
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+
+    var addFC
+    try {
+        addFC = await simulateContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "deleteTracker",
+            args: [ policyId, trackerId ],
+        })
+    } catch (err) {
+        console.log(err)
+        return -1
+    }
+
+    if(addFC != null) {
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+    }
+    
+    return 0
 }
 
 export const setTracker = async(policyId: number, trackerId: number, trSyntax: string, 
@@ -585,7 +637,7 @@ export const getAllForeignCalls = async(policyId: number,
 }
 
 export const getAllTrackers = async(policyId: number, 
-    rulesEngineComponentContract: RulesEngineComponentContract): Promise<TrackerDefinition[] | null> => {
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<any[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
             address: rulesEngineComponentContract.address,
