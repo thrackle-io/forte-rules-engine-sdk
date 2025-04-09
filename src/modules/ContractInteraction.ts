@@ -733,6 +733,55 @@ export const createNewRule = async (policyId: number, ruleSyntax: string, rulesE
     return -1
 }
 
+export const getAllRules = async(policyId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<any[] | null> => {
+    try {
+        const retrieveTR = await simulateContract(config, {
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
+            functionName: "getAllRules",
+            args: [ policyId],
+        });
+    
+
+        await readContract(config, {
+            ...retrieveTR.request,
+            account
+        });
+
+        let trackerResult = retrieveTR.result
+        return trackerResult;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const deleteRule = async(policyId: number, ruleId: number,  
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+
+    var addFC
+    try {
+        addFC = await simulateContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "deleteRule",
+            args: [ policyId, ruleId ],
+        })
+    } catch (err) {
+        console.log(err)
+        return -1
+    }
+
+    if(addFC != null) {
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+    }
+    
+    return 0
+}
+
 function buildAnEffectStruct(ruleSyntax: string) {
     var output = parseRuleSyntax(ruleSyntax, [])
     var pEffects = []
@@ -776,7 +825,6 @@ function buildAnEffectStruct(ruleSyntax: string) {
 
     return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
-
 
 function buildARuleStruct(policyId: number, ruleSyntax: string, foreignCallNameToID: FCNameToID[], effect: any) {
     var output = parseRuleSyntax(ruleSyntax, [])

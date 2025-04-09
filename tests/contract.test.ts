@@ -1,11 +1,13 @@
 import { readContract } from "@wagmi/core"
-import { getAddress, toHex } from 'viem'
+import { getAddress, toFunctionSelector, toHex } from 'viem'
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
 import {  
     executeBatch, 
     createNewRule, 
     setForeignCall, 
+    updatePolicy,
     addNewRuleToBatch, 
+    createFunctionSignature,
     getRulesEnginePolicyContract,
     getRulesEngineComponentContract, 
     getForeignCall,
@@ -18,8 +20,10 @@ import {
     createBlankPolicy,
     sleep,
     updateRule,
+    deleteRule,
     deleteForeignCall,
-    deleteTracker
+    deleteTracker,
+    getAllRules
 
 } from "../src/modules/ContractInteraction";
 
@@ -67,20 +71,53 @@ describe('Rules Engine Interactions', async () => {
     })
     test('Can create a new rule', async () => {
         var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
-        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
+        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value) --> uint256 value", 
             getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
             "src/testOutput/contractTestCreateNewRule.sol", "")
         expect(ruleId).toBeGreaterThan(0)
+        var functionSignature = "addValue(uint256 value)"
+        const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
+        var selector = toFunctionSelector(functionSignature)        
+        await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+        [selector], [fsId], [[ruleId]])
+        var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client))
+        expect(rules?.length).toEqual(1)
     })
     test('Can update an existing rule', async () => {
         var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
-        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
+        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value) --> uint256 value", 
             getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
             "src/testOutput/contractTestCreateNewRule.sol", "")
         expect(ruleId).toBeGreaterThan(0)
+        var functionSignature = "addValue(uint256 value)"
+        const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
+        var selector = toFunctionSelector(functionSignature)        
+        await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+        [selector], [fsId], [[ruleId]])
+        var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client))
+        expect(rules?.length).toEqual(1)
         var updatedRuleId = await updateRule(policyId, ruleId, "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2) --> FC:testCallTwo(value) --> addValue(uint256 value) --> uint256 value", 
             getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}])
         expect(updatedRuleId).toEqual(ruleId)
+    })
+    test('Can delete a rule', async () => {
+        var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
+        var ruleId = await createNewRule(policyId, "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value) --> uint256 value", 
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "")
+        expect(ruleId).toBeGreaterThan(0)
+        var functionSignature = "addValue(uint256 value)"
+        const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
+        var selector = toFunctionSelector(functionSignature)        
+        await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+        [selector], [fsId], [[ruleId]])
+        
+        var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client))
+        expect(rules?.length).toEqual(1)
+        await deleteRule(policyId, ruleId, getRulesEnginePolicyContract(rulesEngineContract, client))
+        var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client))
+        expect(rules?.length).toEqual(1)
+        expect(rules![0][0].instructionSet.length).toEqual(0)
     })
     test('Can create a new foreign call', async() => {
         var policyId = await createBlankPolicy(1, getRulesEnginePolicyContract(rulesEngineContract, client))
