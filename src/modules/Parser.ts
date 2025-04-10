@@ -973,7 +973,6 @@ function convertToTree(condition : string, splitOn : string) {
             endIndex -= 1
         }
     }
-
     return overAllArray
 
 }

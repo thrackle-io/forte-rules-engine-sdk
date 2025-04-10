@@ -815,6 +815,7 @@ test('Extraneous paraenthesis', () => {
   console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
   });
+
   test('Evaluates a syntax string that includes keywords in variable names and raw string values', () => {
     /**
      * Original Syntax:
@@ -859,6 +860,18 @@ test('Extraneous paraenthesis', () => {
       11
     ]
     var str = "value + sAND > 5 AND (lORe == 1 AND bORe test == lORe) --> revert --> addValue(uint256 value, uint256 sAND, address lORe)"
+    var retVal = parseRuleSyntax(str, [])
+    console.log(retVal.instructionSet)
+    expect(retVal.instructionSet).toEqual(expectedArray)
+  });
+
+  test('Ensure that the parser can handle FC in various parts of a string', () => {
+    var expectedArray = [
+      'PLH', 0,
+      parseInt(keccak256('FCalert')),
+      '==', 0, 1
+    ]
+    var str = "(FC:updateOracle(value) == FCalert) --> revert --> addValue(uint256 value, string info, address addr)";
     var retVal = parseRuleSyntax(str, [])
     console.log(retVal.instructionSet)
     expect(retVal.instructionSet).toEqual(expectedArray)
