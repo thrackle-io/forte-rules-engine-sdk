@@ -920,7 +920,7 @@ function convertToTree(condition : string, splitOn : string) {
     }
 
     // 2. Split based on the passed in delimiter (splitOn)
-    var delimiterSplit = condition.split(splitOn)
+    var delimiterSplit = condition.split(" " + splitOn + " ")
     // 3. Convert to syntax array
     // Start from the back of the array and work forwards
     var endIndex = delimiterSplit.length - 1
@@ -973,7 +973,6 @@ function convertToTree(condition : string, splitOn : string) {
             endIndex -= 1
         }
     }
-
     return overAllArray
 
 }

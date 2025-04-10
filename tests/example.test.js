@@ -29,15 +29,16 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
    *    4, 11 ]
    */
   var expectedArray = [
-    'N', 3, 'N', 4, '+', 0,
-     1, 'N', 5, '>', 2, 3,
-    'N', 1, 'N', 1, '==', 5,
-     6, 'N', 2, 'N', 2, '==',
-     8, 9, 'AND', 7, 10, 'AND',
-     4, 11
+    'PLH', 0,   'PLH', 1,     '+',  0,
+    1,     'N', 5,     '>',   2,    3,
+    'PLH', 1,   'N',   1,     '==', 5,
+    6,     'N', 2,     'PLH', 1,    '==',
+    8,     9,   'AND', 7,     10,   'AND',
+    4,     11
   ]
-  var str = "3 + 4 > 5 AND (1 == 1 AND 2 == 2) --> revert --> addValue(uint256 value)"
+  var str = "value + sAND > 5 AND (sAND == 1 AND 2 == sAND) --> revert --> addValue(uint256 value, uint256 sAND)"
   var retVal = parseRuleSyntax(str, [])
+  console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -813,4 +814,65 @@ test('Extraneous paraenthesis', () => {
   var retVal = parseRuleSyntax(str, [])
   console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
+  });
+
+  test('Evaluates a syntax string that includes keywords in variable names and raw string values', () => {
+    /**
+     * Original Syntax:
+     * value + sAND > 5 AND (lORe == 1 AND bORe test == lORe)
+     * 
+     * [
+     *  'PLH', 0,
+     *  'PLH', 1,
+     *  '+',   0,
+     *  1,     'N',
+     *  5,     '>',
+     *  2,     3,
+     *  'PLH', 2,
+     *  'N',   1,
+     *  '==',  5,
+     *  6,     parseInt(keccak256('bORe test')),
+     *  'PLH', 2,
+     *  '==',  8,
+     *  9,     'AND',
+     *  7,     10,
+     *  'AND', 4,
+     *   11
+     * ]
+     */
+
+    var expectedArray = [
+      'PLH', 0,
+      'PLH', 1,
+      '+',   0,
+      1,     'N',
+      5,     '>',
+      2,     3,
+      'PLH', 2,
+      'N',   1,
+      '==',  5,
+      6,     parseInt(keccak256('bORe test')),
+      'PLH', 2,
+      '==',  8,
+      9,     'AND',
+      7,     10,
+      'AND', 4,
+      11
+    ]
+    var str = "value + sAND > 5 AND (lORe == 1 AND bORe test == lORe) --> revert --> addValue(uint256 value, uint256 sAND, address lORe)"
+    var retVal = parseRuleSyntax(str, [])
+    console.log(retVal.instructionSet)
+    expect(retVal.instructionSet).toEqual(expectedArray)
+  });
+
+  test('Ensure that the parser can handle FC in various parts of a string', () => {
+    var expectedArray = [
+      'PLH', 0,
+      parseInt(keccak256('FCalert')),
+      '==', 0, 1
+    ]
+    var str = "(FC:updateOracle(value) == FCalert) --> revert --> addValue(uint256 value, string info, address addr)";
+    var retVal = parseRuleSyntax(str, [])
+    console.log(retVal.instructionSet)
+    expect(retVal.instructionSet).toEqual(expectedArray)
   });
