@@ -815,3 +815,51 @@ test('Extraneous paraenthesis', () => {
   console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
   });
+  test('Evaluates a syntax string that includes keywords in variable names and raw string values', () => {
+    /**
+     * Original Syntax:
+     * value + sAND > 5 AND (lORe == 1 AND bORe test == lORe)
+     * 
+     * [
+     *  'PLH', 0,
+     *  'PLH', 1,
+     *  '+',   0,
+     *  1,     'N',
+     *  5,     '>',
+     *  2,     3,
+     *  'PLH', 2,
+     *  'N',   1,
+     *  '==',  5,
+     *  6,     parseInt(keccak256('bORe test')),
+     *  'PLH', 2,
+     *  '==',  8,
+     *  9,     'AND',
+     *  7,     10,
+     *  'AND', 4,
+     *   11
+     * ]
+     */
+
+    var expectedArray = [
+      'PLH', 0,
+      'PLH', 1,
+      '+',   0,
+      1,     'N',
+      5,     '>',
+      2,     3,
+      'PLH', 2,
+      'N',   1,
+      '==',  5,
+      6,     parseInt(keccak256('bORe test')),
+      'PLH', 2,
+      '==',  8,
+      9,     'AND',
+      7,     10,
+      'AND', 4,
+      11
+    ]
+    var str = "value + sAND > 5 AND (lORe == 1 AND bORe test == lORe) --> revert --> addValue(uint256 value, uint256 sAND, address lORe)"
+    var retVal = parseRuleSyntax(str, [])
+    console.log(retVal.instructionSet)
+    expect(retVal.instructionSet).toEqual(expectedArray)
+  });
