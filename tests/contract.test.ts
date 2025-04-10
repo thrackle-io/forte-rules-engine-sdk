@@ -23,7 +23,8 @@ import {
     deleteRule,
     deleteForeignCall,
     deleteTracker,
-    getAllRules
+    getAllRules,
+    deletePolicy
 
 } from "../src/modules/ContractInteraction";
 
@@ -252,5 +253,28 @@ describe('Rules Engine Interactions', async () => {
             {hex: '0x71308757', functionSignature: "testSig(address)"}
         ], getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
         expect(retVal).toEqual('{"Trackers":["Tracker 1 --> string --> 0x74657374"],"ForeignCalls":["Foreign Call 1 --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"Rules":["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value)"]}')
+    })
+    test('Can delete a full policy', async() => {
+        var policyJSON = '\
+        {\
+        "Policy": "Test Policy", \
+        "ForeignCalls": ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 0"], \
+        "Trackers": ["Simple String Tracker --> string --> test"], \
+        "Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value) --> address to, uint256 value"]\
+        }'
+        var result = await createFullPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), 
+        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON, policyApplicant,
+            "src/testOutput/contractTestCreateFullPolicy.sol", "", 1)
+        expect(result).toBeGreaterThanOrEqual(0)
+        
+        await deletePolicy(result, getRulesEnginePolicyContract(rulesEngineContract, client))
+        var rules = await getAllRules(result, getRulesEnginePolicyContract(rulesEngineContract, client))
+        expect(rules?.length).toEqual(1)
+        expect(rules![0].length).toEqual(0)
+        var trAllRetrieve = await getAllTrackers(result, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(trAllRetrieve![0].set).toEqual(false)
+        var fcAllRetrieve = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
+        expect(fcAllRetrieve?.length).toEqual(1)
+        expect(fcAllRetrieve![0].set).toEqual(false)
     })
 })
