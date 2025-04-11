@@ -1,4 +1,5 @@
 import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex } from 'viem';
+import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
 // Types:
 // --------------------------------------------------------------------------------------------------
@@ -111,50 +112,36 @@ const FC_PREFIX: string = 'FC:'
 // External Parsing Functions:
 // --------------------------------------------------------------------------------------------------
 
-export function parseRuleSyntax(syntax: string, indexMap: trackerIndexNameMapping[]) {
-    // Split the initial syntax string into condition, effect and function signature 
-    syntax = cleanString(syntax)
+export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapping[]) {
 
-    var initialSplit = syntax.split('-->')
-    var condition = initialSplit[0]
+    var condition = syntax.condition
 
     condition = removeExtraParenthesis(condition)
 
-    var functionSignature = initialSplit[2]
-
-    var effectSplit = initialSplit[1]
-
-    var foundMultiEffect = false
-    var positiveEffects: string[] = []
-    var negativeEffects: string[] = []
-
-    foundMultiEffect = parseEffectString(effectSplit, positiveEffects, negativeEffects)
-    if(!foundMultiEffect) {
-        positiveEffects.push(effectSplit)
-    }
-
+    var functionSignature = syntax.functionSignature
     var names = parseFunctionArguments(functionSignature)
     
     condition = parseForeignCalls(condition, names.length, names)
-    parseTrackers(condition + effectSplit, names.length, names)
+    parseTrackers(condition, names.length, names)
     var effectNames = Array.from(names)
-    for(var effectP in positiveEffects) {
-        positiveEffects[effectP] = parseForeignCalls(positiveEffects[effectP], effectNames.length, effectNames)
+    for(var effectP in syntax.positiveEffects) {
+        syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames.length, effectNames)
+        parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames)
     }
-    for(var effectN in negativeEffects) {
-        negativeEffects[effectN] = parseForeignCalls(negativeEffects[effectN], effectNames.length, effectNames)
+    for(var effectN in syntax.negativeEffects) {
+        syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames.length, effectNames)
+        parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames)
     }
-
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
-    for(var effectP of positiveEffects) {
+    for(var effectP of syntax.positiveEffects) {
         let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
         positiveEffectsFinal.push(effect)
 
     }
 
-    for(var effectN of negativeEffects) {
+    for(var effectN of syntax.negativeEffects) {
         let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
         negativeEffectsFinal.push(effect)
     }
@@ -174,28 +161,23 @@ export function parseRuleSyntax(syntax: string, indexMap: trackerIndexNameMappin
          placeHolders: retVal.placeHolders, effectPlaceHolders: effectPlaceHolders}
 }
 
-export function parseTrackerSyntax(syntax: string) {
-    var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 3) {
-        throw new Error("Incorrect Tracker Definition Syntax")
-    }
-    let trackerName = initialSplit[0]
-    let trackerType = initialSplit[1].trim()
+export function parseTrackerSyntax(syntax: trackerJSON) {
+    let trackerType = syntax.type.trim()
     if(!supportedTrackerTypes.includes(trackerType)) {
         throw new Error("Unsupported type")
     }
     var trackerDefaultValue: string
     if(trackerType == "uint256") {
-        if(!isNaN(Number(initialSplit[2]))) {
-            trackerDefaultValue = toHex(Number(initialSplit[2]))
+        if(!isNaN(Number(syntax.defaultValue))) {
+            trackerDefaultValue = toHex(Number(syntax.defaultValue))
         } else {
             throw new Error("Default Value doesn't match type")
         }
     } else if(trackerType == "address") {
-        var address: Address = getAddress(initialSplit[2].trim())
+        var address: Address = getAddress(syntax.defaultValue.trim())
         trackerDefaultValue = toHex(address)
     } else {
-        trackerDefaultValue = toHex(initialSplit[2].trim())
+        trackerDefaultValue = toHex(syntax.defaultValue.trim())
     }
     var trackerTypeEnum = 0
     for(var parameterType of PT) {
@@ -204,27 +186,23 @@ export function parseTrackerSyntax(syntax: string) {
         }
     }
 
-    return {name: initialSplit[0].trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
+    return {name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
 }
 
-export function parseForeignCallDefinition(syntax: string) {
-    var initialSplit = syntax.split('-->')
-    if(initialSplit.length != 6) {
-        throw new Error("Incorrect Foreign Call Syntax")
-    }
-    var address: Address = getAddress(initialSplit[1].trim())
-    var signature = initialSplit[2].trim()
+export function parseForeignCallDefinition(syntax: foreignCallJSON) {
+    var address: Address = getAddress(syntax.address.trim())
+    var signature = syntax.signature.trim()
     var returnType = pTypeEnum.VOID // default to void
-    if(!PT.some(parameter => parameter.name === initialSplit[3].trim())) {
+    if(!PT.some(parameter => parameter.name === syntax.returnType)) {
         throw new Error("Unsupported return type")
     }
     for(var parameterType of PT) {
-        if(parameterType.name == initialSplit[3].trim()) {
+        if(parameterType.name ==syntax.returnType) {
             returnType = parameterType.enumeration
         }
     }
     var parameterTypes: number[] = []
-    var parameterSplit = initialSplit[4].trim().split(',')
+    var parameterSplit = syntax.parameterTypes.trim().split(',')
     for(var fcParameter of parameterSplit) {
         if(!PT.some(parameter => parameter.name === fcParameter.trim())) {
             throw new Error("Unsupported argument type")
@@ -238,7 +216,7 @@ export function parseForeignCallDefinition(syntax: string) {
     }
 
     var encodedIndices: number[] = []
-    var encodedIndecesSplit = initialSplit[5].trim().split(',')
+    var encodedIndecesSplit = syntax.encodedIndices.trim().split(',')
     for(var encodedIndex of encodedIndecesSplit) {
         if(!isNaN(Number(encodedIndex))) {
             encodedIndices.push(Number(encodedIndex))
@@ -247,7 +225,7 @@ export function parseForeignCallDefinition(syntax: string) {
 
 
 
-    return {name: initialSplit[0].trim(), address: address, signature: signature, 
+    return {name: syntax.name.trim(), address: address, signature: signature, 
         returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices} as ForeignCallDefinition
 }
 
@@ -539,51 +517,51 @@ export function cleanInstructionSet(instructionSet: any[]) {
 }
 
 export function convertRuleStructToString(functionString: string, ruleS: RuleStruct, plhArray: string[]) {
+    
+    var rJSON: ruleJSON = {
+        condition: "",
+        positiveEffects: [],
+        negativeEffects: [],
+        functionSignature: "",
+        encodedValues: ""
+    }
+
     var names = parseFunctionArguments(functionString)
 
     for(var plh of ruleS!.placeHolders) {
         plhArray.push(names[plh.typeSpecificIndex].name)
     }
-    var effectString = ""
-    if(ruleS.posEffects.length > 1 || ruleS.negEffects.length > 0) {
-        effectString += "pos: "
-    }
+
     var posIter = 0
     for(var pos of ruleS.posEffects) {
-        if(posIter > 0) {
-            effectString += ", "
-        }
+        var effectString = ""
         if(pos.effectType == 0) {
             effectString += "revert(" + pos.text + ")"
         } else if(pos.effectType == 1) {
             effectString += "emit " + pos.text 
         }
         posIter += 1
+
+        rJSON.positiveEffects.push(effectString)
     }
 
     if(ruleS.negEffects.length > 0) {
-        effectString += " <-> neg: "
         var negIter = 0
         for(var neg of ruleS.negEffects) {
-            if(negIter > 0) {
-                effectString += ", "
-            }
+            var effectString = ""
             if(neg.effectType == 0) {
                 effectString += "revert(" + neg.text + ")"
             } else if(neg.effectType == 1) {
                 effectString += "emit " + neg.text 
             }
             negIter+= 1
+            rJSON.negativeEffects.push(effectString)
         }
     }
 
-    var outputString = ""
-    outputString += reverseParseRule(ruleS!.instructionSet, plhArray, [])
-    outputString += " --> "
-    outputString += effectString
-    outputString += " --> "
-    outputString += functionString
-    return outputString
+    rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, [])
+    rJSON.functionSignature = functionString
+    return rJSON
     
 }
 
