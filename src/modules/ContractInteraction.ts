@@ -313,6 +313,32 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     return result
 } 
 
+export const deletePolicy = async(policyId: number,  
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+
+    var addFC
+    try {
+        addFC = await simulateContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "deletePolicy",
+            args: [ policyId ],
+        })
+    } catch (err) {
+        console.log(err)
+        return -1
+    }
+
+    if(addFC != null) {
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+    }
+    
+    return 0
+}
+
 export const updatePolicy = async (
     rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
         var updatePolicy
