@@ -4,13 +4,13 @@ import {
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ruleJSON } from '../modules/ContractInteraction';
 
-export function generateModifier(syntax: string, outputFileName: string) { 
-        syntax = cleanString(syntax)
-        var initialSplit = syntax.split('-->')
+export function generateModifier(ruleS: string, outputFileName: string) { 
+    let syntax: ruleJSON = JSON.parse(ruleS);
         var absPath = path.join(__dirname, "Template.sol")
         const filePathOutput = outputFileName
-        var argList = initialSplit[3]
+        var argList = syntax.encodedValues
         
         var modifierNameStr = 'modifier checkRulesBefore([]) {\n'
         var modifierNameAfterStr = '\tmodifier checkRulesAfter([]) {\n'
