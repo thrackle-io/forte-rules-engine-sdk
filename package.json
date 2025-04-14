@@ -1,5 +1,5 @@
 {
-  "name": "aquifi-rules-sdk",
+  "name": "@thrackle-io/rules-sdk",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
