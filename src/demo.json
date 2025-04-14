@@ -1,6 +1,29 @@
 {
 "Policy": "Test Policy", 
-"ForeignCalls": ["Simple Foreign Call --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address --> 0"], 
-"Trackers": ["Simple String Tracker --> string --> test"], 
-"Rules": ["value > 500 --> pos: emit Success <-> neg: revert() --> transfer(address to, uint256 value) --> address to, uint256 value"]
+"ForeignCalls": [
+    {
+        "name": "Simple Foreign Call",
+        "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "signature": "testSig(address)",
+        "returnType": "uint256",
+        "parameterTypes": "address",
+        "encodedIndices": "0"
+    }
+], 
+"Trackers": [
+    {
+        "name": "Simple String Tracker",
+        "type": "string",
+        "defaultValue": "test" 
+    }
+], 
+"RulesJSON": [
+    {
+        "condition": "value > 500",
+        "positiveEffects": ["emit Success"],
+        "negativeEffects": ["revert()"],
+        "functionSignature": "transfer(address to, uint256 value)",
+        "encodedValues": "address to, uint256 value"
+    }
+]
 }

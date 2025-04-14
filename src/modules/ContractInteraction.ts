@@ -291,8 +291,6 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     }
 
     for(var rule of policyJSON.RulesJSON) {
-
-        // var functionSignature = rule.split('-->')[2].trim()
         var functionSignature = rule.functionSignature.trim()
         if(!functionSignatures.includes(functionSignature)) {
             functionSignatures.push(functionSignature)

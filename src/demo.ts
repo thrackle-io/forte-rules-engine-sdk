@@ -1,16 +1,13 @@
 import { createTestClient, http, walletActions, publicActions, testActions, Address, decodeFunctionResult, toFunctionSelector, getAddress, stringToHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
-import RulesEngineRunLogicJson from "../src/abis/RulesEngineDataFacet.json";
-import { createFullPolicy, getAllForeignCalls, getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep, getAllTrackers, retrieveFullPolicy } from "../src/modules/ContractInteraction";
+import { createFullPolicy, getAllForeignCalls, getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep, getAllTrackers, retrieveFullPolicy, createBlankPolicy } from "../src/modules/ContractInteraction";
 import { getConfig, connectConfig } from '../config'
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
-const DiamondAddress: `0x${string}` = `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`
-
-const rulesEngineAbi = RulesEngineRunLogicJson.abi
+const DiamondAddress: `0x${string}` = `0x0165878A594ca255338adfa4d48449f69242Eb8F`
 
 const config = getConfig()
 
