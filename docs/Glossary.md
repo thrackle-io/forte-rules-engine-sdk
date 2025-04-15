@@ -2,7 +2,7 @@
 
 ### Policy 
 
-A policy consists of Trackers and Rules that a calling contract can register with to enforce rule evaluations on specific functions within its contract. A `policyId` is used to connect rules, trackers, foreign calls and effects for determining if a rule results in a true or false and the effects from that determination. 
+A policy consists of Trackers, Rules and Foreign Calls that a calling contract can register with to enforce rule evaluations on specific functions within its contract. A `policyId` is used to connect rules, trackers, foreign calls and effects for determining if a rule results in a true or false and the effects from that determination. 
 
 ### Rule  
 
