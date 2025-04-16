@@ -426,6 +426,25 @@ export function buildForeignCallList(condition: string) {
         return names
 }
 
+export function buildTrackerList(condition: string) {
+    const trRegex = /TR:[a-zA-Z]+/g
+    var matches = condition.match(trRegex)
+
+    var names: string[] = []
+    if(matches != null) {
+        for (const match of matches) {
+            const fullTRExpr = match;
+            console.log("match", match)
+            console.log("fullTRExpr", fullTRExpr)
+            var name = fullTRExpr.replace("TR:", "")
+            console.log("name", name)
+            names.push(name)
+        }
+    }
+
+    return names
+}
+
 export function buildForeignCallListRaw(condition: string) {
     const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
     const matches = condition.matchAll(fcRegex);
@@ -859,6 +878,9 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         effectType = EffectType.REVERT
         const match = effect.match(revertTextPattern);
         effectText = match ? match[2] : "";
+        console.log("REVERT")
+        console.log(effect)
+        console.log(effectText)
     } else {
         effectType = EffectType.EXPRESSION
         var effectStruct = interpretToInstructionSet(effect, names, indexMap)

@@ -24,7 +24,8 @@ import {
     parseFunctionArguments,
     parseRuleSyntax,
     cleanInstructionSet,
-    buildForeignCallList
+    buildForeignCallList,
+    buildTrackerList
 } from "./Parser"
 
 import {
@@ -149,6 +150,7 @@ export const applyPolicy = async(policyId: number, contractAddressForPolicy: Add
             })
             break
         } catch (error) {
+            console.log(error)
             // TODO: Look into replacing this loop/sleep with setTimeout
             await sleep(1000);
         } 
@@ -263,9 +265,10 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
 }
 
 export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
-    policySyntax: string, contractAddressForPolicy: Address, outputFileName: string, contractToModify: string, 
+    policySyntax: string, outputFileName: string, contractToModify: string, 
     policyType: number): Promise<number> => {
     var fcIds: FCNameToID[] = []
+    var trackerIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
     let ruleIds = []
     let ruleToFunctionSignature = new Map<string, number[]>();
@@ -273,22 +276,30 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
-
+    console.log("super before")
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
     const policyId = await createBlankPolicy(policyType, rulesEnginePolicyContract)
 
+    console.log("before")
+    
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
         const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
         fcIds.push(struc)
+        console.log(fcIds)
     }
+
+    console.log("after")
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
         const trId = await setTracker(policyId, 0, JSON.stringify(tracker), rulesEngineComponentContract)
+        var struc : FCNameToID = {id: trId, name: trackerStruct.name}
+        trackerIds.push(struc)
         trackers.push(trackerStruct)
     }
+    console.log("trackerIDs", trackerIds)
 
     for(var rule of policyJSON.RulesJSON) {
         var functionSignature = rule.functionSignature.trim()
@@ -298,7 +309,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
             functionSignatureIds.push(fsId)
         }
         
-        const ruleId = await createNewRule(policyId, JSON.stringify(rule), rulesEnginePolicyContract, fcIds, outputFileName, contractToModify)
+        const ruleId = await createNewRule(policyId, JSON.stringify(rule), rulesEnginePolicyContract, fcIds, outputFileName, contractToModify, trackerIds)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
             ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -318,7 +329,8 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
 
     var result = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
 
-    return result
+    return policyId
+    // return result
 } 
 
 export const deletePolicy = async(policyId: number,  
@@ -361,6 +373,7 @@ export const updatePolicy = async (
                 break
             } catch (error) {
                 // TODO: Look into replacing this loop/sleep with setTimeout
+                console.log(error)
                 await sleep(1000)      
             }
             
@@ -727,10 +740,10 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
 }
 
 export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
-    foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string): Promise<number> => {
+    foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     var effects = buildAnEffectStruct(ruleSyntax)
-    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
     var addRule
     while(true) {
         try {
@@ -743,6 +756,8 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
             break
         } catch (err) {
             // TODO: Look into replacing this loop/sleep with setTimeout
+            console.log(err)
+            console.log(rule)
             await sleep(1000)
         }
     }
@@ -830,31 +845,31 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
             valid: true,
             dynamicParam: false,
             effectType: pEffect.type,
-            pType: 0,
+            pType: 2,
             param: toHex(0),
             text: toHex(toBytes(
                 pEffect.text, 
                 { size: 32 } 
               )),
-            errorMessage: '',
+            errorMessage: pEffect.text,
             instructionSet: pEffect.instructionSet
         } as const
         pEffects.push(effect)
     }
     for(var nEffect of output.negativeEffects) {
         cleanInstructionSet(nEffect.instructionSet)
-
+        console.log("nEffect.type", nEffect.type)
         const effect = {
             valid: true,
             dynamicParam: false,
             effectType: nEffect.type,
-            pType: 0,
+            pType: 2,
             param: toHex(0),
             text: toHex(toBytes(
                 nEffect.text, 
                 { size: 32 } 
               )),
-            errorMessage: '',
+            errorMessage: nEffect.text,
             instructionSet: nEffect.instructionSet
         } as const
         nEffects.push(effect)
@@ -865,17 +880,47 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
     return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
 
-function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any) {
+function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
     var output = parseRuleSyntax(ruleSyntax, [])
     var fcList = buildForeignCallList(ruleSyntax.condition)
+    var trList = buildTrackerList(ruleSyntax.condition)
+    console.log(trList)
+    console.log(fcList)
+    console.log(foreignCallNameToID)
     var fcIDs = []
+    var trIDs = []
     for(var name of fcList) {
         for(var mapping of foreignCallNameToID) {
             if(mapping.name == name) {
+                console.log("HERE", mapping.id)
                 fcIDs.push(mapping.id)
             }
         }
     }
+    for(var name of trList) {
+        for(var mapping of trackerNameToID) {
+            if(mapping.name == name) {
+                console.log("TR HERE", mapping.id)
+                trIDs.push(mapping.id)
+            }
+        }
+    }
+    console.log(output.placeHolders)
+    var iter = 0
+    var tIter = 0
+    for(var index in output.placeHolders) {
+        if(output.placeHolders[index].foreignCall) {
+            console.log("HEREH")
+            output.placeHolders[index].typeSpecificIndex = fcIDs[iter]
+            iter++
+        }
+        if(output.placeHolders[index].trackerValue) {
+            console.log("TR HEREH")
+            output.placeHolders[index].typeSpecificIndex = trIDs[tIter]
+            tIter++
+        }
+    }
+    console.log(output.placeHolders)
     var fcEffectList: string[] = []
     for(var eff of ruleSyntax.positiveEffects) {
         fcEffectList.concat(buildForeignCallList(eff))
