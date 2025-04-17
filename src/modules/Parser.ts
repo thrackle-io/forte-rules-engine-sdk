@@ -79,7 +79,7 @@ export type trackerIndexNameMapping = {
 export type TrackerDefinition = {
     name: string
     type: number
-    defaultValue: string
+    defaultValue: any
 }
 
 export type RawData = {
@@ -166,10 +166,11 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
     if(!supportedTrackerTypes.includes(trackerType)) {
         throw new Error("Unsupported type")
     }
-    var trackerDefaultValue: string
+    var trackerDefaultValue: any
     if(trackerType == "uint256") {
         if(!isNaN(Number(syntax.defaultValue))) {
-            trackerDefaultValue = toHex(Number(syntax.defaultValue))
+            
+            trackerDefaultValue = encodePacked(['uint256'], [BigInt(syntax.defaultValue)])
         } else {
             throw new Error("Default Value doesn't match type")
         }
@@ -434,10 +435,7 @@ export function buildTrackerList(condition: string) {
     if(matches != null) {
         for (const match of matches) {
             const fullTRExpr = match;
-            console.log("match", match)
-            console.log("fullTRExpr", fullTRExpr)
             var name = fullTRExpr.replace("TR:", "")
-            console.log("name", name)
             names.push(name)
         }
     }
@@ -878,9 +876,6 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         effectType = EffectType.REVERT
         const match = effect.match(revertTextPattern);
         effectText = match ? match[2] : "";
-        console.log("REVERT")
-        console.log(effect)
-        console.log(effectText)
     } else {
         effectType = EffectType.EXPRESSION
         var effectStruct = interpretToInstructionSet(effect, names, indexMap)

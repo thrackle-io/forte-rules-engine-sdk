@@ -10,6 +10,7 @@ import {
     hexToString,
     toBytes,
     toHex,
+    encodePacked,
 
 } from "viem";
 
@@ -150,7 +151,6 @@ export const applyPolicy = async(policyId: number, contractAddressForPolicy: Add
             })
             break
         } catch (error) {
-            console.log(error)
             // TODO: Look into replacing this loop/sleep with setTimeout
             await sleep(1000);
         } 
@@ -276,21 +276,16 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
-    console.log("super before")
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
     const policyId = await createBlankPolicy(policyType, rulesEnginePolicyContract)
-
-    console.log("before")
     
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
         const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
         fcIds.push(struc)
-        console.log(fcIds)
     }
 
-    console.log("after")
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
@@ -299,7 +294,6 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
         trackerIds.push(struc)
         trackers.push(trackerStruct)
     }
-    console.log("trackerIDs", trackerIds)
 
     for(var rule of policyJSON.RulesJSON) {
         var functionSignature = rule.functionSignature.trim()
@@ -345,7 +339,6 @@ export const deletePolicy = async(policyId: number,
             args: [ policyId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -373,7 +366,6 @@ export const updatePolicy = async (
                 break
             } catch (error) {
                 // TODO: Look into replacing this loop/sleep with setTimeout
-                console.log(error)
                 await sleep(1000)      
             }
             
@@ -487,7 +479,6 @@ export const deleteForeignCall = async(policyId: number, foreignCallId: number,
             args: [ policyId, foreignCallId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -562,7 +553,6 @@ export const deleteTracker = async(policyId: number, trackerId: number,
             args: [ policyId, trackerId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -756,8 +746,6 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
             break
         } catch (err) {
             // TODO: Look into replacing this loop/sleep with setTimeout
-            console.log(err)
-            console.log(rule)
             await sleep(1000)
         }
     }
@@ -820,7 +808,6 @@ export const deleteRule = async(policyId: number, ruleId: number,
             args: [ policyId, ruleId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -858,7 +845,6 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
     }
     for(var nEffect of output.negativeEffects) {
         cleanInstructionSet(nEffect.instructionSet)
-        console.log("nEffect.type", nEffect.type)
         const effect = {
             valid: true,
             dynamicParam: false,
@@ -875,8 +861,6 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
         nEffects.push(effect)
     }
 
-    console.log("pEffects, ", pEffects)
-
     return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
 
@@ -884,15 +868,11 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     var output = parseRuleSyntax(ruleSyntax, [])
     var fcList = buildForeignCallList(ruleSyntax.condition)
     var trList = buildTrackerList(ruleSyntax.condition)
-    console.log(trList)
-    console.log(fcList)
-    console.log(foreignCallNameToID)
     var fcIDs = []
     var trIDs = []
     for(var name of fcList) {
         for(var mapping of foreignCallNameToID) {
             if(mapping.name == name) {
-                console.log("HERE", mapping.id)
                 fcIDs.push(mapping.id)
             }
         }
@@ -900,27 +880,22 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     for(var name of trList) {
         for(var mapping of trackerNameToID) {
             if(mapping.name == name) {
-                console.log("TR HERE", mapping.id)
                 trIDs.push(mapping.id)
             }
         }
     }
-    console.log(output.placeHolders)
     var iter = 0
     var tIter = 0
     for(var index in output.placeHolders) {
         if(output.placeHolders[index].foreignCall) {
-            console.log("HEREH")
             output.placeHolders[index].typeSpecificIndex = fcIDs[iter]
             iter++
         }
         if(output.placeHolders[index].trackerValue) {
-            console.log("TR HEREH")
             output.placeHolders[index].typeSpecificIndex = trIDs[tIter]
             tIter++
         }
     }
-    console.log(output.placeHolders)
     var fcEffectList: string[] = []
     for(var eff of ruleSyntax.positiveEffects) {
         fcEffectList.concat(buildForeignCallList(eff))
