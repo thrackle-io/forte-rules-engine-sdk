@@ -1,4 +1,4 @@
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress } from 'viem';
 import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
 // Types:
@@ -1046,9 +1046,13 @@ function intify(array: any[]) {
         if(Array.isArray(array[iter])) {
             intify(array[iter])
          } else {
-            if(!isNaN(Number(array[iter]))) {
-                array[iter] = Number(array[iter])
-            } 
+            if(isAddress(array[iter])) {
+                array[iter] = BigInt(array[iter])
+            } else {
+                if(!isNaN(Number(array[iter]))) {
+                    array[iter] = BigInt(array[iter])
+                } 
+        }
                 
         }
         iter++
@@ -1066,7 +1070,7 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
     while(iter < instructionSet.length) {
             // Only capture values that aren't naturally numbers
             if(!isNaN(Number(instructionSet[iter]))) {
-                instructionSet[iter] = Number(instructionSet[iter])
+                instructionSet[iter] = BigInt(instructionSet[iter])
             } else {
                 if(!excludeArray.includes(instructionSet[iter].trim())) {
                     // Create the raw data entry
@@ -1099,9 +1103,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     }
 
     // If it's a number add it directly to the instruction set and store its memory location in mem
-    if(typeof expression == "number") {
+    if(typeof expression == "number" || typeof expression == "bigint") {
         retVal.push("N")
-        retVal.push(expression)
+        retVal.push(BigInt(expression))
         mem.push(iterator.value)
         iterator.value += 1
     // If it's an array with a string as the first index, recursively run starting at the next index
@@ -1249,9 +1253,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
     // location to the memory map and recursively run starting at the next index
-    } else if (typeof expression[0] == "number") {
+    } else if (typeof expression[0] == "number" || typeof expression[0] == "bigint") {
         retVal.push("N")
-        retVal.push(expression[0])
+        retVal.push(BigInt(expression[0]))
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1
