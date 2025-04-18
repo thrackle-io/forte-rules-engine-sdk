@@ -1,4 +1,4 @@
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters } from 'viem';
 import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
 // Types:
@@ -169,14 +169,18 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
     var trackerDefaultValue: any
     if(trackerType == "uint256") {
         if(!isNaN(Number(syntax.defaultValue))) {
-            
+
             trackerDefaultValue = encodePacked(['uint256'], [BigInt(syntax.defaultValue)])
         } else {
             throw new Error("Default Value doesn't match type")
         }
     } else if(trackerType == "address") {
-        var address: Address = getAddress(syntax.defaultValue.trim())
-        trackerDefaultValue = toHex(address)
+        var address = encodeAbiParameters(
+            parseAbiParameters('address'),
+            [getAddress(syntax.defaultValue.trim())]
+          )
+
+        trackerDefaultValue = address
     } else {
         trackerDefaultValue = toHex(syntax.defaultValue.trim())
     }
