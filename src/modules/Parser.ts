@@ -1084,7 +1084,9 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
                     dataValues.push(toBytes(instructionSet[iter].trim()))
                     if(!operandArray.includes(instructionSet[iter].trim())) {
                         // Convert the string to a keccak356 has then to a uint256
-                        instructionSet[iter] = hexToNumber(keccak256(encodePacked(['string'], [instructionSet[iter].trim()])))
+                        instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
+                            parseAbiParameters('string'),
+                            [instructionSet[iter].trim()])))
                     }
                 }
             } 
@@ -1138,7 +1140,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     var tracker = false
                     if(parameter.rawType == "address") {
                         placeHolderEnum = 0
-                    } else if (parameter.raw == "string") {
+                    } else if (parameter.rawType == "string") {
                         placeHolderEnum = 1
                     } else if(parameter.rawType == "uint256") {
                         placeHolderEnum = 2
@@ -1248,6 +1250,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         }
         
         if(!foundMatch) {
+            retVal.push("N")
             retVal.push(expression[0].trim())
             var sliced = expression.slice(1)
             mem.push(iterator.value)

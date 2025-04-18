@@ -914,9 +914,9 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     }
 
     var rawData = {
-        instructionSetIndex: output.rawData.instructionSetIndex,
-        argumentTypes: output.rawData.argumentTypes,
-        dataValues: output.rawData.dataValues,
+        instructionSetIndex: [],
+        argumentTypes: [],
+        dataValues: [],
     }
 
     cleanInstructionSet(output.instructionSet)
@@ -929,7 +929,5 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
     } as const
-
-
     return rule
 }
