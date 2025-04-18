@@ -72,8 +72,9 @@ export type stringReplacement = {
 }
 
 export type trackerIndexNameMapping = {
-    trackerName: string
-    trackerIndex: number
+    id: number
+    name: string
+    type: number
 }
 
 export type TrackerDefinition = {
@@ -122,15 +123,15 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var names = parseFunctionArguments(functionSignature)
     
     condition = parseForeignCalls(condition, names.length, names)
-    parseTrackers(condition, names.length, names)
+    parseTrackers(condition, names.length, names, indexMap)
     var effectNames = Array.from(names)
     for(var effectP in syntax.positiveEffects) {
         syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames.length, effectNames)
-        parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames)
+        parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames, indexMap)
     }
     for(var effectN in syntax.negativeEffects) {
         syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames.length, effectNames)
-        parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames)
+        parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames, indexMap)
     }
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
@@ -182,7 +183,9 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
 
         trackerDefaultValue = address
     } else {
-        trackerDefaultValue = toHex(syntax.defaultValue.trim())
+        trackerDefaultValue = encodeAbiParameters(
+                            parseAbiParameters('string'),
+                            [syntax.defaultValue.trim()])
     }
     var trackerTypeEnum = 0
     for(var parameterType of PT) {
@@ -688,7 +691,7 @@ export function parseFunctionArguments(functionSignature: string) {
     return names
 }
 
-export function parseTrackers(condition: string, nextIndex: number, names: any[]) {
+export function parseTrackers(condition: string, nextIndex: number, names: any[], indexMap: trackerIndexNameMapping[]) {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
@@ -696,7 +699,19 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
     if(matches != null) {
         var uniq = [...new Set(matches)];
         for(var match of uniq!) {
-            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            var type = "address"
+            for(var ind of indexMap){
+                if(("TR:"+ind.name) == match) {
+                    if(ind.type == 0) {
+                        type = "address"
+                    } else if(ind.type == 1) {
+                        type = "string"
+                    } else {
+                        type = "uint256"
+                    }
+                }
+            }
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker", rawTypeTwo: type})
             nextIndex++
         }
     }
@@ -1145,7 +1160,13 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     } else if(parameter.rawType == "uint256") {
                         placeHolderEnum = 2
                     } else if(parameter.rawType == "tracker") {
-                        placeHolderEnum = 0
+                        if(parameter.rawTypeTwo == "address") {
+                            placeHolderEnum = 0
+                        } else if(parameter.rawTypeTwo == "string") {
+                            placeHolderEnum = 1
+                        } else {
+                            placeHolderEnum = 2
+                        }
                         tracker = true
                     }
 
@@ -1196,8 +1217,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         foreignCall: false
                     }
                     for(var ind of indexMap) {
-                        if(parameter.name == ind.trackerName) {
-                            truIndex = ind.trackerIndex
+                        if(parameter.name == ind.name) {
+                            truIndex = ind.id
                         }
                     }
                     

@@ -59,6 +59,7 @@ type RulesEngineComponentContract = GetContractReturnType<typeof RulesEngineComp
 type FCNameToID = {
     id: number
     name: string
+    type: number
 }
 
 type RuleStorageSet = {
@@ -282,7 +283,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
         const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
-        var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
+        var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
         fcIds.push(struc)
     }
 
@@ -290,7 +291,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
         const trId = await setTracker(policyId, 0, JSON.stringify(tracker), rulesEngineComponentContract)
-        var struc : FCNameToID = {id: trId, name: trackerStruct.name}
+        var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
         trackerIds.push(struc)
         trackers.push(trackerStruct)
     }
@@ -865,7 +866,7 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
 }
 
 function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
-    var output = parseRuleSyntax(ruleSyntax, [])
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var fcList = buildForeignCallList(ruleSyntax.condition)
     var trList = buildTrackerList(ruleSyntax.condition)
     var fcIDs = []
@@ -929,5 +930,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
     } as const
+
     return rule
 }
