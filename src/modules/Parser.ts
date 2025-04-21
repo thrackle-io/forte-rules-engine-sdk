@@ -887,10 +887,28 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
     var effectText = ""
     var effectInstructionSet: any[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
-
+    var pType = 2
+    var parameterValue: any = 0
     if(effect.includes("emit")) {
         effectType = EffectType.EVENT
-        effectText = effect.replace("emit ", "").trim()
+        var placeHolder = effect.replace("emit ", "").trim()
+        var spli = placeHolder.split(", ")
+        if(spli.length > 1) {
+            effectText = spli[0]
+            if(isAddress(spli[1].trim())) {
+                pType = 0
+                parameterValue = spli[1].trim()
+            } else if(!isNaN(Number(spli[1].trim()))) {
+                pType = 2
+                parameterValue = BigInt(spli[1].trim())
+            } else {
+                pType = 1
+                parameterValue = spli[1].trim() 
+            }
+        } else {
+            effectText = spli[0]
+
+        }
     } else if (effect.includes("revert")) {
         effectType = EffectType.REVERT
         const match = effect.match(revertTextPattern);
@@ -904,7 +922,7 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         }
     }
 
-    return {type: effectType, text: effectText, instructionSet: effectInstructionSet}
+    return {type: effectType, text: effectText, instructionSet: effectInstructionSet, pType: pType, parameterValue: parameterValue}
 }
 
 // Convert the original human-readable rules condition syntax to an Abstract Syntax Tree

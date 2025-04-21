@@ -11,6 +11,10 @@ import {
     toBytes,
     toHex,
     encodePacked,
+    encodeAbiParameters,
+    parseAbiParameters,
+    stringToBytes,
+    getAddress,
 
 } from "viem";
 
@@ -826,16 +830,35 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
     var output = parseRuleSyntax(ruleSyntax, [])
     var pEffects = []
     var nEffects = []
+
     for(var pEffect of output.positiveEffects) {
         cleanInstructionSet(pEffect.instructionSet)
+        var param: any
+
+        if(pEffect.pType == 0) {
+            // address
+            param = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [getAddress(String(pEffect.parameterValue))])
+        } else if(pEffect.pType == 1) {
+            // string
+            param = encodeAbiParameters(
+                parseAbiParameters('string'),
+                [String(pEffect.parameterValue)])
+        } else {
+            // uint
+            param = encodeAbiParameters(
+                parseAbiParameters('uint256'),
+                [BigInt(pEffect.parameterValue)])
+        }
 
         const effect = {
             valid: true,
             dynamicParam: false,
             effectType: pEffect.type,
-            pType: 2,
-            param: toHex(0),
-            text: toHex(toBytes(
+            pType: pEffect.pType,
+            param: param,
+            text: toHex(stringToBytes(
                 pEffect.text, 
                 { size: 32 } 
               )),
@@ -845,14 +868,34 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
         pEffects.push(effect)
     }
     for(var nEffect of output.negativeEffects) {
+
+        var param: any
+
+        if(nEffect.pType == 0) {
+            // address
+            param = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [getAddress(String(nEffect.parameterValue))])
+        } else if(nEffect.pType == 1) {
+            // string
+            param = encodeAbiParameters(
+                parseAbiParameters('string'),
+                [String(nEffect.parameterValue)])
+        } else {
+            // uint
+            param = encodeAbiParameters(
+                parseAbiParameters('uint256'),
+                [BigInt(nEffect.parameterValue)])
+        }
+
         cleanInstructionSet(nEffect.instructionSet)
         const effect = {
             valid: true,
             dynamicParam: false,
             effectType: nEffect.type,
-            pType: 2,
-            param: toHex(0),
-            text: toHex(toBytes(
+            pType: nEffect.pType,
+            param: param,
+            text: toHex(stringToBytes(
                 nEffect.text, 
                 { size: 32 } 
               )),
