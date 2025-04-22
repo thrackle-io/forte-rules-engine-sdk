@@ -121,10 +121,10 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
 
     var functionSignature = syntax.encodedValues
     var names = parseFunctionArguments(functionSignature)
-    
+    var effectNames = Array.from(names)
     condition = parseForeignCalls(condition, names.length, names)
     parseTrackers(condition, names.length, names, indexMap)
-    var effectNames = Array.from(names)
+    
     for(var effectP in syntax.positiveEffects) {
         syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames.length, effectNames)
         parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames, indexMap)
@@ -133,24 +133,20 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
         syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames.length, effectNames)
         parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames, indexMap)
     }
+
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
-    console.log("positive effects begins")
     for(var effectP of syntax.positiveEffects) {
         let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
         positiveEffectsFinal.push(effect)
 
     }
-    console.log("negative effects begins")
     for(var effectN of syntax.negativeEffects) {
-        console.log("effectPlaceholders: ", effectPlaceHolders)
         let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
-        console.log("effectPlaceholders after parseEffect: ", effectPlaceHolders)
         negativeEffectsFinal.push(effect)
     }
     var retVal = interpretToInstructionSet(condition, names, indexMap)
-
     var excludeArray = []
     for(var name of names) {
         excludeArray.push(name.name)
@@ -159,6 +155,9 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     excludeArray.push(...matchArray)
     excludeArray.push(...operandArray)
     var rawData: any[] = []
+
+
+
 
     var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
     return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
@@ -915,14 +914,13 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         const match = effect.match(revertTextPattern);
         effectText = match ? match[2] : "";
     } else {
-        console.log("got to the expression")
         effectType = EffectType.EXPRESSION
         var effectStruct = interpretToInstructionSet(effect, names, indexMap)
         effectInstructionSet = effectStruct.instructionSet
         for(var placeHolder of effectStruct.placeHolders) {
             placeholders.push(placeHolder)
         }
-        console.log("effectStruct: ", effectStruct)
+
     }
 
     return {type: effectType, text: effectText, instructionSet: effectInstructionSet, pType: pType, parameterValue: parameterValue}
