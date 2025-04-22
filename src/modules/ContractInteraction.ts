@@ -741,10 +741,12 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     console.log("ruleSyntax: ", ruleSyntax);
-    var effects = buildAnEffectStruct(ruleSyntax)
+    let effectSyntax: ruleJSON = JSON.parse(ruleS)
+    var effects = buildAnEffectStruct(effectSyntax)
     console.log("effects: ", effects);
     var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
     console.log("rule: ", rule);
+
     var addRule
     while(true) {
         try {
@@ -919,6 +921,7 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     console.log("Build a rule struct")
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     console.log("output from parseRuleSyntax: ", output);
+
     var fcList = buildForeignCallList(ruleSyntax.condition)
     var trList = buildTrackerList(ruleSyntax.condition)
     var fcIDs = []
@@ -982,6 +985,8 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
     } as const
+
+console.log(rule)
 
     return rule
 }
