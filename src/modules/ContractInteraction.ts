@@ -285,6 +285,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     const policyId = await createBlankPolicy(policyType, rulesEnginePolicyContract)
     
     for(var foreignCall of policyJSON.ForeignCalls) {
+        console.log("parsing foreign calls")
         var fcStruct = parseForeignCallDefinition(foreignCall)
         const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
@@ -304,10 +305,12 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
         var functionSignature = rule.functionSignature.trim()
         if(!functionSignatures.includes(functionSignature)) {
             functionSignatures.push(functionSignature)
+            console.log("creating function signature")
             const fsId = await createFunctionSignature(policyId, functionSignature, rulesEngineComponentContract)
             functionSignatureIds.push(fsId)
         }
         
+        console.log("creating new rule")
         const ruleId = await createNewRule(policyId, JSON.stringify(rule), rulesEnginePolicyContract, fcIds, outputFileName, contractToModify, trackerIds)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
@@ -325,7 +328,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
         }
         functionSignatureSelectors.push(toFunctionSelector(fs))
     }
-
+    console.log("updating policy")
     var result = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
 
     return policyId
@@ -737,8 +740,11 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
 export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
+    console.log("ruleSyntax: ", ruleSyntax);
     var effects = buildAnEffectStruct(ruleSyntax)
+    console.log("effects: ", effects);
     var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
+    console.log("rule: ", rule);
     var addRule
     while(true) {
         try {
@@ -827,6 +833,7 @@ export const deleteRule = async(policyId: number, ruleId: number,
 }
 
 function buildAnEffectStruct(ruleSyntax: ruleJSON) {
+    console.log("Build an effect struct")
     var output = parseRuleSyntax(ruleSyntax, [])
     var pEffects = []
     var nEffects = []
@@ -909,7 +916,9 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
 }
 
 function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
+    console.log("Build a rule struct")
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
+    console.log("output from parseRuleSyntax: ", output);
     var fcList = buildForeignCallList(ruleSyntax.condition)
     var trList = buildTrackerList(ruleSyntax.condition)
     var fcIDs = []
