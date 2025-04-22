@@ -348,7 +348,7 @@ describe('Rules Engine Interactions', async () => {
         ]
         }`
         var result = await createFullPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), 
-        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON, policyApplicant,
+        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON,
             "src/testOutput/contractTestCreateFullPolicy.sol", "", 1)
         expect(result).toBeGreaterThanOrEqual(0)
         var resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
@@ -402,7 +402,7 @@ describe('Rules Engine Interactions', async () => {
         ]
         }`
         var result = await createFullPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), 
-        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON, policyApplicant,
+        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON,
             "src/testOutput/contractTestCreateFullPolicy.sol", "", 1)
         expect(result).toBeGreaterThanOrEqual(0)
         await sleep(4000)

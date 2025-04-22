@@ -1,4 +1,4 @@
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters } from 'viem';
 import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
 // Types:
@@ -72,14 +72,15 @@ export type stringReplacement = {
 }
 
 export type trackerIndexNameMapping = {
-    trackerName: string
-    trackerIndex: number
+    id: number
+    name: string
+    type: number
 }
 
 export type TrackerDefinition = {
     name: string
     type: number
-    defaultValue: string
+    defaultValue: any
 }
 
 export type RawData = {
@@ -122,15 +123,15 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var names = parseFunctionArguments(functionSignature)
     
     condition = parseForeignCalls(condition, names.length, names)
-    parseTrackers(condition, names.length, names)
+    parseTrackers(condition, names.length, names, indexMap)
     var effectNames = Array.from(names)
     for(var effectP in syntax.positiveEffects) {
         syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames.length, effectNames)
-        parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames)
+        parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames, indexMap)
     }
     for(var effectN in syntax.negativeEffects) {
         syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames.length, effectNames)
-        parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames)
+        parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames, indexMap)
     }
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
@@ -166,18 +167,25 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
     if(!supportedTrackerTypes.includes(trackerType)) {
         throw new Error("Unsupported type")
     }
-    var trackerDefaultValue: string
+    var trackerDefaultValue: any
     if(trackerType == "uint256") {
         if(!isNaN(Number(syntax.defaultValue))) {
-            trackerDefaultValue = toHex(Number(syntax.defaultValue))
+
+            trackerDefaultValue = encodePacked(['uint256'], [BigInt(syntax.defaultValue)])
         } else {
             throw new Error("Default Value doesn't match type")
         }
     } else if(trackerType == "address") {
-        var address: Address = getAddress(syntax.defaultValue.trim())
-        trackerDefaultValue = toHex(address)
+        var address = encodeAbiParameters(
+            parseAbiParameters('address'),
+            [getAddress(syntax.defaultValue.trim())]
+          )
+
+        trackerDefaultValue = address
     } else {
-        trackerDefaultValue = toHex(syntax.defaultValue.trim())
+        trackerDefaultValue = encodeAbiParameters(
+                            parseAbiParameters('string'),
+                            [syntax.defaultValue.trim()])
     }
     var trackerTypeEnum = 0
     for(var parameterType of PT) {
@@ -426,6 +434,22 @@ export function buildForeignCallList(condition: string) {
         return names
 }
 
+export function buildTrackerList(condition: string) {
+    const trRegex = /TR:[a-zA-Z]+/g
+    var matches = condition.match(trRegex)
+
+    var names: string[] = []
+    if(matches != null) {
+        for (const match of matches) {
+            const fullTRExpr = match;
+            var name = fullTRExpr.replace("TR:", "")
+            names.push(name)
+        }
+    }
+
+    return names
+}
+
 export function buildForeignCallListRaw(condition: string) {
     const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
     const matches = condition.matchAll(fcRegex);
@@ -667,7 +691,7 @@ export function parseFunctionArguments(functionSignature: string) {
     return names
 }
 
-export function parseTrackers(condition: string, nextIndex: number, names: any[]) {
+export function parseTrackers(condition: string, nextIndex: number, names: any[], indexMap: trackerIndexNameMapping[]) {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
@@ -675,7 +699,19 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
     if(matches != null) {
         var uniq = [...new Set(matches)];
         for(var match of uniq!) {
-            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
+            var type = "address"
+            for(var ind of indexMap){
+                if(("TR:"+ind.name) == match) {
+                    if(ind.type == 0) {
+                        type = "address"
+                    } else if(ind.type == 1) {
+                        type = "string"
+                    } else {
+                        type = "uint256"
+                    }
+                }
+            }
+            names.push({name: match, tIndex: nextIndex, rawType: "tracker", rawTypeTwo: type})
             nextIndex++
         }
     }
@@ -851,10 +887,28 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
     var effectText = ""
     var effectInstructionSet: any[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
-
+    var pType = 2
+    var parameterValue: any = 0
     if(effect.includes("emit")) {
         effectType = EffectType.EVENT
-        effectText = effect.replace("emit ", "").trim()
+        var placeHolder = effect.replace("emit ", "").trim()
+        var spli = placeHolder.split(", ")
+        if(spli.length > 1) {
+            effectText = spli[0]
+            if(isAddress(spli[1].trim())) {
+                pType = 0
+                parameterValue = spli[1].trim()
+            } else if(!isNaN(Number(spli[1].trim()))) {
+                pType = 2
+                parameterValue = BigInt(spli[1].trim())
+            } else {
+                pType = 1
+                parameterValue = spli[1].trim() 
+            }
+        } else {
+            effectText = spli[0]
+
+        }
     } else if (effect.includes("revert")) {
         effectType = EffectType.REVERT
         const match = effect.match(revertTextPattern);
@@ -868,7 +922,7 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         }
     }
 
-    return {type: effectType, text: effectText, instructionSet: effectInstructionSet}
+    return {type: effectType, text: effectText, instructionSet: effectInstructionSet, pType: pType, parameterValue: parameterValue}
 }
 
 // Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
@@ -1029,9 +1083,13 @@ function intify(array: any[]) {
         if(Array.isArray(array[iter])) {
             intify(array[iter])
          } else {
-            if(!isNaN(Number(array[iter]))) {
-                array[iter] = Number(array[iter])
-            } 
+            if(isAddress(array[iter])) {
+                array[iter] = BigInt(array[iter])
+            } else {
+                if(!isNaN(Number(array[iter]))) {
+                    array[iter] = BigInt(array[iter])
+                } 
+        }
                 
         }
         iter++
@@ -1049,7 +1107,7 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
     while(iter < instructionSet.length) {
             // Only capture values that aren't naturally numbers
             if(!isNaN(Number(instructionSet[iter]))) {
-                instructionSet[iter] = Number(instructionSet[iter])
+                instructionSet[iter] = BigInt(instructionSet[iter])
             } else {
                 if(!excludeArray.includes(instructionSet[iter].trim())) {
                     // Create the raw data entry
@@ -1059,7 +1117,9 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
                     dataValues.push(toBytes(instructionSet[iter].trim()))
                     if(!operandArray.includes(instructionSet[iter].trim())) {
                         // Convert the string to a keccak356 has then to a uint256
-                        instructionSet[iter] = hexToNumber(keccak256(encodePacked(['string'], [instructionSet[iter].trim()])))
+                        instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
+                            parseAbiParameters('string'),
+                            [instructionSet[iter].trim()])))
                     }
                 }
             } 
@@ -1082,9 +1142,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     }
 
     // If it's a number add it directly to the instruction set and store its memory location in mem
-    if(typeof expression == "number") {
+    if(typeof expression == "number" || typeof expression == "bigint") {
         retVal.push("N")
-        retVal.push(expression)
+        retVal.push(BigInt(expression))
         mem.push(iterator.value)
         iterator.value += 1
     // If it's an array with a string as the first index, recursively run starting at the next index
@@ -1113,12 +1173,18 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     var tracker = false
                     if(parameter.rawType == "address") {
                         placeHolderEnum = 0
-                    } else if (parameter.raw == "string") {
+                    } else if (parameter.rawType == "string") {
                         placeHolderEnum = 1
                     } else if(parameter.rawType == "uint256") {
                         placeHolderEnum = 2
                     } else if(parameter.rawType == "tracker") {
-                        placeHolderEnum = 0
+                        if(parameter.rawTypeTwo == "address") {
+                            placeHolderEnum = 0
+                        } else if(parameter.rawTypeTwo == "string") {
+                            placeHolderEnum = 1
+                        } else {
+                            placeHolderEnum = 2
+                        }
                         tracker = true
                     }
 
@@ -1169,8 +1235,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         foreignCall: false
                     }
                     for(var ind of indexMap) {
-                        if(parameter.name == ind.trackerName) {
-                            truIndex = ind.trackerIndex
+                        if(parameter.name == ind.name) {
+                            truIndex = ind.id
                         }
                     }
                     
@@ -1223,6 +1289,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         }
         
         if(!foundMatch) {
+            retVal.push("N")
             retVal.push(expression[0].trim())
             var sliced = expression.slice(1)
             mem.push(iterator.value)
@@ -1232,9 +1299,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory
     // location to the memory map and recursively run starting at the next index
-    } else if (typeof expression[0] == "number") {
+    } else if (typeof expression[0] == "number" || typeof expression[0] == "bigint") {
         retVal.push("N")
-        retVal.push(expression[0])
+        retVal.push(BigInt(expression[0]))
         var sliced = expression.slice(1)
         mem.push(iterator.value)
         iterator.value += 1

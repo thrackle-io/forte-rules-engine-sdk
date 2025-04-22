@@ -10,6 +10,11 @@ import {
     hexToString,
     toBytes,
     toHex,
+    encodePacked,
+    encodeAbiParameters,
+    parseAbiParameters,
+    stringToBytes,
+    getAddress,
 
 } from "viem";
 
@@ -24,7 +29,8 @@ import {
     parseFunctionArguments,
     parseRuleSyntax,
     cleanInstructionSet,
-    buildForeignCallList
+    buildForeignCallList,
+    buildTrackerList
 } from "./Parser"
 
 import {
@@ -57,6 +63,7 @@ type RulesEngineComponentContract = GetContractReturnType<typeof RulesEngineComp
 type FCNameToID = {
     id: number
     name: string
+    type: number
 }
 
 type RuleStorageSet = {
@@ -263,9 +270,10 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
 }
 
 export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
-    policySyntax: string, contractAddressForPolicy: Address, outputFileName: string, contractToModify: string, 
+    policySyntax: string, outputFileName: string, contractToModify: string, 
     policyType: number): Promise<number> => {
     var fcIds: FCNameToID[] = []
+    var trackerIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
     let ruleIds = []
     let ruleToFunctionSignature = new Map<string, number[]>();
@@ -273,20 +281,22 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
-
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
     const policyId = await createBlankPolicy(policyType, rulesEnginePolicyContract)
-
+    
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
         const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
-        var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0]}
+        var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
         fcIds.push(struc)
     }
+
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
         const trId = await setTracker(policyId, 0, JSON.stringify(tracker), rulesEngineComponentContract)
+        var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
+        trackerIds.push(struc)
         trackers.push(trackerStruct)
     }
 
@@ -298,7 +308,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
             functionSignatureIds.push(fsId)
         }
         
-        const ruleId = await createNewRule(policyId, JSON.stringify(rule), rulesEnginePolicyContract, fcIds, outputFileName, contractToModify)
+        const ruleId = await createNewRule(policyId, JSON.stringify(rule), rulesEnginePolicyContract, fcIds, outputFileName, contractToModify, trackerIds)
         ruleIds.push(ruleId)
         if(ruleToFunctionSignature.has(functionSignature)) {
             ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -318,7 +328,8 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
 
     var result = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
 
-    return result
+    return policyId
+    // return result
 } 
 
 export const deletePolicy = async(policyId: number,  
@@ -333,7 +344,6 @@ export const deletePolicy = async(policyId: number,
             args: [ policyId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -474,7 +484,6 @@ export const deleteForeignCall = async(policyId: number, foreignCallId: number,
             args: [ policyId, foreignCallId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -549,7 +558,6 @@ export const deleteTracker = async(policyId: number, trackerId: number,
             args: [ policyId, trackerId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -727,10 +735,10 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
 }
 
 export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
-    foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string): Promise<number> => {
+    foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     var effects = buildAnEffectStruct(ruleSyntax)
-    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
     var addRule
     while(true) {
         try {
@@ -805,7 +813,6 @@ export const deleteRule = async(policyId: number, ruleId: number,
             args: [ policyId, ruleId ],
         })
     } catch (err) {
-        console.log(err)
         return -1
     }
 
@@ -823,57 +830,114 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
     var output = parseRuleSyntax(ruleSyntax, [])
     var pEffects = []
     var nEffects = []
+
     for(var pEffect of output.positiveEffects) {
         cleanInstructionSet(pEffect.instructionSet)
+        var param: any
+
+        if(pEffect.pType == 0) {
+            // address
+            param = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [getAddress(String(pEffect.parameterValue))])
+        } else if(pEffect.pType == 1) {
+            // string
+            param = encodeAbiParameters(
+                parseAbiParameters('string'),
+                [String(pEffect.parameterValue)])
+        } else {
+            // uint
+            param = encodeAbiParameters(
+                parseAbiParameters('uint256'),
+                [BigInt(pEffect.parameterValue)])
+        }
 
         const effect = {
             valid: true,
             dynamicParam: false,
             effectType: pEffect.type,
-            pType: 0,
-            param: toHex(0),
-            text: toHex(toBytes(
+            pType: pEffect.pType,
+            param: param,
+            text: toHex(stringToBytes(
                 pEffect.text, 
                 { size: 32 } 
               )),
-            errorMessage: '',
+            errorMessage: pEffect.text,
             instructionSet: pEffect.instructionSet
         } as const
         pEffects.push(effect)
     }
     for(var nEffect of output.negativeEffects) {
-        cleanInstructionSet(nEffect.instructionSet)
 
+        var param: any
+
+        if(nEffect.pType == 0) {
+            // address
+            param = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [getAddress(String(nEffect.parameterValue))])
+        } else if(nEffect.pType == 1) {
+            // string
+            param = encodeAbiParameters(
+                parseAbiParameters('string'),
+                [String(nEffect.parameterValue)])
+        } else {
+            // uint
+            param = encodeAbiParameters(
+                parseAbiParameters('uint256'),
+                [BigInt(nEffect.parameterValue)])
+        }
+
+        cleanInstructionSet(nEffect.instructionSet)
         const effect = {
             valid: true,
             dynamicParam: false,
             effectType: nEffect.type,
-            pType: 0,
-            param: toHex(0),
-            text: toHex(toBytes(
+            pType: nEffect.pType,
+            param: param,
+            text: toHex(stringToBytes(
                 nEffect.text, 
                 { size: 32 } 
               )),
-            errorMessage: '',
+            errorMessage: nEffect.text,
             instructionSet: nEffect.instructionSet
         } as const
         nEffects.push(effect)
     }
 
-    console.log("pEffects, ", pEffects)
-
     return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
 
-function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any) {
-    var output = parseRuleSyntax(ruleSyntax, [])
+function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var fcList = buildForeignCallList(ruleSyntax.condition)
+    var trList = buildTrackerList(ruleSyntax.condition)
     var fcIDs = []
+    var trIDs = []
     for(var name of fcList) {
         for(var mapping of foreignCallNameToID) {
             if(mapping.name == name) {
                 fcIDs.push(mapping.id)
             }
+        }
+    }
+    for(var name of trList) {
+        for(var mapping of trackerNameToID) {
+            if(mapping.name == name) {
+                trIDs.push(mapping.id)
+            }
+        }
+    }
+    var iter = 0
+    var tIter = 0
+    for(var index in output.placeHolders) {
+        if(output.placeHolders[index].foreignCall) {
+            output.placeHolders[index].typeSpecificIndex = fcIDs[iter]
+            iter++
+        }
+        if(output.placeHolders[index].trackerValue) {
+            output.placeHolders[index].typeSpecificIndex = trIDs[tIter]
+            tIter++
         }
     }
     var fcEffectList: string[] = []
@@ -894,9 +958,9 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     }
 
     var rawData = {
-        instructionSetIndex: output.rawData.instructionSetIndex,
-        argumentTypes: output.rawData.argumentTypes,
-        dataValues: output.rawData.dataValues,
+        instructionSetIndex: [],
+        argumentTypes: [],
+        dataValues: [],
     }
 
     cleanInstructionSet(output.instructionSet)
@@ -909,7 +973,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
     } as const
-
 
     return rule
 }
