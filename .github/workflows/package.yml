@@ -24,8 +24,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
+
     steps:
       - uses: actions/checkout@v4
       # Setup .npmrc file to publish to npm
@@ -54,8 +55,13 @@ jobs:
           else
             npm version prerelease --preid=rc
           fi
-          git push origin
-          git push --tags
+      - name: Push changes to the repository
+        if: github.event.inputs.versionUpdateSignificance != 'current'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
       - name: Publish the NPM package
         if: github.event.inputs.publish
         run: |
