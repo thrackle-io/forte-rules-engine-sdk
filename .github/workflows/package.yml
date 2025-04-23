@@ -54,7 +54,7 @@ jobs:
           else
             npm version prerelease --preid=rc
           fi
-          git push origin main
+          git push origin
           git push --tags
       - name: Publish the NPM package
         if: github.event.inputs.publish
