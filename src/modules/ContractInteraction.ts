@@ -919,7 +919,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         fcList.push(...buildForeignCallList(eff))
     }
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
-
     var trList = buildTrackerList(ruleSyntax.condition)
     var fcIDs = []
     var trIDs = []

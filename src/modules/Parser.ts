@@ -746,7 +746,16 @@ function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
         // Create a unique placeholder for this FC expression
         const placeholder = `FC:${iter}`;
         processedCondition = processedCondition.replace(fullFcExpr, placeholder);
-        names.push({name: match, tIndex: nextIndex, rawType: "foreign call", fcPlaceholder: placeholder})
+        var alreadyFound = false
+        for(var existing of names) {
+            if(existing.name == fullFcExpr) {
+                alreadyFound = true
+                break
+            }
+        }
+        if(!alreadyFound) {
+            names.push({name: match, tIndex: nextIndex, rawType: "foreign call", fcPlaceholder: placeholder})
+        }
         iter++;
         nextIndex++;
     }
@@ -917,8 +926,8 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         effectType = EffectType.EXPRESSION
         var effectStruct = interpretToInstructionSet(effect, names, indexMap)
         effectInstructionSet = effectStruct.instructionSet
-        for(var placeHolder of effectStruct.placeHolders) {
-            placeholders.push(placeHolder)
+        for(var placeHolde of effectStruct.placeHolders) {
+            placeholders.push(placeHolde)
         }
 
     }
