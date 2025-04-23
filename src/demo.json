@@ -19,11 +19,11 @@
 ], 
 "RulesJSON": [
     {
-        "condition": "value > 500",
-        "positiveEffects": ["emit Success"],
-        "negativeEffects": ["revert()"],
+        "condition": "testParam < 15",
+        "positiveEffects": ["revert(\"Positive\")"],
+        "negativeEffects": ["revert(\"Negative\")"],
         "functionSignature": "transfer(address to, uint256 value)",
-        "encodedValues": "address to, uint256 value"
+        "encodedValues": "address to, uint256 value, uint256 testParam"
     }
 ]
 }
