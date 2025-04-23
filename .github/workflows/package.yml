@@ -1,5 +1,5 @@
-name: Publish package to NPM
-description: "Publishes the repository to npm"
+name: Version Update and publish to NPM
+description: "Updates Version and optionally publishes to NPM"
 
 on:
   release:
@@ -16,6 +16,10 @@ on:
           - Patch
           - Release Candidate
           - current
+      publish:
+        type: boolean
+        description: "Publish to NPM"
+        default: false
 
 jobs:
   publish:
@@ -54,7 +58,8 @@ jobs:
           git config --local user.email "engineering@thrackle.io"
           git push origin main
       - name: Publish the NPM package
+        if: github.event.inputs.publish
         run: |
-          npm publish
+          npm publish --scope=@thrackle-io
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
