@@ -1,0 +1,65 @@
+name: Version Update and publish to NPM
+description: "Updates Version and optionally publishes to NPM"
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      versionUpdateSignificance:
+        type: choice
+        description: "The significance of the version to update"
+        default: "current"
+        options:
+          - Major
+          - Minor
+          - Patch
+          - Release Candidate
+          - current
+      publish:
+        type: boolean
+        description: "Publish to NPM"
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.4.0"
+          registry-url: "https://registry.npmjs.org"
+          # Defaults to the user or organization that owns the workflow file
+          scope: "@thrackle-io"
+          always-auth: true
+      - name: Update version if necessary
+        if: github.event.inputs.versionUpdateSignificance != 'current'
+        run: |
+          if [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Major" ]; then
+            npm version major
+          elif [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Minor" ]; then
+            npm version minor
+          elif [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Patch" ]; then
+            npm version patch
+          else
+            npm version prerelease --preid=rc
+          fi
+      - name: Push version changes to main if necessary
+        if: github.event.inputs.versionUpdateSignificance != 'current'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "engineering@thrackle.io"
+          git push origin main
+      - name: Publish the NPM package
+        if: github.event.inputs.publish
+        run: |
+          npm publish --scope=@thrackle-io
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
