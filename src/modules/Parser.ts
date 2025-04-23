@@ -664,8 +664,6 @@ export function convertTrackerStructsToStrings(trackers: any[] | null, trackerSt
 
 // Parse the function signature string and build the placeholder data structure
 export function parseFunctionArguments(functionSignature: string) {
-    // var start = functionSignature.lastIndexOf("(")
-    // var substr = functionSignature.substring(start+1, functionSignature.indexOf(")", start))
     var params = functionSignature.split(", ");
     var names = []
     var typeIndex = 0
