@@ -737,7 +737,7 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     let effectSyntax: ruleJSON = JSON.parse(ruleS)
-    var effects = buildAnEffectStruct(effectSyntax)
+    var effects = buildAnEffectStruct(effectSyntax, trackerNameToID)
     var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
 
     var addRule
@@ -828,8 +828,8 @@ export const deleteRule = async(policyId: number, ruleId: number,
     return 0
 }
 
-function buildAnEffectStruct(ruleSyntax: ruleJSON) {
-    var output = parseRuleSyntax(ruleSyntax, [])
+function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]) {
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var pEffects = []
     var nEffects = []
 
@@ -920,6 +920,12 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     }
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var trList = buildTrackerList(ruleSyntax.condition)
+    for(var eff of ruleSyntax.positiveEffects) {
+        trList.push(...buildTrackerList(eff))
+    }
+    for(var eff of ruleSyntax.negativeEffects) {
+        trList.push(...buildTrackerList(eff))
+    }
     var fcIDs = []
     var trIDs = []
     for(var name of fcList) {
@@ -961,7 +967,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
             tIter++
         }
     }
-
     var fcEffectList: string[] = []
     for(var eff of ruleSyntax.positiveEffects) {
         fcEffectList.concat(buildForeignCallList(eff))
@@ -996,6 +1001,5 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     } as const
 
     console.log(rule)
-
     return rule
 }

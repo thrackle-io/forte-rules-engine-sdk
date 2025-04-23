@@ -121,7 +121,7 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
 
     var functionSignature = syntax.encodedValues
     var names = parseFunctionArguments(functionSignature)
-    var effectNames = Array.from(names)
+    var effectNames: any[] = []
     condition = parseForeignCalls(condition, names.length, names)
     parseTrackers(condition, names.length, names, indexMap)
     
@@ -146,6 +146,7 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
         let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
         negativeEffectsFinal.push(effect)
     }
+
     var retVal = interpretToInstructionSet(condition, names, indexMap)
     var excludeArray = []
     for(var name of names) {
@@ -438,6 +439,7 @@ export function buildForeignCallList(condition: string) {
 
 export function buildTrackerList(condition: string) {
     const trRegex = /TR:[a-zA-Z]+/g
+    const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
 
     var names: string[] = []
@@ -445,6 +447,14 @@ export function buildTrackerList(condition: string) {
         for (const match of matches) {
             const fullTRExpr = match;
             var name = fullTRExpr.replace("TR:", "")
+            names.push(name)
+        }
+    }
+    matches = condition.match(truRegex)
+    if(matches != null) {
+        for (const match of matches) {
+            const fullTRExpr = match;
+            var name = fullTRExpr.replace("TRU:", "")
             names.push(name)
         }
     }
@@ -536,6 +546,8 @@ export function cleanInstructionSet(instructionSet: any[]) {
             instructionSet[iter] = 10
         } else if(val == 'PLH') {
             instructionSet[iter] = 11
+        } else if(val == 'TRU') {
+            instructionSet[iter] = 12
         }
 
         iter++
@@ -821,41 +833,6 @@ function buildIndividualMapping(parameter: string, argumentIterator: number, arg
         return true
     }
     return false
-}
-
-function parseEffectString(effectSplit: string, positiveEffects: string[], negativeEffects: string[]) {
-    // condition --> pos: revert <-> neg: emit, emit --> function signature
-    var foundMultiEffect = false
-
-    if(effectSplit.includes("pos:")) {
-        foundMultiEffect = true
-        if(effectSplit.includes("neg:")) {
-            // Positive Effects
-            parseIndividualEffects("pos:", effectSplit.split('<->')[0], positiveEffects)
-            // Negative Effects
-            parseIndividualEffects("neg:", effectSplit.split('<->')[1], negativeEffects)
-        } else {
-            // Positive Effects
-            parseIndividualEffects("pos:", effectSplit, positiveEffects)
-        }
-    } else if(effectSplit.includes("neg:")) {
-        foundMultiEffect = true
-        // Negative Effects
-        parseIndividualEffects("neg:", effectSplit, negativeEffects)
-    }
-    return foundMultiEffect
-}
-
-function parseIndividualEffects(splitString: string, effectSplit: string, effects: string[]) {
-    effectSplit = effectSplit.replace(splitString, "")
-    if(effectSplit.includes(",")) {
-        var innerEffectsSplit = effectSplit.split(',')
-        for(var strPos of innerEffectsSplit) {
-            effects.push(strPos.trim())
-        }
-    } else {
-        effects.push(effectSplit)
-    }
 }
 
 function interpretToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[]) {
@@ -1150,7 +1127,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     if (!expression || expression.length === 0) {
         return;
     }
-
+    plhIndex = 0
     // If it's a number add it directly to the instruction set and store its memory location in mem
     if(typeof expression == "number" || typeof expression == "bigint") {
         retVal.push("N")
@@ -1228,6 +1205,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     mem.push(iterator.value)
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                } else {
+                    plhIndex += 1
                 }
             } else if(expression[0].trim().includes('TRU:')) {
                 foundMatch = true
@@ -1245,7 +1224,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         foreignCall: false
                     }
                     for(var ind of indexMap) {
-                        if(parameter.name == ind.name) {
+                        if(parameter.name == "TR:"+ind.name) {
                             truIndex = ind.id
                         }
                     }
@@ -1256,6 +1235,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
 
+                } else {
+                    plhIndex += 1
                 }
             }
         }
@@ -1291,6 +1272,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     retVal.push('TRU')
                     retVal.push(truIndex)
                     retVal.push(iterator.value)
+                    // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates
+                    retVal.push(0)
                 } else {
                     mem.push(iterator.value)
                 }
@@ -1323,6 +1306,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         expression = expression.slice(1)
         convertToInstructionSet(retVal, mem, expression, iterator, parameterNames, placeHolders, indexMap)
     }
+    return plhIndex
 }
 
 
