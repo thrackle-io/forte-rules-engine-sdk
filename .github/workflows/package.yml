@@ -1,5 +1,4 @@
 name: Version Update and publish to NPM
-description: "Updates Version and optionally publishes to NPM"
 
 on:
   release:
@@ -30,6 +29,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Setup .npmrc file to publish to npm
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
       - uses: actions/setup-node@v4
         with:
           node-version: "22.4.0"
@@ -39,6 +42,8 @@ jobs:
           always-auth: true
       - name: Update version if necessary
         if: github.event.inputs.versionUpdateSignificance != 'current'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Major" ]; then
             npm version major
@@ -49,14 +54,8 @@ jobs:
           else
             npm version prerelease --preid=rc
           fi
-      - name: Push version changes to main if necessary
-        if: github.event.inputs.versionUpdateSignificance != 'current'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
           git push origin main
+          git push --tags
       - name: Publish the NPM package
         if: github.event.inputs.publish
         run: |
