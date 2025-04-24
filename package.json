@@ -2,7 +2,7 @@
   "author": "Thrackle",
   "homepage": "https://github.com/thrackle-io/forte-rules-engine-sdk#readme",
   "name": "@thrackle-io/forte-rules-engine-sdk",
-  "license": "UNLICENSED",
+  "license": "BSL 1.1",
   "keywords": [
     "rules",
     "sdk",
@@ -17,7 +17,6 @@
   "scripts": {
     "test": "vitest"
   },
-  
   "dependencies": {
     "@types/diff": "^7.0.1",
     "@wagmi/connectors": "^5.7.3",
@@ -26,7 +25,6 @@
     "vitest": "^2.1.4"
   },
   "devDependencies": {
-    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "viem": "^2.21.51"
   },
