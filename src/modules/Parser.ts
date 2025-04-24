@@ -146,8 +146,8 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
         let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
         negativeEffectsFinal.push(effect)
     }
-
-    var retVal = interpretToInstructionSet(condition, names, indexMap)
+    var placeHolders: PlaceholderStruct[] = []
+    var retVal = interpretToInstructionSet(condition, names, indexMap, placeHolders)
     var excludeArray = []
     for(var name of names) {
         excludeArray.push(name.name)
@@ -162,7 +162,7 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
 
     var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
     return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
-         placeHolders: retVal.placeHolders, effectPlaceHolders: effectPlaceHolders}
+         placeHolders: placeHolders, effectPlaceHolders: effectPlaceHolders}
 }
 
 export function parseTrackerSyntax(syntax: trackerJSON) {
@@ -835,7 +835,7 @@ function buildIndividualMapping(parameter: string, argumentIterator: number, arg
     return false
 }
 
-function interpretToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[]) {
+function interpretToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[], existingPlaceHolders: PlaceholderStruct[]) {
         // Create the initial Abstract Syntax Tree (AST) splitting on AND
         var array = convertToTree(syntax, "AND")
         if(array.length == 0) {
@@ -864,7 +864,7 @@ function interpretToInstructionSet(syntax: string, names: any[], indexMap: track
         const iter = { value: 0 };
         // Convert the AST into the Instruction Set Syntax 
         plhIndex = 0
-        convertToInstructionSet(instructionSet, mem, array, iter, names, placeHolders, indexMap)
+        convertToInstructionSet(instructionSet, mem, array, iter, names, existingPlaceHolders, indexMap)
         return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
@@ -901,11 +901,8 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
         effectText = match ? match[2] : "";
     } else {
         effectType = EffectType.EXPRESSION
-        var effectStruct = interpretToInstructionSet(effect, names, indexMap)
+        var effectStruct = interpretToInstructionSet(effect, names, indexMap, placeholders)
         effectInstructionSet = effectStruct.instructionSet
-        for(var placeHolde of effectStruct.placeHolders) {
-            placeholders.push(placeHolde)
-        }
 
     }
 
@@ -1193,14 +1190,21 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     retVal.push("PLH")
                     retVal.push(plhIndex)
                     plhIndex += 1
-                    var placeHolder : PlaceholderStruct = {
-                        pType: 0,
-                        typeSpecificIndex: parameter.tIndex,
-                        trackerValue: false,
-                        foreignCall: true
+                    var found = false
+                    for(var pHold of placeHolders) {
+                        if(pHold.foreignCall && pHold.typeSpecificIndex == parameter.tIndex) {
+                            found = true
+                        }
                     }
-                    placeHolders.push(placeHolder)
-
+                    if(!found) {
+                        var placeHolder : PlaceholderStruct = {
+                            pType: 0,
+                            typeSpecificIndex: parameter.tIndex,
+                            trackerValue: false,
+                            foreignCall: true
+                        }
+                        placeHolders.push(placeHolder)
+                    }
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
                     iterator.value += 1
