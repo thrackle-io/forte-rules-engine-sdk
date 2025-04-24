@@ -65,6 +65,6 @@ jobs:
       - name: Publish the NPM package
         if: github.event.inputs.publish
         run: |
-          npm publish --scope=@thrackle-io
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
