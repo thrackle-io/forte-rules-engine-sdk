@@ -6,8 +6,7 @@
 
 Check out [our docs](https://docs.forterulesengine.io) for in-depth guides and reference information.
 
-This is a Typescript based SDK for interacting with the [Forte Rules Engine](https://github.com/
-thrackle-io/forte-rules-engine).
+This is a Typescript based SDK for interacting with the [Forte Rules Engine](https://github.com/thrackle-io/forte-rules-engine).
 
 ## Contributing
 
