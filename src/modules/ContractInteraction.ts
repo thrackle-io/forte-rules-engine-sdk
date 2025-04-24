@@ -286,6 +286,8 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
+        console.log("foreignCall")
+        console.log(fcStruct)
         const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
         fcIds.push(struc)
@@ -735,6 +737,8 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
 
 export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
+    console.log("foreignCallNameToID")
+    console.log(foreignCallNameToID)
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     let effectSyntax: ruleJSON = JSON.parse(ruleS)
     var effects = buildAnEffectStruct(effectSyntax, trackerNameToID)
@@ -946,27 +950,35 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     var tIter = 0
     for(var index in output.placeHolders) {
         if(output.placeHolders[index].foreignCall) {
-            output.placeHolders[index].typeSpecificIndex = fcIDs[iter]
+            output.placeHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
             iter++
         }
         if(output.placeHolders[index].trackerValue) {
-            output.placeHolders[index].typeSpecificIndex = trIDs[tIter]
+            output.placeHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
             tIter++
         }
     }
 
     iter = 0
     tIter = 0
+    console.log("foreignCallNameToID")
+    console.log(foreignCallNameToID)
+    console.log("FCIds")
+    console.log(fcIDs)
+    console.log("TRIds")
+    console.log(trIDs)
     for(var index in output.effectPlaceHolders) {
+        console.log("index: ", index)
         if(output.effectPlaceHolders[index].foreignCall) {
-            output.effectPlaceHolders[index].typeSpecificIndex = fcIDs[iter]
+            output.effectPlaceHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
             iter++
         }
         if(output.effectPlaceHolders[index].trackerValue) {
-            output.effectPlaceHolders[index].typeSpecificIndex = trIDs[tIter]
+            output.effectPlaceHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
             tIter++
         }
     }
+    console.log("output.effectPlaceHolders: ", output.effectPlaceHolders)
     var fcEffectList: string[] = []
     for(var eff of ruleSyntax.positiveEffects) {
         fcEffectList.concat(buildForeignCallList(eff))
