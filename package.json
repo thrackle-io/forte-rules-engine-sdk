@@ -1,7 +1,7 @@
 {
   "author": "Thrackle",
-  "homepage": "https://github.com/thrackle-io/aquifi-rules-sdk#readme",
-  "name": "@thrackle-io/rules-sdk",
+  "homepage": "https://github.com/thrackle-io/forte-rules-engine-sdk#readme",
+  "name": "@thrackle-io/forte-rules-engine-sdk",
   "license": "UNLICENSED",
   "keywords": [
     "rules",
@@ -9,7 +9,7 @@
     "thrackle"
   ],
   "bugs": {
-    "url": "https://github.com/thrackle-io/aquifi-rules-sdk/issues"
+    "url": "https://github.com/thrackle-io/forte-rules-engine-sdk/issues"
   },
   "version": "0.0.1",
   "description": "",
@@ -38,6 +38,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thrackle-io/aquifi-rules-sdk.git"
+    "url": "git+https://github.com/thrackle-io/forte-rules-engine-sdk.git"
   }
 }

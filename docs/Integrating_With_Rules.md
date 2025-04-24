@@ -36,7 +36,7 @@ abstract contract RulesEngineClient {
     }
 
     /**
-     * @dev Set the calling contract admin address 
+     * @dev Set the calling contract admin address
      */
     function setCallingContractAdmin(address callingContractAdmin) external {
         IRulesEngine(rulesEngineAddress).grantCallingContractRole(address(this), callingContractAdmin);
@@ -46,8 +46,7 @@ abstract contract RulesEngineClient {
 
 This should be inherited by your contract and the `setRulesEngineAddress` function should be called upon deployment to set the rules engine address to the address of your rules engine.
 
-For more details on the `RulesEngineClient` contract, see the [RulesEngineClient.sol](https://github.com/thrackle-io/aquifi-rules/blob/main/src/client/RulesEngineClient.sol) file.
-
+For more details on the `RulesEngineClient` contract, see the [RulesEngineClient.sol](https://github.com/thrackle-io/forte-rules-engine/blob/main/src/client/RulesEngineClient.sol) file.
 
 Once this is complete you can create a modifier that will check the rules before the function is called and also add any extraneous parameters to the function that are required by your rules (msg.sender, msg.value, block.timestamp, etc).
 
@@ -63,13 +62,13 @@ and then add the `checkRulesBefore` modifier to your function that you want rule
 
 ## Becoming the Contract Admin For Your Rules
 
-In order to become the contract admin for your rules, you need to call the `setCallingContractAdmin` function which will come as part of the inherited `RulesClient` contract. 
+In order to become the contract admin for your rules, you need to call the `setCallingContractAdmin` function which will come as part of the inherited `RulesClient` contract.
 
 ```solidity
     function setCallingContractAdmin(address callingContractAdmin) external;
 ```
 
-This function will set the calling contract admin to the address of the contract that is calling the function. It can only be set by the contract itself and a contract can only limit itself. It also will only grant one admin at a time, but this can take the form of a multisig wallet. 
+This function will set the calling contract admin to the address of the contract that is calling the function. It can only be set by the contract itself and a contract can only limit itself. It also will only grant one admin at a time, but this can take the form of a multisig wallet.
 
 Once your admin is set you will now be able to apply your policy to the contract. From the admin account, call the `applyPolicy` function.
 
