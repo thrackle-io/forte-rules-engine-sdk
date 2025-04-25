@@ -90,8 +90,8 @@ export type RawData = {
 }
 
 
-const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=']
-const truMatchArray: string[] = ['+=', '-=', '*=', '/=']
+const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=', '=']
+const truMatchArray: string[] = ['+=', '-=', '*=', '/=', '=']
 const operandArray: string[] = ['PLH', 'N']
 const supportedTrackerTypes: string[] = ['uint256', 'string', 'address', 'bytes']
 export enum pTypeEnum {
@@ -550,6 +550,8 @@ export function cleanInstructionSet(instructionSet: any[]) {
             instructionSet[iter] = 11
         } else if(val == 'TRU') {
             instructionSet[iter] = 12
+        } else if(val == "=") {
+            instructionSet[iter] = 13
         }
 
         iter++
@@ -1143,7 +1145,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     if (!expression || expression.length === 0) {
         return;
     }
-    plhIndex = 0
+
     // If it's a number add it directly to the instruction set and store its memory location in mem
     if(typeof expression == "number" || typeof expression == "bigint") {
         retVal.push("N")
@@ -1285,6 +1287,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                             break
                         case '/=':
                             retVal.push('/')
+                            break
+                        case '=':
+                            retVal.push('=')
                             break
                     }
                 } else {
