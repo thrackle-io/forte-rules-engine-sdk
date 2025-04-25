@@ -325,7 +325,6 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
         }
         functionSignatureSelectors.push(toFunctionSelector(fs))
     }
-
     var result = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
 
     return policyId
@@ -736,9 +735,12 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
 
 export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
+
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
-    var effects = buildAnEffectStruct(ruleSyntax)
+    let effectSyntax: ruleJSON = JSON.parse(ruleS)
+    var effects = buildAnEffectStruct(effectSyntax, trackerNameToID)
     var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
+
     var addRule
     while(true) {
         try {
@@ -750,6 +752,7 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
             });
             break
         } catch (err) {
+            console.log(err)
             // TODO: Look into replacing this loop/sleep with setTimeout
             await sleep(1000)
         }
@@ -826,8 +829,8 @@ export const deleteRule = async(policyId: number, ruleId: number,
     return 0
 }
 
-function buildAnEffectStruct(ruleSyntax: ruleJSON) {
-    var output = parseRuleSyntax(ruleSyntax, [])
+function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]) {
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var pEffects = []
     var nEffects = []
 
@@ -909,9 +912,21 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON) {
 }
 
 function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
-    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var fcList = buildForeignCallList(ruleSyntax.condition)
+    for(var eff of ruleSyntax.positiveEffects) {
+        fcList.push(...buildForeignCallList(eff))
+    }
+    for(var eff of ruleSyntax.negativeEffects) {
+        fcList.push(...buildForeignCallList(eff))
+    }
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var trList = buildTrackerList(ruleSyntax.condition)
+    for(var eff of ruleSyntax.positiveEffects) {
+        trList.push(...buildTrackerList(eff))
+    }
+    for(var eff of ruleSyntax.negativeEffects) {
+        trList.push(...buildTrackerList(eff))
+    }
     var fcIDs = []
     var trIDs = []
     for(var name of fcList) {
@@ -932,14 +947,29 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     var tIter = 0
     for(var index in output.placeHolders) {
         if(output.placeHolders[index].foreignCall) {
-            output.placeHolders[index].typeSpecificIndex = fcIDs[iter]
+            output.placeHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
             iter++
         }
         if(output.placeHolders[index].trackerValue) {
-            output.placeHolders[index].typeSpecificIndex = trIDs[tIter]
+            output.placeHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
             tIter++
         }
     }
+
+    iter = 0
+    tIter = 0
+
+    for(var index in output.effectPlaceHolders) {
+        if(output.effectPlaceHolders[index].foreignCall) {
+            output.effectPlaceHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
+            iter++
+        }
+        if(output.effectPlaceHolders[index].trackerValue) {
+            output.effectPlaceHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
+            tIter++
+        }
+    }
+
     var fcEffectList: string[] = []
     for(var eff of ruleSyntax.positiveEffects) {
         fcEffectList.concat(buildForeignCallList(eff))
@@ -964,7 +994,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
     }
 
     cleanInstructionSet(output.instructionSet)
-
     const rule =  {
         instructionSet: output.instructionSet,
         rawData: rawData,          
@@ -974,5 +1003,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         negEffects: effect.negativeEffects
     } as const
 
+    console.log(rule)
     return rule
 }

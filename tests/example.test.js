@@ -898,7 +898,7 @@ test('Simple Reverse Interpretation', () => {
     expect(retVal).toEqual("1 + 2 == 3 AND 1 == value")
 })
 
-test('Evaluates a simple effect involving a tracker update (TRU))', () => {
+test('Evaluates a simple effect involving a tracker update TRU', () => {
 
 var expectedArray = [
   'PLH', 0,     'PLH',
@@ -917,9 +917,10 @@ var ruleStringA = `{
 
 var str = "value > 5  --> TRU:testOne -= value --> addValue(uint256 value, string info, address addr)";
 var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{trackerIndex: 4, trackerName: "TR:testOne"}])
-expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray)
 expect(retVal.effectPlaceHolders.length).toEqual(2)
 expect(retVal.effectPlaceHolders[0].trackerValue).toEqual(true)
+expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray)
+
 });
 
 test('Multiple copies of the same placeholder test', () => {
