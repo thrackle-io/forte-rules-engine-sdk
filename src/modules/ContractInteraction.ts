@@ -848,6 +848,11 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]
             param = encodeAbiParameters(
                 parseAbiParameters('string'),
                 [String(pEffect.parameterValue)])
+        } else if(pEffect.pType == 5) {
+            // bytes
+            param = encodeAbiParameters(
+                parseAbiParameters('bytes'),
+                [toHex(stringToBytes(String(pEffect.parameterValue)))])
         } else {
             // uint
             param = encodeAbiParameters(
@@ -884,6 +889,11 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]
             param = encodeAbiParameters(
                 parseAbiParameters('string'),
                 [String(nEffect.parameterValue)])
+        } else if(nEffect.pType == 5) {
+            // bytes
+            param = encodeAbiParameters(
+                parseAbiParameters('bytes'),
+                [toHex(stringToBytes(String(nEffect.parameterValue)))])
         } else {
             // uint
             param = encodeAbiParameters(
@@ -992,7 +1002,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         argumentTypes: [],
         dataValues: [],
     }
-
     cleanInstructionSet(output.instructionSet)
     const rule =  {
         instructionSet: output.instructionSet,
@@ -1002,7 +1011,6 @@ function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNam
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
     } as const
-
     console.log(rule)
     return rule
 }

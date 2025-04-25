@@ -1,4 +1,4 @@
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters } from 'viem';
+import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
 import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
 // Types:
@@ -93,7 +93,7 @@ export type RawData = {
 const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=']
 const truMatchArray: string[] = ['+=', '-=', '*=', '/=']
 const operandArray: string[] = ['PLH', 'N']
-const supportedTrackerTypes: string[] = ['uint256', 'string', 'address']
+const supportedTrackerTypes: string[] = ['uint256', 'string', 'address', 'bytes']
 export enum pTypeEnum {
     ADDRESS = 0,
     STRING = 1,
@@ -156,10 +156,6 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     excludeArray.push(...matchArray)
     excludeArray.push(...operandArray)
     var rawData: any[] = []
-
-
-
-
     var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
     return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
          placeHolders: placeHolders, effectPlaceHolders: effectPlaceHolders}
@@ -185,6 +181,13 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
           )
 
         trackerDefaultValue = address
+    } else if(trackerType == "bytes") {
+        var bytes = encodeAbiParameters(
+            parseAbiParameters('bytes'),
+            [toHex(stringToBytes(String(syntax.defaultValue.trim())))]
+          )
+
+        trackerDefaultValue = bytes
     } else {
         trackerDefaultValue = encodeAbiParameters(
                             parseAbiParameters('string'),
@@ -196,7 +199,6 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
             trackerTypeEnum = parameterType.enumeration
         }
     }
-
     return {name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
 }
 
@@ -684,6 +686,7 @@ export function parseFunctionArguments(functionSignature: string) {
     var addressIndex = 0
     var uint256Index = 0
     var stringIndex = 0
+    var bytesIndex = 0
 
     for(var param of params) {
         var typeName = param.split(" ");
@@ -696,6 +699,9 @@ export function parseFunctionArguments(functionSignature: string) {
         } else if(typeName[0].trim() == "address") {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             addressIndex++
+        } else if(typeName[0].trim() == "bytes") {
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
+            bytesIndex++
         }
         typeIndex++
     }
@@ -718,6 +724,8 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
                         type = "address"
                     } else if(ind.type == 1) {
                         type = "string"
+                    } else if(ind.type == 5) {
+                        type = "bytes"
                     } else {
                         type = "uint256"
                     }
@@ -1093,17 +1101,28 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
             if(!isNaN(Number(instructionSet[iter]))) {
                 instructionSet[iter] = BigInt(instructionSet[iter])
             } else {
-                if(!excludeArray.includes(instructionSet[iter].trim())) {
+                if (!excludeArray.includes(instructionSet[iter].trim())) {
+                    const currentInstruction = instructionSet[iter].trim();
+                
+                    // Determine if the current instruction is a bytes type (hex string starting with "0x")
+                    const isBytes = currentInstruction.startsWith('0x');
+                
                     // Create the raw data entry
-                    rawDataArray.push({rawData: instructionSet[iter].trim(), iSetIndex: iter, dataType: "string"})
-                    instructionSetArray.push(iter)
-                    argumentTypes.push(1)
-                    dataValues.push(toBytes(instructionSet[iter].trim()))
-                    if(!operandArray.includes(instructionSet[iter].trim())) {
-                        // Convert the string to a keccak356 has then to a uint256
+                    rawDataArray.push({
+                        rawData: currentInstruction,
+                        iSetIndex: iter,
+                        dataType: isBytes ? "bytes" : "string"
+                    });
+                    instructionSetArray.push(iter);
+                    argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
+                    dataValues.push(isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction));
+                
+                    if (!operandArray.includes(currentInstruction)) {
+                        // Convert the string or bytes to a keccak256 hash then to a uint256
                         instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
-                            parseAbiParameters('string'),
-                            [instructionSet[iter].trim()])))
+                            parseAbiParameters(isBytes ? 'bytes' : 'string'),
+                            [currentInstruction]
+                        )));
                     }
                 }
             } 
@@ -1161,11 +1180,15 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         placeHolderEnum = 1
                     } else if(parameter.rawType == "uint256") {
                         placeHolderEnum = 2
+                    } else if(parameter.rawType == "bytes") {
+                        placeHolderEnum = 5
                     } else if(parameter.rawType == "tracker") {
                         if(parameter.rawTypeTwo == "address") {
                             placeHolderEnum = 0
                         } else if(parameter.rawTypeTwo == "string") {
                             placeHolderEnum = 1
+                        } else if(parameter.rawTypeTwo == "bytes") {
+                            placeHolderEnum = 5
                         } else {
                             placeHolderEnum = 2
                         }
@@ -1284,7 +1307,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 iterator.value += 1
             }
         }
-        
         if(!foundMatch) {
             retVal.push("N")
             retVal.push(expression[0].trim())
