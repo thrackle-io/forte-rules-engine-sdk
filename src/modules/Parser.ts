@@ -199,7 +199,6 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
             trackerTypeEnum = parameterType.enumeration
         }
     }
-    console.log("Default Value: ", trackerDefaultValue)
     return {name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
 }
 

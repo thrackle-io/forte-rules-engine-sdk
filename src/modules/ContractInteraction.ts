@@ -298,8 +298,6 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
         var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
         trackerIds.push(struc)
         trackers.push(trackerStruct)
-        console.log(trackerStruct)
-        console.log(struc)
     }
 
     for(var rule of policyJSON.RulesJSON) {
