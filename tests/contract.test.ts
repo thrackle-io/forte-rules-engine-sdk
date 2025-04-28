@@ -35,7 +35,7 @@ import { getConfig, account, DiamondAddress, connectConfig } from '../config'
 
 const config = getConfig()
 
-const client = config.getClient({chainID: config.chains[0].id})
+const client: any = config.getClient({chainId: config.chains[0].id})
 
 // Take snapshot
 export const takeSnapshot = async () => {
@@ -95,8 +95,8 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createNewRule(policyId, ruleStringA, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/testOutput/contractTestCreateNewRule.sol", "")
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "", [])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
@@ -116,8 +116,8 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createNewRule(policyId, ruleStringA, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/testOutput/contractTestCreateNewRule.sol", "")
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "", [])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
@@ -134,7 +134,7 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var updatedRuleId = await updateRule(policyId, ruleId, ruleStringB, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}])
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
         expect(updatedRuleId).toEqual(ruleId)
     })
     test('Can delete a rule', async () => {
@@ -147,8 +147,8 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createNewRule(policyId, ruleStringA, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/testOutput/contractTestCreateNewRule.sol", "")
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "", [])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
@@ -250,7 +250,7 @@ describe('Rules Engine Interactions', async () => {
         }
         expect(trAllRetrieve?.length).toEqual(1)
         var trRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
-        expect(trRetrieve?.trackerValue).toEqual("0x40")
+        expect(trRetrieve?.trackerValue).toEqual("0x0000000000000000000000000000000000000000000000000000000000000004")
     })
     test('Can delete a tracker', async() => {
         var trSyntax = `{
@@ -272,7 +272,7 @@ describe('Rules Engine Interactions', async () => {
         }
         expect(trAllRetrieve?.length).toEqual(1)
         var trRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
-        expect(trRetrieve?.trackerValue).toEqual("0x40")
+        expect(trRetrieve?.trackerValue).toEqual("0x0000000000000000000000000000000000000000000000000000000000000004")
         await deleteTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
         var trAllRetrieve = await getAllTrackers(policyId, getRulesEngineComponentContract(rulesEngineContract, client))
         while(true) {
@@ -306,7 +306,7 @@ describe('Rules Engine Interactions', async () => {
         }
         expect(trAllRetrieve?.length).toEqual(1)
         var trRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
-        expect(trRetrieve?.trackerValue).toEqual("0x40")
+        expect(trRetrieve?.trackerValue).toEqual("0x0000000000000000000000000000000000000000000000000000000000000004")
         var updatedSyntax = `{
         "name": "Simple String Tracker",
         "type": "uint256",
@@ -314,7 +314,7 @@ describe('Rules Engine Interactions', async () => {
         }`
         await setTracker(policyId, trId, updatedSyntax, getRulesEngineComponentContract(rulesEngineContract, client))
         var updatedTRRetrieve = await getTracker(policyId, trId, getRulesEngineComponentContract(rulesEngineContract, client))
-        expect(updatedTRRetrieve?.trackerValue).toEqual("0x50")
+        expect(updatedTRRetrieve?.trackerValue).toEqual("0x0000000000000000000000000000000000000000000000000000000000000005")
     })
     test('Can retrieve a full policy', async() => {
         var policyJSON = `
@@ -365,10 +365,10 @@ describe('Rules Engine Interactions', async () => {
         expect(resultFC?.length).toEqual(1)
         var resultTR = await getAllTrackers(result, getRulesEngineComponentContract(rulesEngineContract, client))
         expect(resultTR?.length).toEqual(1)
-        var retVal = await retrieveFullPolicy(result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)"}, 
-            {hex: '0x71308757', functionSignature: "testSig(address)"}
+        var retVal = await retrieveFullPolicy(result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)", encodedValues: "address to, uint256 value"}, 
+            {hex: '0x71308757', functionSignature: "testSig(address)", encodedValues: ""}
         ], getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
-        expect(retVal).toEqual('{"Trackers":["Tracker 1 --> string --> 0x74657374"],"ForeignCalls":["Foreign Call 1 --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"RulesJSON":[{"condition":"value > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"functionSignature":"transfer(address to, uint256 value)","encodedValues":""}]}')
+        expect(retVal).toEqual('{"Trackers":["Tracker 1 --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["Foreign Call 1 --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"RulesJSON":[{"condition":"value > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"functionSignature":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}')
     })
     test('Can delete a full policy', async() => {
         var policyJSON = `

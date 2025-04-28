@@ -46,8 +46,6 @@ abstract contract RulesEngineClient {
 
 This should be inherited by your contract and the `setRulesEngineAddress` function should be called upon deployment to set the rules engine address to the address of your rules engine.
 
-For more details on the `RulesEngineClient` contract, see the [RulesEngineClient.sol](https://github.com/thrackle-io/forte-rules-engine/blob/main/src/client/RulesEngineClient.sol) file.
-
 Once this is complete you can create a modifier that will check the rules before the function is called and also add any extraneous parameters to the function that are required by your rules (msg.sender, msg.value, block.timestamp, etc).
 
 ```solidity

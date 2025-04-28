@@ -558,7 +558,7 @@ export function cleanInstructionSet(instructionSet: any[]) {
     }
 }
 
-export function convertRuleStructToString(functionString: string, ruleS: RuleStruct, plhArray: string[]) {
+export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[]) {
     
     var rJSON: ruleJSON = {
         condition: "",
@@ -568,7 +568,7 @@ export function convertRuleStructToString(functionString: string, ruleS: RuleStr
         encodedValues: ""
     }
 
-    var names = parseFunctionArguments(functionString)
+    var names = parseFunctionArguments(encodedValues)
 
     for(var plh of ruleS!.placeHolders) {
         plhArray.push(names[plh.typeSpecificIndex].name)
@@ -603,11 +603,12 @@ export function convertRuleStructToString(functionString: string, ruleS: RuleStr
 
     rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, [])
     rJSON.functionSignature = functionString
+    rJSON.encodedValues = encodedValues
     return rJSON
     
 }
 
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: hexToFunctionSignature[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: any[]) {
     var fcIter = 1
     if(foreignCalls != null) {
         for(var call of foreignCalls) {
@@ -766,7 +767,13 @@ function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
             continue
         }
         // Create a unique placeholder for this FC expression
-        const placeholder = `FC:${iter}`;
+        var placeholder = `FC:${iter}`;
+        for(var existing of names) {
+            if(existing.name == fullFcExpr) {
+                placeholder = existing.fcPlaceholder
+            }
+        }
+        
         processedCondition = processedCondition.replace(fullFcExpr, placeholder);
         var alreadyFound = false
         for(var existing of names) {
@@ -1156,8 +1163,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
         var foundMatch = false
-        
+
         for(var parameter of parameterNames) {
+            
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
                 var plhIter = 0
@@ -1234,13 +1242,12 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     mem.push(iterator.value)
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
-                } else {
-                    plhIndex += 1
                 }
             } else if(expression[0].trim().includes('TRU:')) {
                 foundMatch = true
                 var trackerName = expression[0].replace('TRU:', 'TR:')
                 var values = trackerName.split(' ')
+
                 if(values[1] == parameter.name) {
                     retVal.push("PLH")
                     retVal.push(plhIndex)
@@ -1252,9 +1259,10 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         trackerValue: true,
                         foreignCall: false
                     }
+
                     for(var ind of indexMap) {
                         if(parameter.name == "TR:"+ind.name) {
-                            truIndex = ind.id
+                            truIndex = ind.id 
                         }
                     }
                     
@@ -1264,8 +1272,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
 
-                } else {
-                    plhIndex += 1
                 }
             }
         }
