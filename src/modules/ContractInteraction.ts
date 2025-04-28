@@ -109,13 +109,13 @@ export interface ruleJSON {
 
 const config = getConfig()
 
-export const getRulesEnginePolicyContract = (address: Address, client): RulesEnginePolicyContract => getContract({
+export const getRulesEnginePolicyContract = (address: Address, client: any): RulesEnginePolicyContract => getContract({
     address,
     abi: RulesEnginePolicyABI,
     client
   });
 
-  export const getRulesEngineComponentContract = (address: Address, client): RulesEngineComponentContract => getContract({
+  export const getRulesEngineComponentContract = (address: Address, client: any): RulesEngineComponentContract => getContract({
     address,
     abi: RulesEngineComponentABI,
     client
@@ -419,11 +419,11 @@ export const executeBatch = async (
 
 }
 
-export const addNewRuleToBatch = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, foreignCallNameToID: FCNameToID[], policyTrackers: TrackerDefinition[], calls: any[]) => {
+export const addNewRuleToBatch = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[], calls: any[]) => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
-    var effect = buildAnEffectStruct(ruleSyntax)
+    var effect = buildAnEffectStruct(ruleSyntax, trackerNameToID)
 
-    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effect)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effect, trackerNameToID)
 
     calls.push(
         encodeFunctionData({
@@ -706,10 +706,10 @@ export const getAllTrackers = async(policyId: number,
 }
 
 export const updateRule = async (policyId: number, ruleId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
-    foreignCallNameToID: FCNameToID[]): Promise<number> => {
+    foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
-    var effects = buildAnEffectStruct(ruleSyntax)
-    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects)
+    var effects = buildAnEffectStruct(ruleSyntax, trackerNameToID)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
     var addRule
     while(true) {
         try {

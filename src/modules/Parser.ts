@@ -608,7 +608,7 @@ export function convertRuleStructToString(functionString: string, encodedValues:
     
 }
 
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: hexToFunctionSignature[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: any[]) {
     var fcIter = 1
     if(foreignCalls != null) {
         for(var call of foreignCalls) {
@@ -1242,10 +1242,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     mem.push(iterator.value)
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
-                } else {
-                    // if(expression[0].trim().includes('FC:')) {
-                    //     plhIndex += 1
-                    // }
                 }
             } else if(expression[0].trim().includes('TRU:')) {
                 foundMatch = true
@@ -1276,10 +1272,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
 
-                } else {
-                    if(expression[0].trim().includes('TR:')) {
-                        plhIndex += 1
-                    }
                 }
             }
         }

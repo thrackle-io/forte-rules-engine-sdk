@@ -35,7 +35,7 @@ import { getConfig, account, DiamondAddress, connectConfig } from '../config'
 
 const config = getConfig()
 
-const client = config.getClient({chainID: config.chains[0].id})
+const client: any = config.getClient({chainId: config.chains[0].id})
 
 // Take snapshot
 export const takeSnapshot = async () => {
@@ -95,8 +95,8 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createNewRule(policyId, ruleStringA, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/testOutput/contractTestCreateNewRule.sol", "")
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "", [])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
@@ -116,8 +116,8 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createNewRule(policyId, ruleStringA, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/testOutput/contractTestCreateNewRule.sol", "")
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "", [])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
@@ -134,7 +134,7 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var updatedRuleId = await updateRule(policyId, ruleId, ruleStringB, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}])
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
         expect(updatedRuleId).toEqual(ruleId)
     })
     test('Can delete a rule', async () => {
@@ -147,8 +147,8 @@ describe('Rules Engine Interactions', async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createNewRule(policyId, ruleStringA, 
-            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall"}, {id: 2, name: "testCallTwo"}], 
-            "src/testOutput/contractTestCreateNewRule.sol", "")
+            getRulesEnginePolicyContract(rulesEngineContract, client), [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], 
+            "src/testOutput/contractTestCreateNewRule.sol", "", [])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(policyId, functionSignature, getRulesEngineComponentContract(rulesEngineContract, client))
