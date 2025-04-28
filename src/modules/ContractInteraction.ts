@@ -73,7 +73,8 @@ type RuleStorageSet = {
 
 type hexToFunctionSignature = {
     hex: string,
-    functionSignature: string
+    functionSignature: string,
+    encodedValues: string
 }
 
 interface PolicyJSON {
@@ -229,17 +230,19 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
         var ruleJSONObjs = []
         for(var innerArray of ruleIds2DArray) {
             var functionString = ""
+            var encodedValues: string = ""
             var fs = functionSignatures[iter]
             for(var mapping of functionSignatureMappings) {
                 if(mapping.hex == fs) {
                      functionString = mapping.functionSignature
+                     encodedValues = mapping.encodedValues
                 }
             }
             for (var ruleId of innerArray) {
                 var ruleS = await retrieveRule(policyId, ruleId, rulesEnginePolicyContract)
                 var plhArray: string[] = []
                 if(ruleS != null) {
-                    ruleJSONObjs.push(convertRuleStructToString(functionString, ruleS, plhArray))
+                    ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray))
                 }
                 
             }
