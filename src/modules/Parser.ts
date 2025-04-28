@@ -1,9 +1,38 @@
 import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
 import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
-// Types:
-// --------------------------------------------------------------------------------------------------
-
+/**
+ * @file Parser.ts
+ * @description This module provides a comprehensive set of parsing utilities for the Rules Engine SDK.
+ *              It includes functions for parsing rule syntax, trackers, foreign calls, and converting
+ *              human-readable conditions into abstract syntax trees (ASTs) and instruction sets.
+ *              Additionally, it supports reverse parsing of instruction sets back into human-readable syntax.
+ * 
+ * @module Parser
+ * 
+ * @dependencies
+ * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
+ * - `ContractInteraction`: Contains types and structures for rules, trackers, and foreign calls.
+ * 
+ * @types
+ * - `EffectType`: Enum representing the types of effects (e.g., REVERT, EVENT, EXPRESSION).
+ * - `RuleStruct`: Represents the structure of a rule in the Rules Engine.
+ * - `ForeignCallDefinition`: Represents the structure of a foreign call definition.
+ * - `PlaceholderStruct`: Represents placeholders used in instruction sets.
+ * - `trackerIndexNameMapping`: Maps tracker IDs to their names and types.
+ * - `RawData`: Represents raw data extracted from instruction sets.
+ * 
+ * @exports
+ * - Functions for parsing rule syntax, trackers, foreign calls, and converting between formats.
+ * - Helper functions for cleaning and interpreting instruction sets.
+ * 
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * 
+ * @license UNLICENSED
+ * 
+ * @note This file is a critical component of the Rules Engine SDK, enabling the translation of human-readable
+ *       rule definitions into machine-readable formats and vice versa.
+ */
 type Tuple = {
     i: string;
     s: string;
@@ -110,9 +139,17 @@ const FC_PREFIX: string = 'FC:'
 // --------------------------------------------------------------------------------------------------
 
 
+// --------------------------------------------------------------------------------------------------
 // External Parsing Functions:
 // --------------------------------------------------------------------------------------------------
 
+/**
+ * Parses the rule syntax and converts it into an abstract syntax tree (AST) and instruction set.
+ * 
+ * @param syntax - The JSON representation of the rule syntax.
+ * @param indexMap - A mapping of tracker IDs to their names and types.
+ * @returns An object containing the instruction set, raw data, positive effects, negative effects, placeholders, and effect placeholders.
+ */
 export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapping[]) {
 
     var condition = syntax.condition
@@ -161,6 +198,13 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
          placeHolders: placeHolders, effectPlaceHolders: effectPlaceHolders}
 }
 
+/**
+ * Parses the tracker syntax and validates its type and default value.
+ * 
+ * @param syntax - The JSON representation of the tracker syntax.
+ * @returns An object containing the tracker's name, type, and encoded default value.
+ * @throws An error if the tracker type or default value is invalid.
+ */
 export function parseTrackerSyntax(syntax: trackerJSON) {
     let trackerType = syntax.type.trim()
     if(!supportedTrackerTypes.includes(trackerType)) {
@@ -202,6 +246,13 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
     return {name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
 }
 
+/**
+ * Parses the foreign call definition and validates its structure.
+ * 
+ * @param syntax - The JSON representation of the foreign call definition.
+ * @returns An object containing the foreign call's name, address, signature, return type, parameter types, and encoded indices.
+ * @throws An error if the return type or parameter types are unsupported.
+ */
 export function parseForeignCallDefinition(syntax: foreignCallJSON) {
     var address: Address = getAddress(syntax.address.trim())
     var signature = syntax.signature.trim()
@@ -242,6 +293,14 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
         returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices} as ForeignCallDefinition
 }
 
+/**
+ * Converts an instruction set back into a human-readable rule condition string.
+ * 
+ * @param instructionSet - The instruction set to reverse parse.
+ * @param placeHolderArray - An array of placeholders used in the instruction set.
+ * @param stringReplacements - An array of string replacements for specific instructions.
+ * @returns A human-readable rule condition string.
+ */
 export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
     var currentAction = -1
     var currentActionIndex = 0
@@ -419,10 +478,15 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
 }
 
 // --------------------------------------------------------------------------------------------------
-
-
 // External Helper Functions
 // --------------------------------------------------------------------------------------------------
+
+/**
+ * Builds a list of foreign call names from a rule condition string.
+ * 
+ * @param condition - The rule condition string.
+ * @returns An array of foreign call names.
+ */
 export function buildForeignCallList(condition: string) {
         // Use a regular expression to find all FC expressions
         const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
@@ -439,6 +503,12 @@ export function buildForeignCallList(condition: string) {
         return names
 }
 
+/**
+ * Builds a list of tracker names from a rule condition string.
+ * 
+ * @param condition - The rule condition string.
+ * @returns An array of tracker names.
+ */
 export function buildTrackerList(condition: string) {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
@@ -464,6 +534,12 @@ export function buildTrackerList(condition: string) {
     return names
 }
 
+/**
+ * Builds a list of raw foreign call expressions from a rule condition string.
+ * 
+ * @param condition - The rule condition string.
+ * @returns An array of raw foreign call expressions.
+ */
 export function buildForeignCallListRaw(condition: string) {
     const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
     const matches = condition.matchAll(fcRegex);
@@ -477,6 +553,15 @@ export function buildForeignCallListRaw(condition: string) {
     return names
 }
 
+/**
+ * Builds a mapping of foreign call arguments to their corresponding placeholders.
+ * 
+ * @param fCallIDs - An array of foreign call IDs.
+ * @param fCalls - An array of foreign call expressions.
+ * @param argumentNames - An array of function arguments.
+ * @param trackers - An array of tracker definitions.
+ * @returns An array of foreign call argument mappings.
+ */
 export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: string[], argumentNames: FunctionArgument[], trackers: TrackerDefinition[]) {
     var retVal: ForeignCallArgumentMappings[] = []
     var iter = 0
@@ -521,6 +606,11 @@ export function buildForeignCallArgumentMapping(fCallIDs: number[], fCalls: stri
     return retVal
 }
 
+/**
+ * Cleans the instruction set by replacing string representations of operators with their numeric equivalents.
+ * 
+ * @param instructionSet - The instruction set to clean.
+ */
 export function cleanInstructionSet(instructionSet: any[]) {
     var iter = 0
     for(var val of instructionSet) {
@@ -558,6 +648,21 @@ export function cleanInstructionSet(instructionSet: any[]) {
     }
 }
 
+/**
+ * Converts a `RuleStruct` object into a JSON-like string representation.
+ *
+ * @param functionString - The function signature as a string.
+ * @param encodedValues - A string containing encoded values for the rule.
+ * @param ruleS - The `RuleStruct` object containing rule details such as placeholders, positive effects, and negative effects.
+ * @param plhArray - An array to store the names of placeholders extracted from the rule.
+ * @returns An object of type `ruleJSON` containing the condition, positive effects, negative effects, function signature, and encoded values.
+ *
+ * The function processes the `RuleStruct` object to:
+ * - Extract placeholder names and append them to `plhArray`.
+ * - Parse and format positive and negative effects into strings.
+ * - Reverse parse the rule's instruction set to generate a condition string.
+ * - Populate the `ruleJSON` object with the processed data.
+ */
 export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[]) {
     
     var rJSON: ruleJSON = {
@@ -608,6 +713,30 @@ export function convertRuleStructToString(functionString: string, encodedValues:
     
 }
 
+/**
+ * Converts an array of foreign call structures into formatted string representations
+ * and appends them to the provided `callStrings` array.
+ *
+ * @param callStrings - An array to which the formatted foreign call strings will be appended.
+ * @param foreignCalls - An array of foreign call objects or `null`. Each object should contain
+ *                       details such as `signature`, `returnType`, `parameterTypes`, and `foreignCallAddress`.
+ * @param functionSignatureMappings - An array of mappings that associate a `hex` signature with
+ *                                    a human-readable `functionSignature`.
+ *
+ * The function processes each foreign call by:
+ * - Matching its `signature` with the corresponding `functionSignature` from the mappings.
+ * - Resolving its `returnType` and `parameterTypes` to human-readable names using a predefined
+ *   parameter type enumeration (`PT`).
+ * - Formatting the foreign call details into a string and appending it to the `callStrings` array.
+ *
+ * The output string format is:
+ * `Foreign Call <index> --> <foreignCallAddress> --> <functionSignature> --> <returnType> --> <parameterTypes>`
+ *
+ * Example:
+ * ```
+ * Foreign Call 1 --> 0x1234567890abcdef --> myFunction(uint256) --> uint256 --> uint256, string
+ * ```
+ */
 export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: any[]) {
     var fcIter = 1
     if(foreignCalls != null) {
@@ -658,6 +787,12 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
     }
 }
 
+/**
+ * Converts tracker structures into human-readable strings.
+ * 
+ * @param trackers - An array of tracker structures.
+ * @param trackerStrings - An array to store the resulting strings.
+ */
 export function convertTrackerStructsToStrings(trackers: any[] | null, trackerStrings: string[]) {
     var trackerIter = 1
     if(trackers != null) {
@@ -681,7 +816,12 @@ export function convertTrackerStructsToStrings(trackers: any[] | null, trackerSt
     }
 }
 
-// Parse the function signature string and build the placeholder data structure
+/**
+ * Parses the function signature string and builds an array of argument placeholders.
+ * 
+ * @param functionSignature - The function signature string.
+ * @returns An array of argument placeholders.
+ */
 export function parseFunctionArguments(functionSignature: string) {
     var params = functionSignature.split(", ");
     var names = []
@@ -712,6 +852,14 @@ export function parseFunctionArguments(functionSignature: string) {
     return names
 }
 
+/**
+ * Parses tracker references in a rule condition string and adds them to the argument list.
+ * 
+ * @param condition - The rule condition string.
+ * @param nextIndex - The next available index for placeholders.
+ * @param names - An array of argument placeholders.
+ * @param indexMap - A mapping of tracker IDs to their names and types.
+ */
 export function parseTrackers(condition: string, nextIndex: number, names: any[], indexMap: trackerIndexNameMapping[]) {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
@@ -751,6 +899,23 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
     }
 }
 
+/**
+ * Parses a condition string to identify and process foreign call (FC) expressions.
+ * Replaces each FC expression with a unique placeholder and updates the `names` array
+ * with metadata about the processed expressions.
+ *
+ * @param condition - The input condition string containing potential FC expressions.
+ * @param nextIndex - The starting index for tracking FC expressions in the `names` array.
+ * @param names - An array to store metadata about the processed FC expressions, including
+ *                their placeholders, indices, and types.
+ * @returns The updated condition string with FC expressions replaced by placeholders.
+ *
+ * @remarks
+ * - FC expressions are identified using the regular expression `/FC:[a-zA-Z]+\([^)]+\)/g`.
+ * - If an FC expression is already present in the `names` array, its existing placeholder
+ *   is reused.
+ * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
+ */
 function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
     let iter = 0
     // Use a regular expression to find all FC expressions
@@ -794,10 +959,20 @@ function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
 }
 
 // --------------------------------------------------------------------------------------------------
-
-
 // Internal Helper Functions
 // --------------------------------------------------------------------------------------------------
+/**
+ * Interprets an arithmetic operation in reverse by mapping memory addresses to their values
+ * and constructing a string representation of the operation.
+ *
+ * @param instruction - The memory address of the instruction to interpret.
+ * @param currentMemAddress - The current memory address where the result will be stored.
+ * @param memAddressesMap - An array of objects mapping memory addresses to their values.
+ * @param currentActionIndex - The index of the current action being processed.
+ * @param currentInstructionValues - An array to store the values of the current instruction.
+ * @param symbol - The arithmetic operator symbol (e.g., "+", "-", "*", "/") to use in the operation.
+ * @returns The string representation of the arithmetic operation if `currentActionIndex` is 1, otherwise an empty string.
+ */
 function arithmeticOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[], 
     currentActionIndex: number, currentInstructionValues: any[], symbol: string) {
     for(var memValue of memAddressesMap) {
@@ -813,6 +988,19 @@ function arithmeticOperatorReverseInterpretation(instruction: number, currentMem
     return ""
 }
 
+/**
+ * Interprets a logical operation in reverse by mapping memory addresses to their values
+ * and constructing a string representation of the operation.
+ *
+ * @param instruction - The memory address of the instruction to interpret.
+ * @param currentMemAddress - The current memory address where the result will be stored.
+ * @param memAddressesMap - An array of objects mapping memory addresses to their values.
+ * @param currentActionIndex - The index of the current action being processed.
+ * @param currentInstructionValues - An array to store the values of the current instruction.
+ * @param symbol - The logical operator symbol (e.g., "&&", "||") used in the operation.
+ * @returns The string representation of the logical operation if `currentActionIndex` is 1,
+ *          otherwise an empty string.
+ */
 function logicalOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[], 
     currentActionIndex: number, currentInstructionValues: any[], symbol: string) {
     for(var memValue of memAddressesMap) {
@@ -828,6 +1016,16 @@ function logicalOperatorReverseInterpretation(instruction: number, currentMemAdd
     return ""
 }
 
+/**
+ * Builds an individual mapping for a function call argument and adds it to the provided mappings array.
+ * 
+ * @param parameter - The parameter string to check against the argument tracker name.
+ * @param argumentIterator - The index of the current argument being processed.
+ * @param argTracker - An object containing metadata about the argument being tracked, including its name and raw type.
+ * @param mappings - An array to which the constructed `IndividualArugmentMapping` will be added.
+ * @param tracker - A boolean value indicating whether the tracker is active.
+ * @returns A boolean indicating whether the mapping was successfully created and added to the mappings array.
+ */
 function buildIndividualMapping(parameter: string, argumentIterator: number, argTracker: any, mappings: IndividualArugmentMapping[], tracker: boolean) {
     if (parameter.includes(argTracker.name)) {
         var enumer = 0
@@ -852,6 +1050,22 @@ function buildIndividualMapping(parameter: string, argumentIterator: number, arg
     return false
 }
 
+/**
+ * Interprets a given syntax string into an instruction set and placeholders.
+ * 
+ * This function processes a syntax string by constructing an Abstract Syntax Tree (AST),
+ * splitting it based on logical operators (AND/OR), and recursively iterating over the tree
+ * to generate an instruction set. It also handles placeholders and maps indices for tracking.
+ * 
+ * @param syntax - The input syntax string to be interpreted.
+ * @param names - An array of names used in the instruction set.
+ * @param indexMap - A mapping of tracker indices to names.
+ * @param existingPlaceHolders - An array of existing placeholders to be considered.
+ * 
+ * @returns An object containing:
+ * - `instructionSet`: The generated instruction set based on the input syntax.
+ * - `placeHolders`: The placeholders used in the instruction set.
+ */
 function interpretToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[], existingPlaceHolders: PlaceholderStruct[]) {
         // Create the initial Abstract Syntax Tree (AST) splitting on AND
         var array = convertToTree(syntax, "AND")
@@ -885,6 +1099,23 @@ function interpretToInstructionSet(syntax: string, names: any[], indexMap: track
         return {instructionSet: instructionSet, placeHolders: placeHolders}
 }
 
+/**
+ * Parses an effect string and extracts its type, text, instruction set, parameter type, 
+ * and parameter value. The function supports three types of effects: "emit", "revert", 
+ * and general expressions.
+ *
+ * @param effect - The effect string to parse.
+ * @param names - An array of names used for interpreting expressions.
+ * @param placeholders - An array to store placeholder structures extracted during parsing.
+ * @param indexMap - A mapping of tracker index names used for interpreting expressions.
+ * 
+ * @returns An object containing:
+ * - `type`: The type of the effect (e.g., `EffectType.REVERT`, `EffectType.EVENT`, or `EffectType.EXPRESSION`).
+ * - `text`: The extracted text of the effect.
+ * - `instructionSet`: An array of instructions for expression effects.
+ * - `pType`: The parameter type (0 for address, 1 for string, 2 for numeric).
+ * - `parameterValue`: The extracted parameter value (address, string, or numeric).
+ */
 function parseEffect(effect: string, names: any[], placeholders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) {
     var effectType = EffectType.REVERT
     var effectText = ""
@@ -926,7 +1157,19 @@ function parseEffect(effect: string, names: any[], placeholders: PlaceholderStru
     return {type: effectType, text: effectText, instructionSet: effectInstructionSet, pType: pType, parameterValue: parameterValue}
 }
 
-// Convert the original human-readable rules condition syntax to an Abstract Syntax Tree
+/**
+ * Converts a logical condition string into a tree-like syntax array representation.
+ * This function processes the input string by handling parenthesis and splitting
+ * based on a specified delimiter, ultimately constructing a nested array structure
+ * that represents the logical condition.
+ *
+ * @param condition - The logical condition string to be converted into a tree structure.
+ *                     Example: "(A AND B) OR C".
+ * @param splitOn - The delimiter used to split the condition string. Typically a logical operator
+ *                  such as "AND" or "OR".
+ * @returns A nested array representing the tree structure of the logical condition.
+ *          Example: ["OR", ["AND", ["A"], ["B"]], ["C"]].
+ */
 function convertToTree(condition : string, splitOn : string) {
     // Recursive Function steps:
     // 1. Replace anything in parenthesis with i:n
@@ -1010,7 +1253,14 @@ function convertToTree(condition : string, splitOn : string) {
 
 }
 
-// Iterate over the array and recursively split based on the splitOn delimiter 
+/**
+ * Iterates through an array and processes its elements based on a specified delimiter.
+ * If an element contains the delimiter, it is converted into a tree structure using `convertToTree`.
+ * The function handles nested arrays recursively.
+ *
+ * @param array - The array to iterate over and process. Can contain nested arrays.
+ * @param splitOn - The delimiter string used to split and process elements in the array.
+ */
 function iterate(array: any[], splitOn: string) {
     var iter = 0
     
@@ -1044,6 +1294,16 @@ function iterate(array: any[], splitOn: string) {
     }
 }
 
+/**
+ * Retrieves and processes the content within parentheses from a given string
+ * based on a list of tuples. If the content includes a specific pattern (`i:`),
+ * it recursively resolves the content using the provided tuples.
+ *
+ * @param str - The input string to process.
+ * @param tuples - An array of `Tuple` objects, where each tuple contains
+ *                 a key (`i`) and a substitution value (`s`).
+ * @returns The processed string with resolved content from the tuples.
+ */
 function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
     var actualValue = str
     var iter = 0
@@ -1062,7 +1322,14 @@ function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
     return actualValue
 }
 
-// Remove extraneous array wrappers created during the recursion 
+/**
+ * Recursively removes unnecessary array wrappers from a nested array structure.
+ * If an element in the array is itself an array with only one element, it replaces
+ * that element with its single value. If the element is a nested array with more
+ * than one element, the function is called recursively on that nested array.
+ *
+ * @param array - The array to process, which may contain nested arrays.
+ */
 function removeArrayWrappers(array: any[]) {
     var iter = 0
     while(iter < array.length) {
@@ -1077,7 +1344,18 @@ function removeArrayWrappers(array: any[]) {
     }
 }
 
-// Replace string representations of numbers with actual numbers
+/**
+ * Recursively converts elements of an array to `BigInt` where applicable.
+ * 
+ * This function traverses through the provided array and its nested arrays.
+ * If an element is determined to be an address (via the `isAddress` function),
+ * it is converted to a `BigInt`. If the element is numeric and not an address,
+ * it is also converted to a `BigInt`. Non-numeric and non-address elements
+ * remain unchanged.
+ * 
+ * @param array - The array to process. Can contain nested arrays and elements
+ *                of any type.
+ */
 function intify(array: any[]) {
     var iter = 0
     while(iter < array.length) {
@@ -1097,8 +1375,19 @@ function intify(array: any[]) {
     }
 }
 
-// Build the rawData array that contains the string representations of strings and addresses and
-// convert them to numbers in the instruction set.
+/**
+ * Processes an instruction set to build raw data entries, excluding specified strings,
+ * and converts certain elements into hashed or numeric representations.
+ *
+ * @param instructionSet - An array of instructions to process. Elements can be strings or numbers.
+ * @param excludeArray - An array of strings to exclude from processing.
+ * @param rawDataArray - An array to store raw data entries. Each entry includes the raw data,
+ *                       its index in the instruction set, and its data type.
+ * @returns An object containing:
+ *          - `instructionSetIndex`: An array of indices in the instruction set corresponding to processed elements.
+ *          - `argumentTypes`: An array of argument types (e.g., 1 for strings).
+ *          - `dataValues`: An array of byte arrays representing the processed data values.
+ */
 function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArray: any[]) {
     var raw : RawData
     var instructionSetArray: number[] = []
@@ -1147,7 +1436,17 @@ function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArra
 var plhIndex = 0
 var truIndex = -1
 
-// Convert AST to Instruction Set Syntax
+/**
+ * Converts an AST into an instruction set syntax.
+ * 
+ * @param retVal - The resulting instruction set.
+ * @param mem - The memory map for the instruction set.
+ * @param expression - The AST to convert.
+ * @param iterator - An iterator for tracking memory locations.
+ * @param parameterNames - An array of argument placeholders.
+ * @param placeHolders - An array to store placeholders.
+ * @param indexMap - A mapping of tracker IDs to their names and types.
+ */
 function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) { 
     if (!expression || expression.length === 0) {
         return;
@@ -1347,11 +1646,31 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
 }
 
 
-// removes newlines and extra spaces from a string
+/**
+ * Cleans a given string by removing line breaks, reducing multiple spaces to a single space,
+ * and trimming leading and trailing whitespace.
+ *
+ * @param str - The input string to be cleaned.
+ * @returns The cleaned string with normalized whitespace.
+ */
 export function cleanString(str: string) {
     return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Cleans up a given string by removing unnecessary parentheses and replacing specific patterns
+ * with placeholders for later restoration. The function processes two types of patterns:
+ * 1. Substrings starting with "FC:" and ending with a closing parenthesis.
+ * 2. Parentheses containing logical operators ("AND" or "OR").
+ *
+ * The function performs the following steps:
+ * - Identifies and replaces "FC:" patterns with temporary placeholders.
+ * - Iteratively removes or replaces parentheses based on their content.
+ * - Restores the replaced placeholders back into the string.
+ *
+ * @param strToClean - The input string to be cleaned of extra parentheses.
+ * @returns The cleaned string with unnecessary parentheses removed and original patterns restored.
+ */
 function removeExtraParenthesis(strToClean: string) {
     var holders: string[] = []
     var fcHolder: string[] = []

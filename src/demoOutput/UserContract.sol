@@ -2,13 +2,20 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title Example contract for testing the Rules Engine
- * @dev This contract provides the ability to test the rules engine with an external contract
- * @author @mpetersoCode55
+ * @title Example Contract for Testing the Rules Engine
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * @dev This file contains an example Solidity contract designed to demonstrate and test the integration of the Rules Engine.
+ *              It provides a sample function that can be used to showcase how custom arguments are sent to the Rules Engine.
  */
 contract ExampleUserContract {
+  
     /**
-     @dev This is a generic function that showcases custom arguments being sent to the Rules Engine
+     * @notice Transfers a specified amount of tokens to a given address.
+     * @dev This function allows transferring tokens with an additional parameter.
+     * @param to The address of the recipient.
+     * @param value The amount of tokens to transfer.
+     * @param somethingElse An additional parameter for custom logic.
+     * @return bool Returns true if the transfer is successful.
      */
     function transfer(address to, uint256 value, uint256 somethingElse) public returns (bool) {
         somethingElse;
