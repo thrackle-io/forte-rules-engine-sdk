@@ -109,6 +109,7 @@ export interface ruleJSON {
 
 const config = getConfig()
 
+//TODO: Make the client usages type specific
 export const getRulesEnginePolicyContract = (address: Address, client: any): RulesEnginePolicyContract => getContract({
     address,
     abi: RulesEnginePolicyABI,
