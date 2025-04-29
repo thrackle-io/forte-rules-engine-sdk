@@ -53,7 +53,37 @@ import { getConfig, account } from '../../config'
 import RulesDiamondArtifact from "../abis/RulesEngineDiamond.json";
 import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
 import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet.json";
-
+/**
+ * @file ContractInteraction.ts
+ * @description This module provides a comprehensive set of functions for interacting with the Rules Engine smart contracts.
+ *              It includes functionality for creating, updating, retrieving, and deleting policies, rules, trackers, and foreign calls.
+ *              Additionally, it supports generating Solidity modifiers, injecting them into contracts, and simulating contract interactions.
+ * 
+ * @module ContractInteraction
+ * 
+ * @dependencies
+ * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
+ * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `generateSolidity`: Handles the generation of Solidity modifiers.
+ * - `injectModifier`: Handles the injection of modifiers into Solidity contracts.
+ * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
+ * - `config`: Provides configuration for interacting with the blockchain.
+ * 
+ * @types
+ * - `RulesEnginePolicyContract`: Represents the contract instance for interacting with the Rules Engine Policy.
+ * - `RulesEngineComponentContract`: Represents the contract instance for interacting with the Rules Engine Component.
+ * - `FCNameToID`: Maps foreign call names to their corresponding IDs.
+ * - `RuleStorageSet`: Represents the structure of a rule stored in the Rules Engine.
+ * - `hexToFunctionSignature`: Maps hex-encoded function signatures to their human-readable equivalents.
+ * - `PolicyJSON`: Represents the structure of a policy in JSON format.
+ * - `foreignCallJSON`, `trackerJSON`, `ruleJSON`: Represent the structure of foreign calls, trackers, and rules in JSON format.
+ * 
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * 
+ * @license UNLICENSED
+ * 
+ * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
+ */
 const RulesEnginePolicyABI = RulesEnginePolicyLogicArtifact.abi;
 const RulesEngineComponentABI = RulesEngineComponentLogicArtifact.abi;
 
@@ -122,11 +152,24 @@ export const getRulesEnginePolicyContract = (address: Address, client: any): Rul
     client
   });
 
+/**
+ * Pauses the execution of an asynchronous function for a specified duration.
+ *
+ * @param ms - The number of milliseconds to sleep before resolving the promise.
+ * @returns A promise that resolves after the specified duration.
+ */
 export async function sleep(ms: number): Promise<void> {
     return new Promise(
         (resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Creates a blank policy in the Rules Engine.
+ * 
+ * @param policyType - The type of the policy to be created.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @returns The ID of the newly created policy.
+ */
 export const createBlankPolicy = async (policyType: number, 
     rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<number> => {
         
@@ -144,6 +187,14 @@ export const createBlankPolicy = async (policyType: number,
     return addPolicy.result
 }
 
+/**
+ * Applies a policy to a specific contract address.
+ * 
+ * @param policyId - The ID of the policy to apply.
+ * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @returns The result of the policy application.
+ */
 export const applyPolicy = async(policyId: number, contractAddressForPolicy: Address,
     rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<number> => {
 
@@ -172,6 +223,14 @@ export const applyPolicy = async(policyId: number, contractAddressForPolicy: Add
     return applyPolicy.result
 }
 
+/**
+ * Retrieves a specific rule from the Rules Engine.
+ * 
+ * @param policyId - The ID of the policy containing the rule.
+ * @param ruleId - The ID of the rule to retrieve.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @returns The retrieved rule as a `RuleStruct`, or `null` if retrieval fails.
+ */
 export const retrieveRule = async(policyId: number, ruleId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<RuleStruct | null> => {
     
     try {
@@ -207,6 +266,15 @@ export const retrieveRule = async(policyId: number, ruleId: number, rulesEngineP
     } 
 }
 
+/**
+ * Retrieves the full policy, including rules, trackers, and foreign calls, as a JSON string.
+ * 
+ * @param policyId - The ID of the policy to retrieve.
+ * @param functionSignatureMappings - A mapping of function signatures to their hex representations.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
+ * @returns A JSON string representing the full policy.
+ */
 export const retrieveFullPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[], 
     rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract): Promise<string> => {
     try {
@@ -273,6 +341,17 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
 
 }
 
+/**
+ * Creates a full policy in the Rules Engine, including rules, trackers, and foreign calls.
+ * 
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
+ * @param policySyntax - The JSON string representing the policy syntax.
+ * @param outputFileName - The name of the output file for generated Solidity code.
+ * @param contractToModify - The contract to which the policy will be applied.
+ * @param policyType - The type of the policy to be created.
+ * @returns The ID of the newly created policy.
+ */
 export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
     policySyntax: string, outputFileName: string, contractToModify: string, 
     policyType: number): Promise<number> => {
@@ -335,6 +414,13 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     // return result
 } 
 
+/**
+ * Deletes a policy from the Rules Engine.
+ * 
+ * @param policyId - The ID of the policy to delete.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
+ * @returns `0` if successful, `-1` if an error occurs.
+ */
 export const deletePolicy = async(policyId: number,  
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
 
@@ -360,6 +446,16 @@ export const deletePolicy = async(policyId: number,
     return 0
 }
 
+/**
+ * Updates an existing policy in the Rules Engine.
+ * 
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to update.
+ * @param signatures - The function signatures associated with the policy.
+ * @param ids - The IDs of the rules associated with the policy.
+ * @param ruleIds - The mapping of rules to function signatures.
+ * @returns The result of the policy update.
+ */
 export const updatePolicy = async (
     rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
         var updatePolicy
@@ -390,6 +486,14 @@ export const updatePolicy = async (
         return -1
     }
 
+/**
+ * Executes a batch of calls in the Rules Engine.
+ * 
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param account - The account executing the batch.
+ * @param calls - The list of calls to execute.
+ * @returns The transaction result or an error if execution fails.
+ */
 export const executeBatch = async (
     rulesEnginePolicyContract: RulesEnginePolicyContract,
     account: PrivateKeyAccount,
@@ -420,6 +524,18 @@ export const executeBatch = async (
 
 }
 
+/**
+ * Adds a new rule to a batch of calls for the Rules Engine Policy Contract.
+ *
+ * @param policyId - The ID of the policy to which the rule will be added.
+ * @param ruleS - A JSON string representing the rule to be added.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param foreignCallNameToID - A mapping of foreign call names to their corresponding IDs.
+ * @param trackerNameToID - A mapping of tracker names to their corresponding IDs.
+ * @param calls - An array to which the encoded function call for creating the rule will be appended.
+ *
+ * @returns A promise that resolves when the rule has been successfully added to the batch.
+ */
 export const addNewRuleToBatch = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[], calls: any[]) => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     var effect = buildAnEffectStruct(ruleSyntax, trackerNameToID)
@@ -435,6 +551,21 @@ export const addNewRuleToBatch = async (policyId: number, ruleS: string, rulesEn
     )
 }
 
+/**
+ * Creates a function signature in the rules engine component contract.
+ *
+ * This function parses the provided function signature, maps its arguments to their respective
+ * types, and interacts with the smart contract to create the function signature. If the contract
+ * interaction fails, it retries with a delay until successful.
+ *
+ * @param policyId - The ID of the policy for which the function signature is being created.
+ * @param functionSignature - The function signature string to be parsed and added to the contract.
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI
+ *                                        of the rules engine component.
+ * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
 export const createFunctionSignature = async (policyId: number, functionSignature: string, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
         var argsRaw = parseFunctionArguments(functionSignature)
@@ -475,6 +606,18 @@ export const createFunctionSignature = async (policyId: number, functionSignatur
     return -1 
 }
 
+/**
+ * Deletes a foreign call associated with a specific policy in the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy to which the foreign call belongs.
+ * @param foreignCallId - The ID of the foreign call to be deleted.
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interacting with the rules engine component.
+ * @returns A promise that resolves to a number:
+ *          - `0` if the operation is successful.
+ *          - `-1` if an error occurs during the simulation of the contract interaction.
+ *
+ * @throws This function does not explicitly throw errors but will return `-1` if an error occurs during the simulation phase.
+ */
 export const deleteForeignCall = async(policyId: number, foreignCallId: number,  
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
 
@@ -500,6 +643,24 @@ export const deleteForeignCall = async(policyId: number, foreignCallId: number,
     return 0
 }
 
+/**
+ * Sets or updates a foreign call in the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy to associate with the foreign call.
+ * @param foreignCallId - The ID of the foreign call to update. Use `0` to create a new foreign call.
+ * @param fcSyntax - A JSON string representing the foreign call definition.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the rules engine component.
+ * @returns A promise that resolves to the foreign call index. Returns `-1` if the operation fails.
+ *
+ * @remarks
+ * - If `foreignCallId` is `0`, a new foreign call is created. Otherwise, the specified foreign call is updated.
+ * - The function retries the contract interaction in case of failure, with a delay of 1 second between attempts.
+ * - The `simulateContract` function is used to simulate the contract interaction before writing to the blockchain.
+ * - The `writeContract` function is used to execute the contract interaction on the blockchain.
+ * - The function returns the `foreignCallIndex` for an updated foreign call or the result of the newly created foreign call.
+ *
+ * @throws Will throw an error if the JSON parsing of `fcSyntax` fails.
+ */
 export const setForeignCall = async(policyId: number, foreignCallId: number, fcSyntax: string, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
     var json = JSON.parse(fcSyntax)
@@ -549,6 +710,18 @@ export const setForeignCall = async(policyId: number, foreignCallId: number, fcS
     return -1
 }
 
+/**
+ * Deletes a tracker associated with a specific policy in the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy to which the tracker belongs.
+ * @param trackerId - The ID of the tracker to be deleted.
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @returns A promise that resolves to a number:
+ *          - `0` if the tracker was successfully deleted.
+ *          - `-1` if an error occurred during the simulation of the contract interaction.
+ *
+ * @throws This function does not explicitly throw errors but will return `-1` if an error occurs during the simulation phase.
+ */
 export const deleteTracker = async(policyId: number, trackerId: number,  
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
 
@@ -574,6 +747,19 @@ export const deleteTracker = async(policyId: number, trackerId: number,
     return 0
 }
 
+/**
+ * Asynchronously sets or updates a tracker in the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy associated with the tracker.
+ * @param trackerId - The ID of the tracker to update. If 0, a new tracker will be created.
+ * @param trSyntax - A JSON string representing the tracker syntax.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the rules engine component.
+ * @returns A promise that resolves to the tracker ID. If a new tracker is created, the new tracker ID is returned.
+ *          If an update is performed, the existing tracker ID is returned. Returns -1 if the operation fails.
+ *
+ * @throws Will retry indefinitely with a 1-second delay between attempts if an error occurs during the contract simulation.
+ *         Ensure proper error handling or timeout mechanisms are implemented to avoid infinite loops.
+ */
 export const setTracker = async(policyId: number, trackerId: number, trSyntax: string, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
     var json : trackerJSON = JSON.parse(trSyntax)
@@ -611,7 +797,16 @@ export const setTracker = async(policyId: number, trackerId: number, trSyntax: s
     return -1;
 }
 
-
+/**
+ * Retrieves the result of a foreign call from the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy associated with the foreign call.
+ * @param foreignCallId - The ID of the foreign call to retrieve.
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @returns A promise that resolves to the result of the foreign call, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
 export const getForeignCall = async(policyId: number, foreignCallId: number, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<any | null> => {
     try {
@@ -634,6 +829,16 @@ export const getForeignCall = async(policyId: number, foreignCallId: number,
     }
 }
 
+/**
+ * Retrieves a tracker from the Rules Engine Component Contract based on the provided policy ID and tracker ID.
+ *
+ * @param policyId - The ID of the policy associated with the tracker.
+ * @param trackerId - The ID of the tracker to retrieve.
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @returns A promise that resolves to the tracker result if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
 export const getTracker = async(policyId: number, trackerId: number, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<any | null> => {
     try {
@@ -658,7 +863,16 @@ export const getTracker = async(policyId: number, trackerId: number,
     }
 }
 
-
+/**
+ * Retrieves all foreign calls associated with a specific policy ID from the Rules Engine Component Contract.
+ *
+ * @param policyId - The ID of the policy for which foreign calls are to be retrieved.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract, 
+ * containing its address and ABI.
+ * @returns A promise that resolves to an array of foreign calls if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
 export const getAllForeignCalls = async(policyId: number, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<any[] | null> => {
     try {
@@ -682,6 +896,16 @@ export const getAllForeignCalls = async(policyId: number,
 
 }
 
+/**
+ * Retrieves all trackers associated with a specific policy ID from the Rules Engine Component Contract.
+ *
+ * @param policyId - The unique identifier of the policy for which trackers are to be retrieved.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract, 
+ * including its address and ABI.
+ * @returns A promise that resolves to an array of trackers if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
 export const getAllTrackers = async(policyId: number, 
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<any[] | null> => {
     try {
@@ -706,6 +930,19 @@ export const getAllTrackers = async(policyId: number,
     }
 }
 
+/**
+ * Updates an existing rule in the Rules Engine Policy Contract.
+ *
+ * @param policyId - The ID of the policy to which the rule belongs.
+ * @param ruleId - The ID of the rule to be updated.
+ * @param ruleS - A JSON string representing the rule's structure and logic.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param foreignCallNameToID - A mapping of foreign call names to their corresponding IDs.
+ * @param trackerNameToID - A mapping of tracker names to their corresponding IDs.
+ * @returns A promise that resolves to the result of the rule update operation. Returns the result ID if successful, or -1 if the operation fails.
+ *
+ * @throws Will retry indefinitely if the contract simulation fails, with a 1-second delay between retries.
+ */
 export const updateRule = async (policyId: number, ruleId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
@@ -737,6 +974,25 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
     return -1
 }
 
+/**
+ * Asynchronously creates a new rule in the rules engine policy contract.
+ *
+ * @param policyId - The ID of the policy to which the rule belongs.
+ * @param ruleS - A JSON string representing the rule to be created.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the rules engine policy.
+ * @param foreignCallNameToID - An array mapping foreign call names to their corresponding IDs.
+ * @param outputFileName - The name of the output file where the rule modifier will be generated.
+ * @param contractToModify - The contract to be modified with the generated rule modifier.
+ * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
+ * @returns A promise that resolves to the result of the rule creation operation. Returns the rule ID if successful, or -1 if the operation fails.
+ *
+ * @throws Will log errors to the console if the contract simulation fails and retry the operation after a delay.
+ *
+ * @remarks
+ * - The function parses the rule JSON string to build the rule and effect structures.
+ * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
+ * - If the rule creation is successful, it writes the contract, generates a rule modifier, and optionally injects the modifier into the specified contract.
+ */
 export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     foreignCallNameToID: FCNameToID[], outputFileName: string, contractToModify: string, trackerNameToID: FCNameToID[]): Promise<number> => {
 
@@ -785,6 +1041,16 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
     return -1
 }
 
+/**
+ * Retrieves all rules associated with a specific policy ID from the Rules Engine Policy Contract.
+ *
+ * @param policyId - The unique identifier of the policy for which rules are to be retrieved.
+ * @param rulesEnginePolicyContract - An object representing the Rules Engine Policy Contract, 
+ * including its address and ABI (Application Binary Interface).
+ * @returns A promise that resolves to an array of rules if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
 export const getAllRules = async(policyId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<any[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
@@ -808,6 +1074,18 @@ export const getAllRules = async(policyId: number, rulesEnginePolicyContract: Ru
     }
 }
 
+/**
+ * Deletes a rule from the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy to which the rule belongs.
+ * @param ruleId - The ID of the rule to be deleted.
+ * @param rulesEngineComponentContract - The contract instance containing the rules engine component.
+ * @returns A promise that resolves to a number:
+ *          - `0` if the rule was successfully deleted.
+ *          - `-1` if an error occurred during the deletion process.
+ *
+ * @throws This function does not throw errors directly but returns `-1` in case of an exception.
+ */
 export const deleteRule = async(policyId: number, ruleId: number,  
     rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
 
@@ -833,6 +1111,27 @@ export const deleteRule = async(policyId: number, ruleId: number,
     return 0
 }
 
+/**
+ * Builds a structured representation of positive and negative effects based on the provided rule syntax and tracker mappings.
+ *
+ * @param ruleSyntax - The JSON representation of the rule syntax to parse.
+ * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
+ * @returns An object containing arrays of positive and negative effects, each represented as structured objects.
+ *
+ * The returned object has the following structure:
+ * - `positiveEffects`: An array of objects representing the positive effects.
+ * - `negativeEffects`: An array of objects representing the negative effects.
+ *
+ * Each effect object includes:
+ * - `valid`: A boolean indicating whether the effect is valid.
+ * - `dynamicParam`: A boolean indicating whether the parameter is dynamic.
+ * - `effectType`: The type of the effect.
+ * - `pType`: The parameter type (e.g., address, string, bytes, uint).
+ * - `param`: The encoded parameter value.
+ * - `text`: A hexadecimal representation of the effect's text.
+ * - `errorMessage`: The error message associated with the effect.
+ * - `instructionSet`: The cleaned instruction set for the effect.
+ */
 function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]) {
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var pEffects = []
@@ -925,6 +1224,20 @@ function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]
     return {positiveEffects: pEffects, negativeEffects: nEffects }
 }
 
+/**
+ * Constructs a rule structure based on the provided policy ID, rule syntax, foreign call mappings, 
+ * effect data, and tracker mappings. This function processes the rule syntax to generate a structured 
+ * representation of the rule, including placeholders, effects, and associated metadata.
+ *
+ * @param policyId - The unique identifier for the policy associated with the rule.
+ * @param ruleSyntax - The JSON representation of the rule syntax, including conditions and effects.
+ * @param foreignCallNameToID - An array of mappings between foreign call names and their corresponding IDs.
+ * @param effect - An object containing the positive and negative effects of the rule.
+ * @param trackerNameToID - An array of mappings between tracker names and their corresponding IDs.
+ * 
+ * @returns A structured representation of the rule, including its instruction set, placeholders, 
+ *          effect placeholders, and associated effects.
+ */
 function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
     var fcList = buildForeignCallList(ruleSyntax.condition)
     for(var eff of ruleSyntax.positiveEffects) {
