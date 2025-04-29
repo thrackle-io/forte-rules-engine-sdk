@@ -37,6 +37,7 @@ jobs:
         npm install -g typescript
         npm install @rollup/rollup-linux-x64-gnu
         npm install --no-optional
+        npm install @esbuild/linux-x64
     - name: Run Anvil
       run: |
         anvil -p 8545 --load-state diamondDeployedAnvilState.json &
