@@ -3,8 +3,6 @@ pragma solidity ^0.8.24;
 
 import "./RulesEngineClient.sol";
 
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
 
 /**
  * @title Template Contract for Testing the Rules Engine
