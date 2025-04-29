@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from 'vitest'
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes, toHex } from 'viem';
 import { generateModifier } from '../src/codeGeneration/generateSolidity'

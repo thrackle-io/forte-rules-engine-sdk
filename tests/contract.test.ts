@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { readContract } from "@wagmi/core"
 import { getAddress, toFunctionSelector, toHex } from 'viem'
 import { expect, test, describe, beforeAll, beforeEach } from 'vitest'
