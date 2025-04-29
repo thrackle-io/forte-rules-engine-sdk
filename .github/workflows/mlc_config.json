@@ -8,6 +8,9 @@
       },
       {
         "pattern": "^https://docs.forterulesengine.io*"
+      },
+      {
+        "pattern": "^https://github.com/thrackle-io/forte-rules-engine"
       }
     ],
     "replacementPatterns": [
