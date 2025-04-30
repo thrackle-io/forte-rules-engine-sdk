@@ -69,52 +69,96 @@ export function injectModifier(funcName: string, variables: string, userFilePath
     var data = fs.readFileSync(userFilePath, 'utf-8')
     var reg = /(?<=pragma).+?(?=;)/g;
     const matches = data.matchAll(reg);
-    var modifiedData = ''
+    var modifiedData = data; // Initialize with original data
     for (const match of matches) {
         const fullFcExpr = match[0];
-        modifiedData = data.replace(fullFcExpr, fullFcExpr + ';\nimport "src/client/RulesEngineClientCustom.sol"')
+        // Check if import already exists
+        if (!modifiedData.includes('import "src/client/RulesEngineClientCustom.sol"')) {
+            modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ';\nimport "src/client/RulesEngineClientCustom.sol"');
+        }
         break
     }  
 
-    // Find and replace Contract Name Line
-    var regNew = /(?<=contract).+?(?={)/g;
-    const contractMatches = data.matchAll(regNew);
+    // Find and replace Contract Name Line with proper inheritance
+    // Improved regex that specifically targets contract declarations
+    var regNew = /contract\s+([a-zA-Z0-9_]+)(\s+is\s+[^{]+|\s*)(?={)/g;
+    const contractMatches = modifiedData.matchAll(regNew);
+    
     for (const match of contractMatches) {
-        const fullFcExpr = match[0];
-        modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + 'is RulesEngineClientCustom ')
-        break
+        const fullMatch = match[0];
+        const contractName = match[1];
+        const existingInheritance = match[2] || '';
+        
+        let newInheritance;
+        
+        // Check if there's already an inheritance clause
+        if (existingInheritance.includes(' is ')) {
+            // Contract already has inheritance, add our interface to the list
+            if (!existingInheritance.includes('RulesEngineClientCustom')) {
+                newInheritance = existingInheritance.replace(' is ', ' is RulesEngineClientCustom, ');
+                modifiedData = modifiedData.replace(fullMatch, `contract ${contractName}${newInheritance}`);
+            }
+        } else {
+            // No existing inheritance, add our interface as the only one
+            newInheritance = ` is RulesEngineClientCustom${existingInheritance}`;
+            modifiedData = modifiedData.replace(fullMatch, `contract ${contractName}${newInheritance}`);
+        }
+        break;
     }
 
     // Find Function and place modifier
-    var functionName = "function "
-
+    var functionName = "function ";
     var argListUpdate = variables.replace(/address /g , '')
-    argListUpdate = argListUpdate.replace(/uint256 /g, '')
-    argListUpdate = argListUpdate.replace(/string /g, '')
-    argListUpdate = argListUpdate.replace(/bool /g, '')
-    argListUpdate = argListUpdate.replace(/bytes /g, '')
-    const regex = new RegExp(`${functionName + funcName}(.*?)\\)`, 'g');
-    const funcMatches = data.matchAll(regex);
+                                .replace(/uint256 /g, '')
+                                .replace(/string /g, '')
+                                .replace(/bool /g, '')
+                                .replace(/bytes /g, '');
+    
+    // More precise regex to find the function declaration and its modifiers
+    const functionRegex = new RegExp(`${functionName + funcName}\\s*\\([^)]*\\)(\\s*[^{]*)?(?={)`, 'g');
+    const funcMatches = modifiedData.matchAll(functionRegex);
+    
     for (const match of funcMatches) {
-        const fullFcExpr = match[0];
-        modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ' checkRulesBefore(' + argListUpdate + ')')
-        break
+        const fullMatch = match[0];
+        
+        // Check if our modifier is already present
+        if (!fullMatch.includes(`checkRulesBefore(${argListUpdate})`)) {
+            // Find the position of the closing parenthesis
+            const closingParenIndex = fullMatch.indexOf(')');
+            if (closingParenIndex !== -1) {
+                // Split the string at the closing parenthesis
+                const beforeParen = fullMatch.substring(0, closingParenIndex + 1);
+                const afterParen = fullMatch.substring(closingParenIndex + 1);
+                
+                // Add our modifier after any existing modifiers
+                const newModifiers = afterParen.trim() 
+                    ? `${afterParen.trim()} checkRulesBefore(${argListUpdate})`
+                    : ` checkRulesBefore(${argListUpdate})`;
+                
+                // Replace the full match with our modified version
+                modifiedData = modifiedData.replace(fullMatch, `${beforeParen}${newModifiers}`);
+            }
+        }
+        break;
     }
     
     // Write the modified data back to the file
     fs.writeFileSync(userFilePath, modifiedData, 'utf-8')
 
-    const diffResult = diff.diffLines(data, modifiedData);
-    var newData = ''
-    diffResult.forEach((part) => {
-        if (part.added) {
-            newData += '+' + part.value + '\n'
-        } else if (part.removed) {
-            newData += '-' + part.value + '\n'
-        } else {
-            newData += ' ' + part.value + '\n'
-        }
-    })
+    // Only create diff file if diffPath is provided
+    if (diffPath && diffPath.length > 0) {
+        const diffResult = diff.diffLines(data, modifiedData);
+        var newData = ''
+        diffResult.forEach((part) => {
+            if (part.added) {
+                newData += '+' + part.value + '\n'
+            } else if (part.removed) {
+                newData += '-' + part.value + '\n'
+            } else {
+                newData += ' ' + part.value + '\n'
+            }
+        })
 
-    fs.writeFileSync(diffPath, newData, 'utf-8')
+        fs.writeFileSync(diffPath, newData, 'utf-8')
+    }
 }

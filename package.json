@@ -15,6 +15,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "generate": "ts-node src/codeGeneration/codeModificationScript.ts",
     "test": "vitest"
   },
   "dependencies": {
