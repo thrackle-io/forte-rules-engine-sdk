@@ -12,7 +12,7 @@ import { setForeignCall, createNewRule, getAllForeignCalls, getAllTrackers } fro
 import { sleep } from "./ContractInteractionUtils";
 import { createFunctionSignature } from "./FunctionSignatures";
 import { retrieveRule } from "./Rules";
-import { setTracker } from "./Trackers";
+import { createTracker } from "./Trackers";
 
 /**
  * @file Policy.ts
@@ -96,7 +96,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
 
     for(var tracker of policyJSON.Trackers) {
         var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
-        const trId = await setTracker(policyId, 0, JSON.stringify(tracker), rulesEngineComponentContract)
+        const trId = await createTracker(rulesEngineComponentContract, policyId, JSON.stringify(tracker) )
         var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
         trackerIds.push(struc)
         trackers.push(trackerStruct)
@@ -298,7 +298,7 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
         var callStrings: string[] = []
         convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
 
-        var trackers: any[] | null = await getAllTrackers(policyId, rulesEngineComponentContract)
+        var trackers: any[] | null = await getAllTrackers(rulesEngineComponentContract, policyId)
         var trackerStrings: string[] = []
         convertTrackerStructsToStrings(trackers, trackerStrings)
 
