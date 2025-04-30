@@ -5,7 +5,7 @@ import { foundry } from 'viem/chains'
 import { getConfig, connectConfig } from '../config'
 import * as fs from 'fs';
 import * as path from 'path';
-import { createPolicy, getAllForeignCalls, getAllTrackers, getPolicy } from '.';
+import { createPolicy, getAllForeignCalls, getAllTrackers, getPolicy } from '..';
 import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } from './modules/ContractInteractionUtils';
 /**
  * @file demo.ts
@@ -98,18 +98,18 @@ const account = privateKeyToAccount(
     const policyJSON = await fs.promises.readFile(absolutePath, 'utf-8');
     var result = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),
     policyJSON)
-    var resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
+    var resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result)
 
     while(true) {
         if(resultFC!.length < 1) {
             await sleep(1000)
-            resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
+            resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result)
         } else {
             break
         }
     }
 
-    var resultTR = await getAllTrackers(result, getRulesEngineComponentContract(rulesEngineContract, client))
+    var resultTR = await getAllTrackers( getRulesEngineComponentContract(rulesEngineContract, client), result)
     var retVal = await getPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)", encodedValues: "address to, uint256 value"}, 
         {hex: '0x71308757', functionSignature: "testSig(address)", encodedValues: ""}
     ])

@@ -3,22 +3,12 @@ import { readContract } from "@wagmi/core";
 import { getAddress, toFunctionSelector, toHex } from "viem";
 import { expect, test, describe, beforeAll, beforeEach } from "vitest";
 import { getConfig, account, DiamondAddress, connectConfig } from "../config";
-import {
-  getRulesEnginePolicyContract,
-  createNewRule,
-  getRulesEngineComponentContract,
-  createForeignCall,
-  getForeignCall,
-  getAllForeignCalls,
-  getAllTrackers,
-  createPolicy,
-  getPolicy,
-} from "../src";
-import { deleteForeignCall, updateForeignCall } from "../src/modules/ForeignCalls";
+import { getRulesEnginePolicyContract, getRulesEngineComponentContract } from "../src/modules/ContractInteractionUtils";
+import { createForeignCall, deleteForeignCall, updateForeignCall, getForeignCall, getAllForeignCalls } from "../src/modules/ForeignCalls";
 import { createFunctionSignature } from "../src/modules/FunctionSignatures";
-import { createPolicy, updatePolicy, deletePolicy } from "../src/modules/Policy";
-import { getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
-import { createTracker, updateTracker, getTracker, deleteTracker } from "../src/modules/Trackers";
+import { createPolicy, updatePolicy, deletePolicy, getPolicy } from "../src/modules/Policy";
+import { createNewRule, getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
+import { createTracker, updateTracker, getTracker, getAllTrackers, deleteTracker } from "../src/modules/Trackers";
 import { sleep } from "../src/modules/ContractInteractionUtils";
 
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json

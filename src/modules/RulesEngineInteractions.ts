@@ -23,9 +23,11 @@
 import { Address, getContract } from "viem"
 import { FCNameToID, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types"
 import { getConfig } from "../../config"
-import {createPolicy, updatePolicy as updatePolicyInternal, 
+import {createPolicy as createPolicyInternal,
+     updatePolicy as updatePolicyInternal, 
     applyPolicy as applyPolicyInternal,
-    deletePolicy as deletePolicyInternal
+    deletePolicy as deletePolicyInternal,
+    getPolicy as getPolicyInternal
  } from "./Policy"
 
 import {
@@ -87,7 +89,7 @@ export const initializeRulesEngineConnection = async(address: Address, client: a
  * @returns The ID of the newly created policy.
  */
 export const createPolicy = async (policyJSON: string): Promise<number> => {
-    return createPolicy(rulesEnginePolicyContract, rulesEngineComponentContract, policyJSON)
+    return createPolicyInternal(rulesEnginePolicyContract, rulesEngineComponentContract, policyJSON)
 }
 
 /**
@@ -111,7 +113,7 @@ export const updatePolicy = async (policyId: number, signatures: any[], ids: num
  * @returns The result of the policy application.
  */
 export const applyPolicy = async(policyId: number, contractAddressForPolicy: Address): Promise<number> => {
-    return applyPolicyInternal(policyId, contractAddressForPolicy, rulesEnginePolicyContract)
+    return applyPolicyInternal(rulesEnginePolicyContract, policyId, contractAddressForPolicy)
 }
 
 /**
@@ -121,7 +123,7 @@ export const applyPolicy = async(policyId: number, contractAddressForPolicy: Add
  * @returns `0` if successful, `-1` if an error occurs.
  */
 export const deletePolicy = async(policyId: number): Promise<number> => {
-        return deletePolicyInternal(policyId, rulesEnginePolicyContract)
+        return deletePolicyInternal(rulesEnginePolicyContract, policyId)
 }
 
 /**
@@ -131,8 +133,8 @@ export const deletePolicy = async(policyId: number): Promise<number> => {
  * @param functionSignatureMappings - A mapping of function signatures to their hex representations.
  * @returns A JSON string representing the full policy.
  */
-export const retrievePolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
-    return retrieveFullPolicy(policyId, functionSignatureMappings, rulesEnginePolicyContract, rulesEngineComponentContract)
+export const getPolicy = async(policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
+    return getPolicyInternal(rulesEnginePolicyContract, rulesEngineComponentContract,policyId, functionSignatureMappings)
 }
 
 /**

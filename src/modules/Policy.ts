@@ -8,7 +8,9 @@ import {
 import { account, getConfig } from "../../config";
 import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./Parser";
 import { RulesEnginePolicyContract, RulesEngineComponentContract, FCNameToID, TrackerDefinition, PolicyJSON, hexToFunctionSignature } from "./types";
-import { createForeignCall, createNewRule, getAllForeignCalls, getAllTrackers } from "..";
+import { createForeignCall,getAllForeignCalls} from "./ForeignCalls"
+import {createNewRule } from "./Rules"
+import { getAllTrackers } from "./Trackers";
 import { sleep } from "./ContractInteractionUtils";
 import { createFunctionSignature } from "./FunctionSignatures";
 import { retrieveRule } from "./Rules";
