@@ -74,9 +74,9 @@ describe("Rules Engine Interactions", async () => {
     expect(ruleId).toBeGreaterThan(0);
     var functionSignature = "addValue(uint256 value)";
     const fsId = await createFunctionSignature(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
-      functionSignature,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      functionSignature
     );
     var selector = toFunctionSelector(functionSignature);
     await updatePolicy(
@@ -111,9 +111,9 @@ describe("Rules Engine Interactions", async () => {
     expect(ruleId).toBeGreaterThan(0);
     var functionSignature = "addValue(uint256 value)";
     const fsId = await createFunctionSignature(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
-      functionSignature,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      functionSignature
     );
     var selector = toFunctionSelector(functionSignature);
     await updatePolicy(
@@ -167,9 +167,9 @@ describe("Rules Engine Interactions", async () => {
     expect(ruleId).toBeGreaterThan(0);
     var functionSignature = "addValue(uint256 value)";
     const fsId = await createFunctionSignature(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
-      functionSignature,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      functionSignature
     );
     var selector = toFunctionSelector(functionSignature);
     await updatePolicy(

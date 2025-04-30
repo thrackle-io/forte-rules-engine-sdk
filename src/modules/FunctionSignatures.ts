@@ -14,7 +14,7 @@ import { RulesEngineComponentContract } from "./types"
  * @description This module provides a comprehensive set of functions for interacting with the Function Signatures within the Rules Engine smart contracts.
  *              It includes functionality for creating, updating, retrieving, and deleting function signatures.
  * 
- * @module ContractInteraction
+ * @module FunctionSignatures
  * 
  * @dependencies
  * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
@@ -25,7 +25,7 @@ import { RulesEngineComponentContract } from "./types"
  * 
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  * 
- * @license UNLICENSED
+ * @license BUSL-1.1
  * 
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
@@ -39,16 +39,17 @@ const config = getConfig()
  * types, and interacts with the smart contract to create the function signature. If the contract
  * interaction fails, it retries with a delay until successful.
  *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI
  * @param policyId - The ID of the policy for which the function signature is being created.
  * @param functionSignature - The function signature string to be parsed and added to the contract.
- * @param rulesEngineComponentContract - The contract instance containing the address and ABI
  *                                        of the rules engine component.
  * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
-export const createFunctionSignature = async (policyId: number, functionSignature: string, 
-    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+export const createFunctionSignature = async (rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number, functionSignature: string
+    ): Promise<number> => {
         var argsRaw = parseFunctionArguments(functionSignature)
         var args = []
         for(var arg of argsRaw) {

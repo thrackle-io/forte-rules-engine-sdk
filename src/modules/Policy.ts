@@ -106,7 +106,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
         var functionSignature = rule.functionSignature.trim()
         if(!functionSignatures.includes(functionSignature)) {
             functionSignatures.push(functionSignature)
-            const fsId = await createFunctionSignature(policyId, functionSignature, rulesEngineComponentContract)
+            const fsId = await createFunctionSignature(rulesEngineComponentContract, policyId, functionSignature)
             functionSignatureIds.push(fsId)
         }
         
