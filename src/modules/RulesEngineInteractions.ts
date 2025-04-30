@@ -427,5 +427,5 @@ export const getAllTrackers = async (
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
 export const createFunctionSignature = async (policyId: number, functionSignature: string): Promise<number> => {
-    return createFunctionSignatureInternal(policyId, functionSignature, rulesEngineComponentContract)
+    return createFunctionSignatureInternal(rulesEngineComponentContract, policyId, functionSignature, )
 }
