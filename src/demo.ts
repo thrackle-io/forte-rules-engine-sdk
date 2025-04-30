@@ -2,10 +2,11 @@
 import { createTestClient, http, walletActions, publicActions, testActions, Address, decodeFunctionResult, toFunctionSelector, getAddress, stringToHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
-import { createFullPolicy, getAllForeignCalls, getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep, getAllTrackers, retrieveFullPolicy, createBlankPolicy, applyPolicy } from "../src/modules/ContractInteraction";
 import { getConfig, connectConfig } from '../config'
 import * as fs from 'fs';
 import * as path from 'path';
+import { createFullPolicy, getAllForeignCalls, getAllTrackers, retrieveFullPolicy } from '.';
+import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } from './modules/ContractInteractionUtils';
 /**
  * @file demo.ts
  * @description This script demonstrates the integration and usage of the Rules Engine SDK by creating, applying, 
@@ -96,8 +97,7 @@ const account = privateKeyToAccount(
     const absolutePath = path.resolve("src/demo.json")
     const policyJSON = await fs.promises.readFile(absolutePath, 'utf-8');
     var result = await createFullPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),
-    policyJSON,
-        "src/demoOutput/contractTestCreateFullPolicy.sol", "src/demoOutput/UserContract.sol", 1)
+    policyJSON)
     var resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
 
     while(true) {

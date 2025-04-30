@@ -1,0 +1,302 @@
+/// SPDX-License-Identifier: BUSL-1.1
+import { 
+    getContract, 
+    Address,
+    toFunctionSelector,
+
+    toHex,
+    encodeAbiParameters,
+    parseAbiParameters,
+    stringToBytes,
+    getAddress,
+
+} from "viem";
+
+import {
+    parseRuleSyntax,
+    cleanInstructionSet,
+    buildForeignCallList,
+    buildTrackerList
+} from "./Parser"
+
+
+import { FCNameToID, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract } from "./types";
+
+/**
+ * @file ContractInteractionUtils.ts
+ * @description This module provides a set of utility functions to aid in interacting with the Rules Engine smart contracts.
+ * 
+ * @module ContractInteractionUtils
+ * 
+ * @dependencies
+ * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
+ * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `generateSolidity`: Handles the generation of Solidity modifiers.
+ * - `injectModifier`: Handles the injection of modifiers into Solidity contracts.
+ * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
+ * - `config`: Provides configuration for interacting with the blockchain.
+ * 
+ * @types
+ * - `RulesEnginePolicyContract`: Represents the contract instance for interacting with the Rules Engine Policy.
+ * - `RulesEngineComponentContract`: Represents the contract instance for interacting with the Rules Engine Component.
+ * 
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * 
+ * @license UNLICENSED
+ * 
+ * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
+ */
+
+
+
+
+//TODO: Make the client usages type specific
+export const getRulesEnginePolicyContract = (address: Address, client: any): RulesEnginePolicyContract => getContract({
+    address,
+    abi: RulesEnginePolicyABI,
+    client
+  });
+
+  export const getRulesEngineComponentContract = (address: Address, client: any): RulesEngineComponentContract => getContract({
+    address,
+    abi: RulesEngineComponentABI,
+    client
+  });
+
+/**
+ * Pauses the execution of an asynchronous function for a specified duration.
+ *
+ * @param ms - The number of milliseconds to sleep before resolving the promise.
+ * @returns A promise that resolves after the specified duration.
+ */
+export async function sleep(ms: number): Promise<void> {
+    return new Promise(
+        (resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 
+ * Helper Functions
+ * 
+ */
+
+/**
+ * Constructs a rule structure based on the provided policy ID, rule syntax, foreign call mappings, 
+ * effect data, and tracker mappings. This function processes the rule syntax to generate a structured 
+ * representation of the rule, including placeholders, effects, and associated metadata.
+ *
+ * @param policyId - The unique identifier for the policy associated with the rule.
+ * @param ruleSyntax - The JSON representation of the rule syntax, including conditions and effects.
+ * @param foreignCallNameToID - An array of mappings between foreign call names and their corresponding IDs.
+ * @param effect - An object containing the positive and negative effects of the rule.
+ * @param trackerNameToID - An array of mappings between tracker names and their corresponding IDs.
+ * 
+ * @returns A structured representation of the rule, including its instruction set, placeholders, 
+ *          effect placeholders, and associated effects.
+ */
+export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
+    var fcList = buildForeignCallList(ruleSyntax.condition)
+    for(var eff of ruleSyntax.positiveEffects) {
+        fcList.push(...buildForeignCallList(eff))
+    }
+    for(var eff of ruleSyntax.negativeEffects) {
+        fcList.push(...buildForeignCallList(eff))
+    }
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
+    var trList = buildTrackerList(ruleSyntax.condition)
+    for(var eff of ruleSyntax.positiveEffects) {
+        trList.push(...buildTrackerList(eff))
+    }
+    for(var eff of ruleSyntax.negativeEffects) {
+        trList.push(...buildTrackerList(eff))
+    }
+    var fcIDs = []
+    var trIDs = []
+    for(var name of fcList) {
+        for(var mapping of foreignCallNameToID) {
+            if(mapping.name == name) {
+                fcIDs.push(mapping.id)
+            }
+        }
+    }
+    for(var name of trList) {
+        for(var mapping of trackerNameToID) {
+            if(mapping.name == name) {
+                trIDs.push(mapping.id)
+            }
+        }
+    }
+    var iter = 0
+    var tIter = 0
+    for(var index in output.placeHolders) {
+        if(output.placeHolders[index].foreignCall) {
+            output.placeHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
+            iter++
+        }
+        if(output.placeHolders[index].trackerValue) {
+            output.placeHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
+            tIter++
+        }
+    }
+
+    iter = 0
+    tIter = 0
+
+    for(var index in output.effectPlaceHolders) {
+        if(output.effectPlaceHolders[index].foreignCall) {
+            output.effectPlaceHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
+            iter++
+        }
+        if(output.effectPlaceHolders[index].trackerValue) {
+            output.effectPlaceHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
+            tIter++
+        }
+    }
+
+    var fcEffectList: string[] = []
+    for(var eff of ruleSyntax.positiveEffects) {
+        fcEffectList.concat(buildForeignCallList(eff))
+    }
+    for(var eff of ruleSyntax.negativeEffects) {
+        fcEffectList.concat(buildForeignCallList(eff))
+    }
+
+    var fcEffectIDs = []
+    for(var name of fcEffectList) {
+        for(var mapping of foreignCallNameToID) {
+            if(mapping.name == name) {
+                fcEffectIDs.push(mapping.id)
+            }
+        }
+    }
+
+    var rawData = {
+        instructionSetIndex: [],
+        argumentTypes: [],
+        dataValues: [],
+    }
+    cleanInstructionSet(output.instructionSet)
+    const rule =  {
+        instructionSet: output.instructionSet,
+        rawData: rawData,          
+        placeHolders: output.placeHolders,
+        effectPlaceHolders: output.effectPlaceHolders,
+        posEffects: effect.positiveEffects,
+        negEffects: effect.negativeEffects
+    } as const
+    console.log(rule)
+    return rule
+}
+
+/**
+ * Builds a structured representation of positive and negative effects based on the provided rule syntax and tracker mappings.
+ *
+ * @param ruleSyntax - The JSON representation of the rule syntax to parse.
+ * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
+ * @returns An object containing arrays of positive and negative effects, each represented as structured objects.
+ *
+ * The returned object has the following structure:
+ * - `positiveEffects`: An array of objects representing the positive effects.
+ * - `negativeEffects`: An array of objects representing the negative effects.
+ *
+ * Each effect object includes:
+ * - `valid`: A boolean indicating whether the effect is valid.
+ * - `dynamicParam`: A boolean indicating whether the parameter is dynamic.
+ * - `effectType`: The type of the effect.
+ * - `pType`: The parameter type (e.g., address, string, bytes, uint).
+ * - `param`: The encoded parameter value.
+ * - `text`: A hexadecimal representation of the effect's text.
+ * - `errorMessage`: The error message associated with the effect.
+ * - `instructionSet`: The cleaned instruction set for the effect.
+ */
+export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]) {
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
+    var pEffects = []
+    var nEffects = []
+
+    for(var pEffect of output.positiveEffects) {
+        cleanInstructionSet(pEffect.instructionSet)
+        var param: any
+
+        if(pEffect.pType == 0) {
+            // address
+            param = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [getAddress(String(pEffect.parameterValue))])
+        } else if(pEffect.pType == 1) {
+            // string
+            param = encodeAbiParameters(
+                parseAbiParameters('string'),
+                [String(pEffect.parameterValue)])
+        } else if(pEffect.pType == 5) {
+            // bytes
+            param = encodeAbiParameters(
+                parseAbiParameters('bytes'),
+                [toHex(stringToBytes(String(pEffect.parameterValue)))])
+        } else {
+            // uint
+            param = encodeAbiParameters(
+                parseAbiParameters('uint256'),
+                [BigInt(pEffect.parameterValue)])
+        }
+
+        const effect = {
+            valid: true,
+            dynamicParam: false,
+            effectType: pEffect.type,
+            pType: pEffect.pType,
+            param: param,
+            text: toHex(stringToBytes(
+                pEffect.text, 
+                { size: 32 } 
+              )),
+            errorMessage: pEffect.text,
+            instructionSet: pEffect.instructionSet
+        } as const
+        pEffects.push(effect)
+    }
+    for(var nEffect of output.negativeEffects) {
+
+        var param: any
+
+        if(nEffect.pType == 0) {
+            // address
+            param = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [getAddress(String(nEffect.parameterValue))])
+        } else if(nEffect.pType == 1) {
+            // string
+            param = encodeAbiParameters(
+                parseAbiParameters('string'),
+                [String(nEffect.parameterValue)])
+        } else if(nEffect.pType == 5) {
+            // bytes
+            param = encodeAbiParameters(
+                parseAbiParameters('bytes'),
+                [toHex(stringToBytes(String(nEffect.parameterValue)))])
+        } else {
+            // uint
+            param = encodeAbiParameters(
+                parseAbiParameters('uint256'),
+                [BigInt(nEffect.parameterValue)])
+        }
+
+        cleanInstructionSet(nEffect.instructionSet)
+        const effect = {
+            valid: true,
+            dynamicParam: false,
+            effectType: nEffect.type,
+            pType: nEffect.pType,
+            param: param,
+            text: toHex(stringToBytes(
+                nEffect.text, 
+                { size: 32 } 
+              )),
+            errorMessage: nEffect.text,
+            instructionSet: nEffect.instructionSet
+        } as const
+        nEffects.push(effect)
+    }
+
+    return {positiveEffects: pEffects, negativeEffects: nEffects }
+}

@@ -5,7 +5,7 @@ import {
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ruleJSON } from '../modules/ContractInteraction';
+import { ruleJSON } from '../modules/ContractInteractionUtils';
 /**
  * @file generateSolidity.ts
  * @description This file contains functionality for dynamically generating Solidity modifiers based on rule definitions.

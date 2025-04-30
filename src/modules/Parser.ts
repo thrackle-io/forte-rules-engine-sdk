@@ -1,6 +1,7 @@
+
 /// SPDX-License-Identifier: BUSL-1.1
-import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
-import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
+import { keccak256, encodePacked, Address, getAddress, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
+import { EffectType, ForeignCallArgumentMappings, ForeignCallDefinition, foreignCallJSON, FunctionArgument, IndividualArugmentMapping, matchArray, operandArray, PlaceholderStruct, PT, pTypeEnum, RawData, ruleJSON, RuleStruct, stringReplacement, supportedTrackerTypes, TrackerDefinition, trackerIndexNameMapping, trackerJSON, truMatchArray, Tuple } from './types';
 
 /**
  * @file Parser.ts
@@ -34,111 +35,6 @@ import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
  * @note This file is a critical component of the Rules Engine SDK, enabling the translation of human-readable
  *       rule definitions into machine-readable formats and vice versa.
  */
-type Tuple = {
-    i: string;
-    s: string;
-}
-
-export enum EffectType {
-    REVERT = 0,
-    EVENT = 1,
-    EXPRESSION = 2
-    
-}
-
-type Effect = {
-    type: EffectType;
-    text?: string;
-    instructionSet?: any[]
-}
-
-export type RuleStruct = {
-    instructionSet: number[],
-    rawData: RawData,          
-    placeHolders: any[],
-    effectPlaceHolders: any[],
-    fcArgumentMappingsConditions: any[],
-    fcArgumentMappingsEffects: any[],
-    posEffects: any[],
-    negEffects: any[]
-}
-
-export type ForeignCallDefinition = {
-
-    name: string;
-    address: Address;
-    signature: string;
-    returnType: number;
-    parameterTypes: number[];
-    encodedIndices: number[];
-}
-
-type PlaceholderStruct = {
-    pType: number;
-    typeSpecificIndex: number;
-    trackerValue: boolean;
-    foreignCall: boolean;
-}
-
-type IndividualArugmentMapping = {
-    functionCallArgumentType: number;
-    functionSignatureArg: PlaceholderStruct;
-}
-
-type ForeignCallArgumentMappings = {
-    foreignCallIndex: number;
-    mappings: IndividualArugmentMapping[];
-}
-
-type FunctionArgument = {
-    name: string
-    tIndex: number
-    rawType: string
-}
-
-export type stringReplacement = {
-    instructionSetIndex: number
-    originalData: string
-}
-
-export type trackerIndexNameMapping = {
-    id: number
-    name: string
-    type: number
-}
-
-export type TrackerDefinition = {
-    name: string
-    type: number
-    defaultValue: any
-}
-
-export type RawData = {
-    instructionSetIndex: number[]
-    argumentTypes: number[]
-    dataValues: ByteArray[]
-}
-
-
-const matchArray: string[] = ['OR', 'AND', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=', '=']
-const truMatchArray: string[] = ['+=', '-=', '*=', '/=', '=']
-const operandArray: string[] = ['PLH', 'N']
-const supportedTrackerTypes: string[] = ['uint256', 'string', 'address', 'bytes']
-export enum pTypeEnum {
-    ADDRESS = 0,
-    STRING = 1,
-    UINT256 = 2,
-    BOOL = 3,
-    VOID = 4,
-    BYTES = 5
-}
-export const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 'string', enumeration: pTypeEnum.STRING}, 
-    {name: 'uint256', enumeration: pTypeEnum.UINT256}, {name: 'bool', enumeration: pTypeEnum.BOOL}, 
-    {name: 'void', enumeration: pTypeEnum.VOID}, {name: 'bytes', enumeration: pTypeEnum.BYTES} ]
-const LC = [ {name: 'N', enumeration: 0}]
-const FC_PREFIX: string = 'FC:'
-// --------------------------------------------------------------------------------------------------
-
 
 // --------------------------------------------------------------------------------------------------
 // External Parsing Functions:
