@@ -32,7 +32,7 @@ import { createTracker } from "./Trackers";
  * 
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  * 
- * @license UNLICENSED
+ * @license BUSL-1.1
  * 
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
@@ -40,38 +40,11 @@ import { createTracker } from "./Trackers";
 const config = getConfig()
 
 /**
- * Creates a blank policy in the Rules Engine.
- * 
- * @param policyType - The type of the policy to be created.
- * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
- * @returns The ID of the newly created policy.
- */
-const createBlankPolicy = async (policyType: string, 
-    rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<number> => {
-        
-    const addPolicy = await simulateContract(config, {
-        address: rulesEnginePolicyContract.address,
-        abi: rulesEnginePolicyContract.abi,
-        functionName: "createPolicy",
-        args: [[], [], policyType == "open" ? 1 : 0],
-    })
-    const returnHash = await writeContract(config, {
-        ...addPolicy.request,
-        account
-    });
-
-    return addPolicy.result
-}
-
-/**
  * Creates a policy in the Rules Engine, including rules, trackers, and foreign calls.
  * 
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
  * @param policySyntax - The JSON string representing the policy syntax.
- * @param outputFileName - The name of the output file for generated Solidity code.
- * @param contractToModify - The contract to which the policy will be applied.
- * @param policyType - The type of the policy to be created.
  * @returns The ID of the newly created policy.
  */
 export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
@@ -86,7 +59,19 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
-    let policyId = await createBlankPolicy("open", rulesEnginePolicyContract)
+
+    const addPolicy = await simulateContract(config, {
+        address: rulesEnginePolicyContract.address,
+        abi: rulesEnginePolicyContract.abi,
+        functionName: "createPolicy",
+        args: [[], [], 1],
+    })
+    const returnHash = await writeContract(config, {
+        ...addPolicy.request,
+        account
+    });
+    let policyId:number = addPolicy.result
+
     if (policySyntax !== undefined){
         let policyJSON: PolicyJSON = JSON.parse(policySyntax);
         for(var foreignCall of policyJSON.ForeignCalls) {
@@ -182,7 +167,8 @@ export const updatePolicy = async (
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
  * @returns The result of the policy application.
  */
-export const applyPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, contractAddressForPolicy: Address): Promise<number> => {
+export const applyPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, 
+    policyId: number, contractAddressForPolicy: Address): Promise<number> => {
 
     var applyPolicy
     while(true) {
@@ -249,7 +235,8 @@ export const deletePolicy = async(rulesEnginePolicyContract: RulesEnginePolicyCo
  * @param functionSignatureMappings - A mapping of function signatures to their hex representations.
  * @returns A JSON string representing the full policy.
  */
-export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
+export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
+    policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
     try {
         const retrievePolicy = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,

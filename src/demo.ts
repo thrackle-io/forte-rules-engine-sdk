@@ -46,7 +46,7 @@ import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } 
  * 
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  * 
- * @license UNLICENSED
+ * @license BUSL-1.1
  * 
  * @note This file is intended for demonstration and testing purposes only. It is not suitable for production use.
  */
