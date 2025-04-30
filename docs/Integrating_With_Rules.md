@@ -3,7 +3,7 @@
 You now have a policy created with the rules you want defined. All that's left is to integrate the rules into your contract. To begin you should generate a client contract that will act as the interface between your contract and the rules engine.
 
 ```solidity
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
 import "./IRulesEngine.sol";

@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from 'vitest'
 import { parseRuleSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, stringReplacement, 
   buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/modules/Parser.ts';

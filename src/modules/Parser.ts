@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { keccak256, hexToNumber, encodePacked, Address, getAddress, toFunctionSelector, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
 import { foreignCallJSON, ruleJSON, trackerJSON } from './ContractInteraction';
 
