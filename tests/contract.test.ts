@@ -7,14 +7,14 @@ import {
   getRulesEnginePolicyContract,
   createNewRule,
   getRulesEngineComponentContract,
-  setForeignCall,
+  createForeignCall,
   getForeignCall,
   getAllForeignCalls,
   getAllTrackers,
   createFullPolicy,
   retrieveFullPolicy,
 } from "../src";
-import { deleteForeignCall } from "../src/modules/ForeignCalls";
+import { deleteForeignCall, updateForeignCall } from "../src/modules/ForeignCalls";
 import { createFunctionSignature } from "../src/modules/FunctionSignatures";
 import { createBlankPolicy, updatePolicy, deletePolicy } from "../src/modules/Policy";
 import { getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
@@ -197,17 +197,16 @@ describe("Rules Engine Interactions", async () => {
         "parameterTypes": "address, string, uint256",
         "encodedIndices": "0, 1, 2"
         }`;
-    var fcId = await setForeignCall(
+    var fcId = await createForeignCall(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
-      0,
       fcSyntax,
-      getRulesEngineComponentContract(rulesEngineContract, client)
     );
-    var fcRetrieve = await getForeignCall(policyId, fcId, getRulesEngineComponentContract(rulesEngineContract, client));
+    var fcRetrieve = await getForeignCall(getRulesEngineComponentContract(rulesEngineContract, client), policyId, fcId);
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
-      policyId,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+        getRulesEngineComponentContract(rulesEngineContract, client),
+      policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
   });
@@ -221,22 +220,21 @@ describe("Rules Engine Interactions", async () => {
                 "parameterTypes": "address",
                 "encodedIndices": "0"
             }`;
-    var fcId = await setForeignCall(
+    var fcId = await createForeignCall(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
-      0,
       fcSyntax,
-      getRulesEngineComponentContract(rulesEngineContract, client)
     );
-    var fcRetrieve = await getForeignCall(policyId, fcId, getRulesEngineComponentContract(rulesEngineContract, client));
+    var fcRetrieve = await getForeignCall(getRulesEngineComponentContract(rulesEngineContract, client), policyId, fcId);
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
-      policyId,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
-    var ret = await deleteForeignCall(policyId, fcId, getRulesEngineComponentContract(rulesEngineContract, client));
+    var ret = await deleteForeignCall(getRulesEngineComponentContract(rulesEngineContract, client), policyId, fcId);
     expect(ret).toEqual(0);
-    fcAllRetrieve = await getAllForeignCalls(policyId, getRulesEngineComponentContract(rulesEngineContract, client));
+    fcAllRetrieve = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), policyId);
     expect(fcAllRetrieve?.length).toEqual(1);
     expect(fcAllRetrieve![0].set).toEqual(false);
   });
@@ -250,17 +248,16 @@ describe("Rules Engine Interactions", async () => {
             "parameterTypes": "address",
             "encodedIndices": "0"
         }`;
-    var fcId = await setForeignCall(
+    var fcId = await createForeignCall(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
-      0,
-      fcSyntax,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      fcSyntax
     );
-    var fcRetrieve = await getForeignCall(policyId, fcId, getRulesEngineComponentContract(rulesEngineContract, client));
+    var fcRetrieve = await getForeignCall(getRulesEngineComponentContract(rulesEngineContract, client), policyId, fcId);
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
-      policyId,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
     var updatedSyntax = `{
@@ -271,11 +268,11 @@ describe("Rules Engine Interactions", async () => {
             "parameterTypes": "address, string, uint256",
             "encodedIndices": "0, 1, 2"
         }`;
-    var updatedId = await setForeignCall(
+    var updatedId = await updateForeignCall(
+      getRulesEngineComponentContract(rulesEngineContract, client),
       policyId,
       fcId,
-      updatedSyntax,
-      getRulesEngineComponentContract(rulesEngineContract, client)
+      updatedSyntax
     );
     expect(updatedId).toEqual(fcId);
   });
@@ -408,12 +405,12 @@ describe("Rules Engine Interactions", async () => {
       policyJSON
     );
     expect(result).toBeGreaterThanOrEqual(0);
-    var resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client));
+    var resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result);
 
     while (true) {
       if (resultFC!.length < 1) {
         await sleep(1000);
-        resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client));
+        resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result);
       } else {
         break;
       }
@@ -490,8 +487,8 @@ describe("Rules Engine Interactions", async () => {
       expect(trAllRetrieve?.length).toEqual(1);
       expect(trAllRetrieve![0].set).toEqual(false);
       var fcAllRetrieve = await getAllForeignCalls(
-        result,
-        getRulesEngineComponentContract(rulesEngineContract, client)
+        getRulesEngineComponentContract(rulesEngineContract, client),
+        result
       );
       expect(fcAllRetrieve?.length).toEqual(1);
       expect(fcAllRetrieve![0].set).toEqual(false);

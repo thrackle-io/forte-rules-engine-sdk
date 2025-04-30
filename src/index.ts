@@ -22,14 +22,16 @@ export {
 } from './modules/Rules'
 
 export {
-    setForeignCall,
+    createForeignCall,
+    updateForeignCall,
     getAllForeignCalls,
     getForeignCall,
     deleteForeignCall
 } from './modules/ForeignCalls'
 
 export {
-    setTracker,
+    createTracker,
+    updateTracker,
     getAllTrackers,
     getTracker,
     deleteTracker

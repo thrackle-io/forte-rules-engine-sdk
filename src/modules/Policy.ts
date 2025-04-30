@@ -8,7 +8,7 @@ import {
 import { account, getConfig } from "../../config";
 import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./Parser";
 import { RulesEnginePolicyContract, RulesEngineComponentContract, FCNameToID, TrackerDefinition, PolicyJSON, hexToFunctionSignature } from "./types";
-import { setForeignCall, createNewRule, getAllForeignCalls, getAllTrackers } from "..";
+import { createForeignCall, createNewRule, getAllForeignCalls, getAllTrackers } from "..";
 import { sleep } from "./ContractInteractionUtils";
 import { createFunctionSignature } from "./FunctionSignatures";
 import { retrieveRule } from "./Rules";
@@ -88,7 +88,7 @@ export const createFullPolicy = async (rulesEnginePolicyContract: RulesEnginePol
     
     for(var foreignCall of policyJSON.ForeignCalls) {
         var fcStruct = parseForeignCallDefinition(foreignCall)
-        const fcId = await setForeignCall(policyId, 0, JSON.stringify(foreignCall), rulesEngineComponentContract)
+        const fcId = await createForeignCall(rulesEngineComponentContract, policyId, JSON.stringify(foreignCall))
         var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
         fcIds.push(struc)
     }
@@ -294,7 +294,7 @@ export const retrieveFullPolicy = async(policyId: number, functionSignatureMappi
         }
 
 
-        var foreignCalls: any[] | null = await getAllForeignCalls(policyId, rulesEngineComponentContract)
+        var foreignCalls: any[] | null = await getAllForeignCalls(rulesEngineComponentContract, policyId)
         var callStrings: string[] = []
         convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
 
