@@ -216,13 +216,13 @@ export const applyPolicy = async(policyId: number, contractAddressForPolicy: Add
  * @returns `0` if successful, `-1` if an error occurs.
  */
 export const deletePolicy = async(policyId: number,  
-    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+    rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<number> => {
 
     var addFC
     try {
         addFC = await simulateContract(config, {
-            address: rulesEngineComponentContract.address,
-            abi: rulesEngineComponentContract.abi,
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
             functionName: "deletePolicy",
             args: [ policyId ],
         })
