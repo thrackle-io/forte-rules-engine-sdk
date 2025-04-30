@@ -39,7 +39,7 @@ jobs:
         npm install --no-optional
     - name: Run Anvil
       run: |
-        anvil -p 8545 --load-state diamondDeployedAnvilState.json &
+        anvil -p 8545 --load-state tests/diamondDeployedAnvilState.json &
         sleep 3
     - name: Run Tests
       run: npm run test
