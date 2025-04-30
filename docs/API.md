@@ -4,10 +4,10 @@ An example application that integrates the Rules SDK can be found at [SDK Integr
 
 In order to Integrate the SDK with your project you'll need to place both in the same parent directory (this requirement will be removed once the SDK has been setup as a NPM package).
 
-In your project you'll want to import the SDK calls you intend to use from 'forte-rules-sdk/src/index'. For example if you intended to use the createFullPolicy and retrieveFullPolicy SDK calls to create a policy and verify that the policy created on chain matches what you submitted you'd use the following import statement (you'll also likely want to the getRulesEngineContract helper function):
+In your project you'll want to import the SDK calls you intend to use from 'forte-rules-sdk/src/index'. For example if you intended to use the createFullPolicy and getPolicy SDK calls to create a policy and verify that the policy created on chain matches what you submitted you'd use the following import statement (you'll also likely want to the getRulesEngineContract helper function):
 
 ```c
-import { getRulesEngineContract, createFullPolicy, retrieveFullPolicy } from "../../forte-rules-engine-sdk/src/index"
+import { getRulesEngineContract, createPolicy, getPolicy } from "../../forte-rules-engine-sdk/src/index"
 ```
 
 ## Available API Calls
@@ -27,7 +27,7 @@ This utility call is used to retrieve a RulesEngineContract object representing 
 
 The RulesEngineContract object representing the Rules Engine instance the SDK will be communicating with.
 
-### createBlankPolicy
+### createPolicy
 
 #### Overview
 
@@ -58,7 +58,7 @@ Retrieve the Rules Struct for a specific rule
 
 The Rule struct for the requested rule.
 
-### retrieveFullPolicy
+### getPolicy
 
 #### Overview
 
@@ -74,7 +74,7 @@ Retrieves the JSON representation of a policy
 
 The JSON (string) representation of the requested policy
 
-### createFullPolicy
+### createPolicy
 
 #### Overview
 

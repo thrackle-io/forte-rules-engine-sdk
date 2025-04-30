@@ -7,9 +7,8 @@ export {
 } from './modules/ContractInteractionUtils';
 
 export {
-    createBlankPolicy,
-    createFullPolicy,
-    retrieveFullPolicy,
+    createPolicy,
+    getPolicy,
     deletePolicy
 } from './modules/Policy'
 

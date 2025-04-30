@@ -11,12 +11,12 @@ import {
   getForeignCall,
   getAllForeignCalls,
   getAllTrackers,
-  createFullPolicy,
-  retrieveFullPolicy,
+  createPolicy,
+  getPolicy,
 } from "../src";
 import { deleteForeignCall, updateForeignCall } from "../src/modules/ForeignCalls";
 import { createFunctionSignature } from "../src/modules/FunctionSignatures";
-import { createBlankPolicy, updatePolicy, deletePolicy } from "../src/modules/Policy";
+import { createPolicy, updatePolicy, deletePolicy } from "../src/modules/Policy";
 import { getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
 import { createTracker, updateTracker, getTracker, deleteTracker } from "../src/modules/Trackers";
 import { sleep } from "../src/modules/ContractInteractionUtils";
@@ -53,7 +53,7 @@ describe("Rules Engine Interactions", async () => {
   });
 
   test("Can create a new rule", async () => {
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
@@ -90,7 +90,7 @@ describe("Rules Engine Interactions", async () => {
     expect(rules?.length).toEqual(1);
   });
   test("Can update an existing rule", async () => {
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
@@ -146,7 +146,7 @@ describe("Rules Engine Interactions", async () => {
     expect(updatedRuleId).toEqual(ruleId);
   });
   test("Can delete a rule", async () => {
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
@@ -188,7 +188,7 @@ describe("Rules Engine Interactions", async () => {
     expect(rules![0][0].instructionSet.length).toEqual(0);
   });
   test("Can create a new foreign call", async () => {
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     var fcSyntax = `{
         "name": "Simple Foreign Call",
         "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
@@ -211,7 +211,7 @@ describe("Rules Engine Interactions", async () => {
     expect(fcAllRetrieve?.length).toEqual(1);
   });
   test("Can delete a foreign call", async () => {
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     var fcSyntax = `{
                 "name": "Simple Foreign Call",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
@@ -239,7 +239,7 @@ describe("Rules Engine Interactions", async () => {
     expect(fcAllRetrieve![0].set).toEqual(false);
   });
   test("Can update an existing foreign call", async () => {
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     var fcSyntax = `{
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
@@ -282,7 +282,7 @@ describe("Rules Engine Interactions", async () => {
             "type": "uint256",
             "defaultValue": "4"
         }`;
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     expect(policyId).toBeGreaterThan(0);
     var trId = await createTracker(getRulesEngineComponentContract(rulesEngineContract, client), policyId, trSyntax);
     var trAllRetrieve = await getAllTrackers(getRulesEngineComponentContract(rulesEngineContract, client), policyId);
@@ -304,7 +304,7 @@ describe("Rules Engine Interactions", async () => {
         "type": "uint256",
         "defaultValue": "4"
         }`;
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     expect(policyId).toBeGreaterThan(0);
     var trId = await createTracker(getRulesEngineComponentContract(rulesEngineContract, client), policyId, trSyntax);
     var trAllRetrieve = await getAllTrackers(getRulesEngineComponentContract(rulesEngineContract, client), policyId);
@@ -337,7 +337,7 @@ describe("Rules Engine Interactions", async () => {
         "type": "uint256",
         "defaultValue": "4"
         }`;
-    var policyId = await createBlankPolicy("open", getRulesEnginePolicyContract(rulesEngineContract, client));
+    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     expect(policyId).toBeGreaterThan(0);
     var trId = await createTracker(getRulesEngineComponentContract(rulesEngineContract, client), policyId, trSyntax);
     var trAllRetrieve = await getAllTrackers(getRulesEngineComponentContract(rulesEngineContract, client), policyId);
@@ -399,11 +399,8 @@ describe("Rules Engine Interactions", async () => {
             }
         ]
         }`;
-    var result = await createFullPolicy(
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      policyJSON
-    );
+    var result = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), 
+        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
     expect(result).toBeGreaterThanOrEqual(0);
     var resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result);
 
@@ -419,19 +416,9 @@ describe("Rules Engine Interactions", async () => {
     expect(resultFC?.length).toEqual(1);
     var resultTR = await getAllTrackers(getRulesEngineComponentContract(rulesEngineContract, client), result);
     expect(resultTR?.length).toEqual(1);
-    var retVal = await retrieveFullPolicy(
-      result,
-      [
-        {
-          hex: "0xa9059cbb",
-          functionSignature: "transfer(address to, uint256 value)",
-          encodedValues: "address to, uint256 value",
-        },
-        { hex: "0x71308757", functionSignature: "testSig(address)", encodedValues: "" },
-      ],
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      getRulesEngineComponentContract(rulesEngineContract, client)
-    );
+    var retVal = await getPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)", encodedValues: "address to, uint256 value"}, 
+        {hex: '0x71308757', functionSignature: "testSig(address)", encodedValues: ""}
+    ])
     expect(retVal).toEqual(
       '{"Trackers":["Tracker 1 --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["Foreign Call 1 --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"RulesJSON":[{"condition":"value > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"functionSignature":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}'
     );
@@ -470,15 +457,13 @@ describe("Rules Engine Interactions", async () => {
             }
         ]
         }`;
-      var result = await createFullPolicy(
-        getRulesEnginePolicyContract(rulesEngineContract, client),
-        getRulesEngineComponentContract(rulesEngineContract, client),
-        policyJSON
-      );
+      var result = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), 
+        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
+        expect(result).toBeGreaterThanOrEqual(0)
       expect(result).toBeGreaterThanOrEqual(0);
       await sleep(4000);
 
-      await deletePolicy(result, getRulesEnginePolicyContract(rulesEngineContract, client));
+      await deletePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), result);
       await sleep(4000);
       var rules = await getAllRules(result, getRulesEnginePolicyContract(rulesEngineContract, client));
       expect(rules?.length).toEqual(1);

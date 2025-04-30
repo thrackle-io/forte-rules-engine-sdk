@@ -23,13 +23,9 @@
 import { Address, getContract } from "viem"
 import { FCNameToID, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types"
 import { getConfig } from "../../config"
-import { 
-    createBlankPolicy, 
-    createFullPolicy, 
-    updatePolicy as updatePolicyInternal, 
+import {createPolicy, updatePolicy as updatePolicyInternal, 
     applyPolicy as applyPolicyInternal,
-    deletePolicy as deletePolicyInternal,
-    retrieveFullPolicy
+    deletePolicy as deletePolicyInternal
  } from "./Policy"
 
 import {
@@ -91,11 +87,7 @@ export const initializeRulesEngineConnection = async(address: Address, client: a
  * @returns The ID of the newly created policy.
  */
 export const createPolicy = async (policyJSON: string): Promise<number> => {
-    if(policyJSON.length > 0) {
-        return createFullPolicy(rulesEnginePolicyContract, rulesEngineComponentContract, policyJSON)
-    } else {
-        return createBlankPolicy("open", rulesEnginePolicyContract)
-    }
+    return createPolicy(rulesEnginePolicyContract, rulesEngineComponentContract, policyJSON)
 }
 
 /**
