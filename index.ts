@@ -4,13 +4,13 @@
 export {
     getRulesEnginePolicyContract, 
     getRulesEngineComponentContract,
-} from './modules/ContractInteractionUtils';
+} from './src/modules/ContractInteractionUtils';
 
 export {
     createPolicy,
     getPolicy,
     deletePolicy
-} from './modules/Policy'
+} from './src/modules/Policy'
 
 export {
     createNewRule,
@@ -18,7 +18,7 @@ export {
     getAllRules,
     retrieveRule,
     deleteRule
-} from './modules/Rules'
+} from './src/modules/Rules'
 
 export {
     createForeignCall,
@@ -26,7 +26,7 @@ export {
     getAllForeignCalls,
     getForeignCall,
     deleteForeignCall
-} from './modules/ForeignCalls'
+} from './src/modules/ForeignCalls'
 
 export {
     createTracker,
@@ -34,10 +34,8 @@ export {
     getAllTrackers,
     getTracker,
     deleteTracker
-} from './modules/Trackers'
+} from './src/modules/Trackers'
 
 export {
     createFunctionSignature
-} from './modules/FunctionSignatures'
-
-export const VERSION = '0.1.0';
+} from './src/modules/FunctionSignatures'
