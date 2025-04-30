@@ -1,0 +1,88 @@
+import { toFunctionSelector } from "viem"
+import {
+    simulateContract,
+    writeContract, 
+    readContract
+} from "@wagmi/core";
+import { account, getConfig } from "../../config"
+import { sleep } from "./ContractInteractionUtils"
+import { parseFunctionArguments } from "./Parser"
+import { RulesEngineComponentContract } from "./types"
+
+/**
+ * @file FunctionSignatures.ts
+ * @description This module provides a comprehensive set of functions for interacting with the Function Signatures within the Rules Engine smart contracts.
+ *              It includes functionality for creating, updating, retrieving, and deleting function signatures.
+ * 
+ * @module ContractInteraction
+ * 
+ * @dependencies
+ * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
+ * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
+ * - `config`: Provides configuration for interacting with the blockchain.
+ * 
+ * 
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * 
+ * @license UNLICENSED
+ * 
+ * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
+ */
+
+const config = getConfig()
+
+/**
+ * Creates a function signature in the rules engine component contract.
+ *
+ * This function parses the provided function signature, maps its arguments to their respective
+ * types, and interacts with the smart contract to create the function signature. If the contract
+ * interaction fails, it retries with a delay until successful.
+ *
+ * @param policyId - The ID of the policy for which the function signature is being created.
+ * @param functionSignature - The function signature string to be parsed and added to the contract.
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI
+ *                                        of the rules engine component.
+ * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const createFunctionSignature = async (policyId: number, functionSignature: string, 
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+        var argsRaw = parseFunctionArguments(functionSignature)
+        var args = []
+        for(var arg of argsRaw) {
+            if(arg.rawType == "uint256") {
+                args.push(2)
+            } else if(arg.rawType == "string") {
+                args.push(1)
+            } else if(arg.rawType == "address") {
+                args.push(0)
+            }
+        }
+
+        var addRule
+    while(true) {
+        try {
+            addRule = await simulateContract(config, {
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
+                functionName: "createFunctionSignature",
+                args: [ policyId, toFunctionSelector(functionSignature), args ],
+            });
+            break
+        } catch (err) {
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
+        }
+    }
+    if(addRule != null) {
+        await writeContract(config, {
+            ...addRule.request,
+            account
+        });
+
+        return addRule.result;
+    }
+    return -1 
+}

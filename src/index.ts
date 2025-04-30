@@ -1,16 +1,42 @@
 /// SPDX-License-Identifier: BUSL-1.1
 // index.ts
 
-export { createNewRule, 
+export {
     getRulesEnginePolicyContract, 
     getRulesEngineComponentContract,
-    setForeignCall, 
-    getForeignCall, 
-    getAllForeignCalls,
+} from './modules/ContractInteractionUtils';
+
+export {
+    createBlankPolicy,
     createFullPolicy,
-    sleep,
+    retrieveFullPolicy,
+    deletePolicy
+} from './modules/Policy'
+
+export {
+    createNewRule,
+    updateRule,
+    getAllRules,
+    retrieveRule,
+    deleteRule
+} from './modules/Rules'
+
+export {
+    setForeignCall,
+    getAllForeignCalls,
+    getForeignCall,
+    deleteForeignCall
+} from './modules/ForeignCalls'
+
+export {
+    setTracker,
     getAllTrackers,
-    retrieveFullPolicy 
-} from './modules/ContractInteraction';
+    getTracker,
+    deleteTracker
+} from './modules/Trackers'
+
+export {
+    createFunctionSignature
+} from './modules/FunctionSignatures'
 
 export const VERSION = '0.1.0';

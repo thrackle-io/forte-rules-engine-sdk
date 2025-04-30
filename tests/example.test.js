@@ -1,9 +1,9 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from 'vitest'
-import { parseRuleSyntax, parseForeignCallDefinition, parseTrackerSyntax, EffectType, stringReplacement, 
+import { parseRuleSyntax, parseForeignCallDefinition, parseTrackerSyntax,stringReplacement, 
   buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/modules/Parser.ts';
+import { EffectType, pTypeEnum } from '../src/modules/types.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes, toHex, encodeAbiParameters, parseAbiParameters } from 'viem';
-import { pTypeEnum } from '../src/modules/Parser.ts';
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**

@@ -1,0 +1,244 @@
+import { hexToString } from "viem";
+import {
+    simulateContract,
+    writeContract, 
+    readContract
+} from "@wagmi/core";
+
+import { account, getConfig } from "../../config";
+import { buildAnEffectStruct, buildARuleStruct, sleep } from "./ContractInteractionUtils";
+import { RulesEnginePolicyContract, FCNameToID, ruleJSON, RulesEngineComponentContract, RuleStruct, RuleStorageSet } from "./types";
+
+/**
+ * @file Rules.ts
+ * @description This module provides a comprehensive set of functions for interacting with the Rules within the Rules Engine smart contracts.
+ *              It includes functionality for creating, updating, retrieving, and deleting rules.
+ * 
+ * @module ContractInteraction
+ * 
+ * @dependencies
+ * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
+ * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
+ * - `config`: Provides configuration for interacting with the blockchain.
+ * 
+ * 
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * 
+ * @license UNLICENSED
+ * 
+ * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
+ */
+
+const config = getConfig()
+
+/**
+ * Asynchronously creates a new rule in the rules engine policy contract.
+ *
+ * @param policyId - The ID of the policy to which the rule belongs.
+ * @param ruleS - A JSON string representing the rule to be created.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the rules engine policy.
+ * @param foreignCallNameToID - An array mapping foreign call names to their corresponding IDs.
+ * @param outputFileName - The name of the output file where the rule modifier will be generated.
+ * @param contractToModify - The contract to be modified with the generated rule modifier.
+ * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
+ * @returns A promise that resolves to the result of the rule creation operation. Returns the rule ID if successful, or -1 if the operation fails.
+ *
+ * @throws Will log errors to the console if the contract simulation fails and retry the operation after a delay.
+ *
+ * @remarks
+ * - The function parses the rule JSON string to build the rule and effect structures.
+ * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
+ * - If the rule creation is successful, it writes the contract, generates a rule modifier, and optionally injects the modifier into the specified contract.
+ */
+export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+    foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
+
+    let ruleSyntax: ruleJSON = JSON.parse(ruleS);
+    let effectSyntax: ruleJSON = JSON.parse(ruleS)
+    var effects = buildAnEffectStruct(effectSyntax, trackerNameToID)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
+
+    var addRule
+    while(true) {
+        try {
+            addRule = await simulateContract(config, {
+                address: rulesEnginePolicyContract.address,
+                abi: rulesEnginePolicyContract.abi,
+                functionName: "createRule",
+                args: [ policyId, rule ],
+            });
+            break
+        } catch (err) {
+            console.log(err)
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
+        }
+    }
+    if(addRule != null) {
+        await writeContract(config, {
+            ...addRule.request,
+            account
+        });
+        
+        return addRule.result;
+    } 
+    return -1
+}
+
+/**
+ * Updates an existing rule in the Rules Engine Policy Contract.
+ *
+ * @param policyId - The ID of the policy to which the rule belongs.
+ * @param ruleId - The ID of the rule to be updated.
+ * @param ruleS - A JSON string representing the rule's structure and logic.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param foreignCallNameToID - A mapping of foreign call names to their corresponding IDs.
+ * @param trackerNameToID - A mapping of tracker names to their corresponding IDs.
+ * @returns A promise that resolves to the result of the rule update operation. Returns the result ID if successful, or -1 if the operation fails.
+ *
+ * @throws Will retry indefinitely if the contract simulation fails, with a 1-second delay between retries.
+ */
+export const updateRule = async (policyId: number, ruleId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+    foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
+    let ruleSyntax: ruleJSON = JSON.parse(ruleS);
+    var effects = buildAnEffectStruct(ruleSyntax, trackerNameToID)
+    var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
+    var addRule
+    while(true) {
+        try {
+            addRule = await simulateContract(config, {
+                address: rulesEnginePolicyContract.address,
+                abi: rulesEnginePolicyContract.abi,
+                functionName: "updateRule",
+                args: [ policyId, ruleId, rule ],
+            });
+            break
+        } catch (err) {
+            // TODO: Look into replacing this loop/sleep with setTimeout
+            await sleep(1000)
+        }
+    }
+    if(addRule != null) {
+        await writeContract(config, {
+            ...addRule.request,
+            account
+        });
+
+        return addRule.result;
+    } 
+    return -1
+}
+
+/**
+ * Deletes a rule from the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy to which the rule belongs.
+ * @param ruleId - The ID of the rule to be deleted.
+ * @param rulesEngineComponentContract - The contract instance containing the rules engine component.
+ * @returns A promise that resolves to a number:
+ *          - `0` if the rule was successfully deleted.
+ *          - `-1` if an error occurred during the deletion process.
+ *
+ * @throws This function does not throw errors directly but returns `-1` in case of an exception.
+ */
+export const deleteRule = async(policyId: number, ruleId: number,  
+    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+
+    var addFC
+    try {
+        addFC = await simulateContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "deleteRule",
+            args: [ policyId, ruleId ],
+        })
+    } catch (err) {
+        return -1
+    }
+
+    if(addFC != null) {
+        await writeContract(config, {
+            ...addFC.request,
+            account
+        });
+    }
+    
+    return 0
+}
+
+/**
+ * Retrieves a specific rule from the Rules Engine.
+ * 
+ * @param policyId - The ID of the policy containing the rule.
+ * @param ruleId - The ID of the rule to retrieve.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @returns The retrieved rule as a `RuleStruct`, or `null` if retrieval fails.
+ */
+export const retrieveRule = async(policyId: number, ruleId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<RuleStruct | null> => {
+    
+    try {
+        const retrieveRule = await simulateContract(config, {
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
+            functionName: "getRule",
+            args: [ policyId, ruleId],
+        });
+
+        await writeContract(config, {
+            ...retrieveRule.request,
+            account
+        });
+
+        let ruleResult = retrieveRule.result as RuleStorageSet
+        let ruleS = ruleResult.rule as RuleStruct
+
+
+        for(var posEffect of ruleS.posEffects) {
+            posEffect.text = hexToString(posEffect.text).replace(/\u0000/g, "")
+        }
+
+        for(var negEffect of ruleS.negEffects) {
+            negEffect.text = hexToString(negEffect.text).replace(/\u0000/g, "")
+        }
+
+        return ruleS
+
+    } catch (error) {
+        console.error(error);
+            return null;
+    } 
+}
+
+/**
+ * Retrieves all rules associated with a specific policy ID from the Rules Engine Policy Contract.
+ *
+ * @param policyId - The unique identifier of the policy for which rules are to be retrieved.
+ * @param rulesEnginePolicyContract - An object representing the Rules Engine Policy Contract, 
+ * including its address and ABI (Application Binary Interface).
+ * @returns A promise that resolves to an array of rules if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const getAllRules = async(policyId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<any[] | null> => {
+    try {
+        const retrieveTR = await simulateContract(config, {
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
+            functionName: "getAllRules",
+            args: [ policyId],
+        });
+    
+
+        await readContract(config, {
+            ...retrieveTR.request,
+            account
+        });
+
+        let trackerResult = retrieveTR.result
+        return trackerResult;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
