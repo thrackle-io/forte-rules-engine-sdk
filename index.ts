@@ -1,6 +1,9 @@
 /// SPDX-License-Identifier: BUSL-1.1
 // index.ts
 
+export { RulesEngine } from './src/modules/RulesEngine';
+export { IRulesEngine } from './src/IRulesEngine';
+
 export {
     getRulesEnginePolicyContract, 
     getRulesEngineComponentContract,

@@ -31,10 +31,10 @@ import {createPolicy as createPolicyInternal,
  } from "./Policy"
 
 import {
-    createNewRule as createNewRuleInternal,
+    createRule as createRuleInternal,
     updateRule as updateRuleInternal,
     deleteRule as deleteRuleInternal,
-    retrieveRule as retrieveRuleInternal,
+    getRule as getRuleInternal,
     getAllRules as getAllRulesInternal
 } from "./Rules"
 
@@ -163,7 +163,7 @@ export const getPolicy = async(policyId: number, functionSignatureMappings: hexT
  */
 export const createNewRule = async (policyId: number, ruleS: string,  
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
-        return createNewRuleInternal(policyId, ruleS, rulesEnginePolicyContract, foreignCallNameToID, trackerNameToID)
+        return createRuleInternal(rulesEnginePolicyContract, policyId, ruleS, foreignCallNameToID, trackerNameToID)
 }
 
 /**
@@ -180,7 +180,7 @@ export const createNewRule = async (policyId: number, ruleS: string,
  */
 export const updateRule = async (policyId: number, ruleId: number, ruleS: string, 
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
-    return updateRuleInternal(policyId, ruleId, ruleS, rulesEnginePolicyContract, 
+    return updateRuleInternal(rulesEnginePolicyContract, policyId, ruleId, ruleS, 
         foreignCallNameToID, trackerNameToID)
 }
 
@@ -196,7 +196,7 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
  * @throws This function does not throw errors directly but returns `-1` in case of an exception.
  */
 export const deleteRule = async(policyId: number, ruleId: number): Promise<number> => {
-        return deleteRuleInternal(policyId, ruleId, rulesEngineComponentContract)
+        return deleteRuleInternal(rulesEnginePolicyContract, policyId, ruleId)
 }
 
 /**
@@ -207,7 +207,7 @@ export const deleteRule = async(policyId: number, ruleId: number): Promise<numbe
  * @returns The retrieved rule as a `RuleStruct`, or `null` if retrieval fails.
  */
 export const retrieveRule = async(policyId: number, ruleId: number): Promise<RuleStruct | null> => {
-    return retrieveRuleInternal(policyId, ruleId, rulesEnginePolicyContract)
+    return getRuleInternal(rulesEnginePolicyContract, policyId, ruleId)
 }
 
 /**
@@ -219,7 +219,7 @@ export const retrieveRule = async(policyId: number, ruleId: number): Promise<Rul
  * @throws Will log an error to the console if the operation fails.
  */
 export const getAllRules = async(policyId: number): Promise<any[] | null> => {
-    return getAllRulesInternal(policyId, rulesEnginePolicyContract)
+    return getAllRulesInternal(rulesEnginePolicyContract, policyId)
 }
 
 /**

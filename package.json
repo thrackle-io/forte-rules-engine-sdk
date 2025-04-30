@@ -13,7 +13,7 @@
   },
   "version": "0.0.2-rc.1",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "generate": "ts-node src/codeGeneration/codeModificationScript.ts",
     "test": "vitest"
