@@ -40,7 +40,6 @@ const config = getConfig();
 export const createTracker = async (
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
-  trackerId: number,
   trSyntax: string
 ): Promise<number> => {
   var json: trackerJSON = JSON.parse(trSyntax);
