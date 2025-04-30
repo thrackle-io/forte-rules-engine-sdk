@@ -13,10 +13,10 @@ export {
 } from './src/modules/Policy'
 
 export {
-    createNewRule,
+    createRule,
     updateRule,
     getAllRules,
-    retrieveRule,
+    getRule,
     deleteRule
 } from './src/modules/Rules'
 

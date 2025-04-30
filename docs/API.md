@@ -223,7 +223,7 @@ Retrieves all of the trackers for a policy.
 
 Array of Tracker structures for all trackers associated with the policy
 
-### createNewRule
+### createRule
 
 #### Overview
 

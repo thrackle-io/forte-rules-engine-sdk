@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { hexToString } from "viem";
 import {
     simulateContract,
@@ -51,7 +52,7 @@ const config = getConfig()
  * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
  * - If the rule creation is successful, it writes the contract, generates a rule modifier, and optionally injects the modifier into the specified contract.
  */
-export const createNewRule = async (policyId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+export const createRule = async (rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleS: string, 
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
 
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
@@ -99,7 +100,7 @@ export const createNewRule = async (policyId: number, ruleS: string, rulesEngine
  *
  * @throws Will retry indefinitely if the contract simulation fails, with a 1-second delay between retries.
  */
-export const updateRule = async (policyId: number, ruleId: number, ruleS: string, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+export const updateRule = async (rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number, ruleS: string, 
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     var effects = buildAnEffectStruct(ruleSyntax, trackerNameToID)
@@ -142,8 +143,8 @@ export const updateRule = async (policyId: number, ruleId: number, ruleS: string
  *
  * @throws This function does not throw errors directly but returns `-1` in case of an exception.
  */
-export const deleteRule = async(policyId: number, ruleId: number,  
-    rulesEngineComponentContract: RulesEngineComponentContract): Promise<number> => {
+export const deleteRule = async(rulesEngineComponentContract: RulesEngineComponentContract, 
+        policyId: number, ruleId: number): Promise<number> => {
 
     var addFC
     try {
@@ -175,10 +176,10 @@ export const deleteRule = async(policyId: number, ruleId: number,
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @returns The retrieved rule as a `RuleStruct`, or `null` if retrieval fails.
  */
-export const retrieveRule = async(policyId: number, ruleId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<RuleStruct | null> => {
+export const getRule = async(rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number): Promise<RuleStruct | null> => {
     
     try {
-        const retrieveRule = await simulateContract(config, {
+        const getRuleule = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
             abi: rulesEnginePolicyContract.abi,
             functionName: "getRule",
@@ -186,11 +187,11 @@ export const retrieveRule = async(policyId: number, ruleId: number, rulesEngineP
         });
 
         await writeContract(config, {
-            ...retrieveRule.request,
+            ...getRuleule.request,
             account
         });
 
-        let ruleResult = retrieveRule.result as RuleStorageSet
+        let ruleResult = getRuleule.result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct
 
 
@@ -220,7 +221,7 @@ export const retrieveRule = async(policyId: number, ruleId: number, rulesEngineP
  *
  * @throws Will log an error to the console if the operation fails.
  */
-export const getAllRules = async(policyId: number, rulesEnginePolicyContract: RulesEnginePolicyContract): Promise<any[] | null> => {
+export const getAllRules = async(rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number): Promise<any[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,

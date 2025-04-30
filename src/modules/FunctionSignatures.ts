@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { toFunctionSelector } from "viem"
 import {
     simulateContract,
@@ -77,6 +78,42 @@ export const createFunctionSignature = async (rulesEngineComponentContract: Rule
             await sleep(1000)
         }
     }
+    if(addRule != null) {
+        await writeContract(config, {
+            ...addRule.request,
+            account
+        });
+
+        return addRule.result;
+    }
+    return -1 
+    }   
+
+/**
+ * Delete a function signature from the rules engine component contract.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI
+ * @param policyId - The ID of the policy for which the function signature is being created.
+ * @param functionSignatureId - The function signature ID to be deleted.
+ * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const deleteFunctionSignature = async (rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number, functionSignatureId: number
+    ): Promise<number> => {
+    var addRule
+    try {
+        addRule = await simulateContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "deleteFunctionSignature",
+            args: [ policyId, functionSignatureId ],
+        });
+    } catch (err) {
+        return -1
+    }
+
     if(addRule != null) {
         await writeContract(config, {
             ...addRule.request,

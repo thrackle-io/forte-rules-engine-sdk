@@ -5,9 +5,9 @@ import { expect, test, describe, beforeAll, beforeEach } from "vitest";
 import { getConfig, account, DiamondAddress, connectConfig } from "../config";
 import { getRulesEnginePolicyContract, getRulesEngineComponentContract } from "../src/modules/ContractInteractionUtils";
 import { createForeignCall, deleteForeignCall, updateForeignCall, getForeignCall, getAllForeignCalls } from "../src/modules/ForeignCalls";
-import { createFunctionSignature } from "../src/modules/FunctionSignatures";
+import { createFunctionSignature, deleteFunctionSignature } from "../src/modules/FunctionSignatures";
 import { createPolicy, updatePolicy, deletePolicy, getPolicy } from "../src/modules/Policy";
-import { createNewRule, getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
+import { createRule, getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
 import { createTracker, updateTracker, getTracker, getAllTrackers, deleteTracker } from "../src/modules/Trackers";
 import { sleep } from "../src/modules/ContractInteractionUtils";
 
@@ -50,136 +50,101 @@ describe("Rules Engine Interactions", async () => {
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
-        }`;
-    var ruleId = await createNewRule(
-      policyId,
-      ruleStringA,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      [
-        { id: 1, name: "testCall", type: 0 },
-        { id: 2, name: "testCallTwo", type: 0 },
-      ],
-      []
-    );
-    expect(ruleId).toBeGreaterThan(0);
-    var functionSignature = "addValue(uint256 value)";
-    const fsId = await createFunctionSignature(
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      policyId,
-      functionSignature
-    );
-    var selector = toFunctionSelector(functionSignature);
-    await updatePolicy(
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      policyId,
-      [selector],
-      [fsId],
-      [[ruleId]]
-    );
-    var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client));
-    expect(rules?.length).toEqual(1);
-  });
-  test("Can update an existing rule", async () => {
-    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-    var ruleStringA = `{
+        }`
+        var ruleId = await createRule(getRulesEnginePolicyContract(rulesEngineContract, client), 
+            policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
+        expect(ruleId).toBeGreaterThan(0)
+        var functionSignature = "addValue(uint256 value)"
+        const fsId = await createFunctionSignature(getRulesEngineComponentContract(rulesEngineContract, client), policyId, functionSignature,)
+        var selector = toFunctionSelector(functionSignature)        
+        await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+        [selector], [fsId], [[ruleId]])
+        var rules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), policyId)
+        expect(rules?.length).toEqual(1)
+    })
+    test("Can delete a function signature", async () => {
+        var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+        var ruleStringA = `{
+            "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
+            "positiveEffects": ["revert"],
+            "negativeEffects": [],
+            "functionSignature": "addValue(uint256 value)",
+            "encodedValues": "uint256 value"
+            }`
+            var ruleId = await createRule(getRulesEnginePolicyContract(rulesEngineContract, client), 
+                policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
+            expect(ruleId).toBeGreaterThan(0)
+            var functionSignature = "addValue(uint256 value)"
+            const fsId = await createFunctionSignature(getRulesEngineComponentContract(rulesEngineContract, client), policyId, functionSignature)
+            var selector = toFunctionSelector(functionSignature)        
+            await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+            [selector], [fsId], [[ruleId]])
+            var rules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), policyId)
+            expect(rules?.length).toEqual(1)
+            await deleteFunctionSignature(getRulesEngineComponentContract(rulesEngineContract, client), policyId, fsId)
+            var newRules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), policyId)
+            expect(newRules?.length).toEqual(0)
+            
+        })
+    test('Can update an existing rule', async () => {
+        var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+        var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
-        }`;
-    var ruleId = await createNewRule(
-      policyId,
-      ruleStringA,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      [
-        { id: 1, name: "testCall", type: 0 },
-        { id: 2, name: "testCallTwo", type: 0 },
-      ],
-      []
-    );
-    expect(ruleId).toBeGreaterThan(0);
-    var functionSignature = "addValue(uint256 value)";
-    const fsId = await createFunctionSignature(
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      policyId,
-      functionSignature
-    );
-    var selector = toFunctionSelector(functionSignature);
-    await updatePolicy(
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      policyId,
-      [selector],
-      [fsId],
-      [[ruleId]]
-    );
-    var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client));
-    expect(rules?.length).toEqual(1);
-    var ruleStringB = `{
+        }`
+        var ruleId = await createRule(getRulesEnginePolicyContract(rulesEngineContract, client), 
+            policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
+        expect(ruleId).toBeGreaterThan(0)
+        var functionSignature = "addValue(uint256 value)"
+        const fsId = await createFunctionSignature(getRulesEngineComponentContract(rulesEngineContract, client), policyId, functionSignature)
+        var selector = toFunctionSelector(functionSignature)        
+        await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+        [selector], [fsId], [[ruleId]])
+        var rules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), policyId)
+        expect(rules?.length).toEqual(1)
+        var ruleStringB = `{
         "condition": "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2)",
         "positiveEffects": ["FC:testCallTwo(value)"],
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
-        }`;
-    var updatedRuleId = await updateRule(
-      policyId,
-      ruleId,
-      ruleStringB,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      [
-        { id: 1, name: "testCall", type: 0 },
-        { id: 2, name: "testCallTwo", type: 0 },
-      ],
-      []
-    );
-    expect(updatedRuleId).toEqual(ruleId);
-  });
-  test("Can delete a rule", async () => {
-    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-    var ruleStringA = `{
+        }`
+        var updatedRuleId = await updateRule(getRulesEnginePolicyContract(rulesEngineContract, client),
+        policyId, ruleId, ruleStringB, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
+        expect(updatedRuleId).toEqual(ruleId)
+    })
+    test('Can delete a rule', async () => {
+        var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+        var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
-        }`;
-    var ruleId = await createNewRule(
-      policyId,
-      ruleStringA,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      [
-        { id: 1, name: "testCall", type: 0 },
-        { id: 2, name: "testCallTwo", type: 0 },
-      ],
-      []
-    );
-    expect(ruleId).toBeGreaterThan(0);
-    var functionSignature = "addValue(uint256 value)";
-    const fsId = await createFunctionSignature(
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      policyId,
-      functionSignature
-    );
-    var selector = toFunctionSelector(functionSignature);
-    await updatePolicy(
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      policyId,
-      [selector],
-      [fsId],
-      [[ruleId]]
-    );
-
-    var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client));
-    expect(rules?.length).toEqual(1);
-    await deleteRule(policyId, ruleId, getRulesEnginePolicyContract(rulesEngineContract, client));
-    var rules = await getAllRules(policyId, getRulesEnginePolicyContract(rulesEngineContract, client));
-    expect(rules?.length).toEqual(1);
-    expect(rules![0][0].instructionSet.length).toEqual(0);
-  });
-  test("Can create a new foreign call", async () => {
-    var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-    var fcSyntax = `{
+        }`
+        var ruleId = await createRule(getRulesEnginePolicyContract(rulesEngineContract, client), 
+            policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
+        expect(ruleId).toBeGreaterThan(0)
+        var functionSignature = "addValue(uint256 value)"
+        const fsId = await createFunctionSignature(getRulesEngineComponentContract(rulesEngineContract, client), policyId, functionSignature)
+        var selector = toFunctionSelector(functionSignature)        
+        await updatePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, 
+        [selector], [fsId], [[ruleId]])
+        
+        var rules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), policyId)
+        expect(rules?.length).toEqual(1)
+        await deleteRule(getRulesEnginePolicyContract(rulesEngineContract, client), policyId, ruleId)
+        var rules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), policyId)
+        expect(rules?.length).toEqual(1)
+        expect(rules![0][0].instructionSet.length).toEqual(0)
+    })
+    test('Can create a new foreign call', async() => {
+        var policyId = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+        var fcSyntax =  
+        `{
         "name": "Simple Foreign Call",
         "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "signature": "testSig(address,string,uint256)",
@@ -450,24 +415,18 @@ describe("Rules Engine Interactions", async () => {
       var result = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), 
         getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
         expect(result).toBeGreaterThanOrEqual(0)
-      expect(result).toBeGreaterThanOrEqual(0);
-      await sleep(4000);
-
-      await deletePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), result);
-      await sleep(4000);
-      var rules = await getAllRules(result, getRulesEnginePolicyContract(rulesEngineContract, client));
-      expect(rules?.length).toEqual(1);
-      expect(rules![0].length).toEqual(0);
-      var trAllRetrieve = await getAllTrackers(getRulesEngineComponentContract(rulesEngineContract, client), result);
-      expect(trAllRetrieve?.length).toEqual(1);
-      expect(trAllRetrieve![0].set).toEqual(false);
-      var fcAllRetrieve = await getAllForeignCalls(
-        getRulesEngineComponentContract(rulesEngineContract, client),
-        result
-      );
-      expect(fcAllRetrieve?.length).toEqual(1);
-      expect(fcAllRetrieve![0].set).toEqual(false);
-    },
-    { timeout: 15000 }
-  );
-});
+        await sleep(4000)
+        
+        await deletePolicy(getRulesEnginePolicyContract(rulesEngineContract, client), result)
+        await sleep(4000)
+        var rules = await getAllRules(getRulesEnginePolicyContract(rulesEngineContract, client), result)
+        expect(rules?.length).toEqual(1)
+        expect(rules![0].length).toEqual(0)
+        var trAllRetrieve = await getAllTrackers(getRulesEngineComponentContract(rulesEngineContract, client), result)
+        expect(trAllRetrieve?.length).toEqual(1)
+        expect(trAllRetrieve![0].set).toEqual(false)
+        var fcAllRetrieve = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result)
+        expect(fcAllRetrieve?.length).toEqual(1)
+        expect(fcAllRetrieve![0].set).toEqual(false)
+    }, {timeout: 15000})
+})

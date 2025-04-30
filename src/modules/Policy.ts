@@ -9,11 +9,11 @@ import { account, getConfig } from "../../config";
 import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./Parser";
 import { RulesEnginePolicyContract, RulesEngineComponentContract, FCNameToID, TrackerDefinition, PolicyJSON, hexToFunctionSignature } from "./types";
 import { createForeignCall,getAllForeignCalls} from "./ForeignCalls"
-import {createNewRule } from "./Rules"
+import {createRule } from "./Rules"
 import { getAllTrackers } from "./Trackers";
 import { sleep } from "./ContractInteractionUtils";
 import { createFunctionSignature } from "./FunctionSignatures";
-import { retrieveRule } from "./Rules";
+import { getRule } from "./Rules";
 import { createTracker } from "./Trackers";
 
 /**
@@ -97,7 +97,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
                 functionSignatureIds.push(fsId)
             }
             
-            const ruleId = await createNewRule(policyId, JSON.stringify(rule), rulesEnginePolicyContract, fcIds, trackerIds)
+            const ruleId = await createRule(rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
             ruleIds.push(ruleId)
             if(ruleToFunctionSignature.has(functionSignature)) {
                 ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
@@ -269,7 +269,7 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
                 }
             }
             for (var ruleId of innerArray) {
-                var ruleS = await retrieveRule(policyId, ruleId, rulesEnginePolicyContract)
+                var ruleS = await getRule(rulesEnginePolicyContract, policyId, ruleId)
                 var plhArray: string[] = []
                 if(ruleS != null) {
                     ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray))
