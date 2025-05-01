@@ -71,7 +71,7 @@ export function generateModifier(ruleS: string, outputFileName: string) {
 
         modifierNameStr = modifierNameStr.replace('[]', argList.trim())
         modifierNameAfterStr = modifierNameAfterStr.replace('[]', argList.trim())
-        var encodeStr = '\t\tbytes memory encoded = abi.encodeWithSelector(msg.sig,[], msg.sender);\n'
+        var encodeStr = '\t\tbytes memory encoded = abi.encodeWithSelector(msg.sig,[]);\n'
         encodeStr = encodeStr.replace('[]', argListUpdate)
         var thirdLine = '\t\t_invokeRulesEngine(encoded);\n'
         var fourthLine = '\t\t_;\n'
