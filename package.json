@@ -30,12 +30,13 @@
     "viem": "^2.21.51"
   },
   "files": [
-    "src",
     "README.md",
     "LICENSE",
     "package.json",
     "config.ts",
-    "tsconfig.json"
+    "tsconfig.json",
+    "index.js",
+    "src"
   ],
   "repository": {
     "type": "git",

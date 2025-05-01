@@ -5,7 +5,9 @@ import { foundry } from 'viem/chains'
 import { getConfig, connectConfig } from '../config'
 import * as fs from 'fs';
 import * as path from 'path';
-import { createFullPolicy, getAllForeignCalls, getAllTrackers, retrieveFullPolicy } from '.';
+import { createPolicy, getPolicy } from '../src/modules/Policy';
+import { getAllForeignCalls} from '../src/modules/ForeignCalls';
+import { getAllTrackers } from '../src/modules/Trackers';
 import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } from './modules/ContractInteractionUtils';
 /**
  * @file demo.ts
@@ -46,7 +48,7 @@ import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } 
  * 
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  * 
- * @license UNLICENSED
+ * @license BUSL-1.1
  * 
  * @note This file is intended for demonstration and testing purposes only. It is not suitable for production use.
  */
@@ -80,7 +82,7 @@ const account = privateKeyToAccount(
  * 
  * @remarks
  * - The function assumes the existence of helper functions such as `connectConfig`, 
- *   `createFullPolicy`, `getAllForeignCalls`, `getAllTrackers`, and `retrieveFullPolicy`.
+ *   `createPolicy`, `getAllForeignCalls`, `getAllTrackers`, and `getPolicy`.
  * - It also relies on utility functions like `getRulesEnginePolicyContract` and 
  *   `getRulesEngineComponentContract` for interacting with the rules engine contracts.
  * - The function includes a polling mechanism to wait for foreign calls to be available.
@@ -96,23 +98,23 @@ const account = privateKeyToAccount(
 
     const absolutePath = path.resolve("src/demo.json")
     const policyJSON = await fs.promises.readFile(absolutePath, 'utf-8');
-    var result = await createFullPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),
+    var result = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),
     policyJSON)
-    var resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
+    var resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result)
 
     while(true) {
         if(resultFC!.length < 1) {
             await sleep(1000)
-            resultFC = await getAllForeignCalls(result, getRulesEngineComponentContract(rulesEngineContract, client))
+            resultFC = await getAllForeignCalls(getRulesEngineComponentContract(rulesEngineContract, client), result)
         } else {
             break
         }
     }
 
-    var resultTR = await getAllTrackers(result, getRulesEngineComponentContract(rulesEngineContract, client))
-    var retVal = await retrieveFullPolicy(result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)", encodedValues: "address to, uint256 value"}, 
+    var resultTR = await getAllTrackers( getRulesEngineComponentContract(rulesEngineContract, client), result)
+    var retVal = await getPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)", encodedValues: "address to, uint256 value"}, 
         {hex: '0x71308757', functionSignature: "testSig(address)", encodedValues: ""}
-    ],getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
+    ])
 
     console.log("Foreign Call Count: ", resultFC?.length)
     console.log("Tracker Count: ", resultTR?.length)

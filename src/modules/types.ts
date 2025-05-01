@@ -1,3 +1,4 @@
+
 import { 
     Address,
     ByteArray,
@@ -6,6 +7,23 @@ import {
 
 import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
 import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet.json";
+
+/**
+ * @file types.ts
+ * @description This module provides the comprehensive set types that are used throughout the SDK
+ * 
+ * @module types
+ * 
+ * @dependencies
+ * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
+ * 
+ * 
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * 
+ * @license BUSL-1.1
+ * 
+ * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
+ */
 
 export const RulesEnginePolicyABI = RulesEnginePolicyLogicArtifact.abi;
 export const RulesEngineComponentABI = RulesEngineComponentLogicArtifact.abi;
