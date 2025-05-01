@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/thrackle-io/forte-rules-engine-sdk/issues"
   },
-  "version": "0.0.2-rc.1",
+  "version": "0.0.2-rc.2",
   "description": "",
   "main": "index.js",
   "scripts": {
