@@ -5,60 +5,25 @@ export {
     initializeRulesEngineConnection,
     createPolicy,
     getPolicy,
+    updatePolicy,
     deletePolicy,
+    applyPolicy,
     createRule,
-    updateRule,
-    getAllRules,
     getRule,
+    getAllRules,
+    updateRule,
     deleteRule,
-    createForeignCall,
-    updateForeignCall,
-    getAllForeignCalls,
-    getForeignCall,
-    deleteForeignCall,
+    createFunctionSignature,
+    deleteFunctionSignature,
     createTracker,
-    updateTracker,
-    getAllTrackers,
     getTracker,
+    getAllTrackers,
+    updateTracker,
     deleteTracker,
-    createFunctionSignature
+    createForeignCall,
+    getForeignCall,
+    getAllForeignCalls,
+    updateForeignCall,
+    deleteForeignCall,
 } from './src/modules/RulesEngineInteractions';
 
-// export {
-//     getRulesEnginePolicyContract, 
-//     getRulesEngineComponentContract,
-// } from './src/modules/ContractInteractionUtils';
-
-// export {
-//     createPolicy,
-//     getPolicy,
-//     deletePolicy
-// } from './src/modules/Policy'
-
-// export {
-//     createRule,
-//     updateRule,
-//     getAllRules,
-//     getRule,
-//     deleteRule
-// } from './src/modules/Rules'
-
-// export {
-//     createForeignCall,
-//     updateForeignCall,
-//     getAllForeignCalls,
-//     getForeignCall,
-//     deleteForeignCall
-// } from './src/modules/ForeignCalls'
-
-// export {
-//     createTracker,
-//     updateTracker,
-//     getAllTrackers,
-//     getTracker,
-//     deleteTracker
-// } from './src/modules/Trackers'
-
-// export {
-//     createFunctionSignature
-// } from './src/modules/FunctionSignatures'

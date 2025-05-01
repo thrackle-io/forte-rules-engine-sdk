@@ -55,7 +55,8 @@ import {
 } from "./Trackers"
     
 import {
-    createFunctionSignature as createFunctionSignatureInternal
+    createFunctionSignature as createFunctionSignatureInternal,
+    deleteFunctionSignature as deleteFunctionSignatureInternal
 } from "./FunctionSignatures"
 
 const config = getConfig()
@@ -422,4 +423,17 @@ export const getAllTrackers = async (
  */
 export const createFunctionSignature = async (policyId: number, functionSignature: string): Promise<number> => {
     return createFunctionSignatureInternal(rulesEngineComponentContract, policyId, functionSignature, )
+}
+
+/**
+ * Delete a function signature from the rules engine component contract.
+ *
+ * @param policyId - The ID of the policy for which the function signature is being created.
+ * @param functionSignatureId - The function signature ID to be deleted.
+ * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const deleteFunctionSignature = async (policyId: number, functionSignatureId: number): Promise<number> => {
+    return deleteFunctionSignatureInternal(rulesEngineComponentContract, policyId, functionSignatureId);
 }
