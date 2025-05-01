@@ -96,19 +96,28 @@ export async function sleep(ms: number): Promise<void> {
  */
 export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
     var fcList = buildForeignCallList(ruleSyntax.condition)
-    for(var eff of ruleSyntax.positiveEffects) {
-        fcList.push(...buildForeignCallList(eff))
+    if(ruleSyntax.positiveEffects != null) {
+        for(var eff of ruleSyntax.positiveEffects) {
+            fcList.push(...buildForeignCallList(eff))
+        }
     }
-    for(var eff of ruleSyntax.negativeEffects) {
-        fcList.push(...buildForeignCallList(eff))
+    if(ruleSyntax.negativeEffects != null) {
+        for(var eff of ruleSyntax.negativeEffects) {
+            fcList.push(...buildForeignCallList(eff))
+        }
     }
+    
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
     var trList = buildTrackerList(ruleSyntax.condition)
-    for(var eff of ruleSyntax.positiveEffects) {
-        trList.push(...buildTrackerList(eff))
+    if(ruleSyntax.positiveEffects != null) {
+        for(var eff of ruleSyntax.positiveEffects) {
+            trList.push(...buildTrackerList(eff))
+        }
     }
-    for(var eff of ruleSyntax.negativeEffects) {
-        trList.push(...buildTrackerList(eff))
+    if(ruleSyntax.negativeEffects != null) {
+        for(var eff of ruleSyntax.negativeEffects) {
+            trList.push(...buildTrackerList(eff))
+        }
     }
     var fcIDs = []
     var trIDs = []
@@ -139,6 +148,7 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
         }
     }
 
+
     iter = 0
     tIter = 0
 
@@ -154,11 +164,15 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
     }
 
     var fcEffectList: string[] = []
-    for(var eff of ruleSyntax.positiveEffects) {
-        fcEffectList.concat(buildForeignCallList(eff))
+    if(ruleSyntax.positiveEffects != null) {
+        for(var eff of ruleSyntax.positiveEffects) {
+            fcEffectList.concat(buildForeignCallList(eff))
+        }
     }
-    for(var eff of ruleSyntax.negativeEffects) {
-        fcEffectList.concat(buildForeignCallList(eff))
+    if(ruleSyntax.negativeEffects != null) {
+        for(var eff of ruleSyntax.negativeEffects) {
+            fcEffectList.concat(buildForeignCallList(eff))
+        }
     }
 
     var fcEffectIDs = []

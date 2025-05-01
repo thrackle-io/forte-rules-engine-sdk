@@ -71,14 +71,18 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
-    for(var effectP of syntax.positiveEffects) {
-        let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
-        positiveEffectsFinal.push(effect)
+    if (syntax.positiveEffects != null) {
+        for(var effectP of syntax.positiveEffects) {
+            let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
+            positiveEffectsFinal.push(effect)
 
+        }
     }
-    for(var effectN of syntax.negativeEffects) {
-        let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
-        negativeEffectsFinal.push(effect)
+    if (syntax.negativeEffects != null) {
+        for(var effectN of syntax.negativeEffects) {
+            let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
+            negativeEffectsFinal.push(effect)
+        }
     }
     var placeHolders: PlaceholderStruct[] = []
     var retVal = interpretToInstructionSet(condition, names, indexMap, placeHolders)
