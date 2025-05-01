@@ -7,7 +7,9 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["diff"],
+    "types": [
+      "diff"
+    ],
     "typeRoots": [
       "node_modules/@types"
     ],

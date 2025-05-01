@@ -161,7 +161,7 @@ export const getPolicy = async(policyId: number, functionSignatureMappings: hexT
  * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
  * - If the rule creation is successful, it writes the contract, generates a rule modifier, and optionally injects the modifier into the specified contract.
  */
-export const createNewRule = async (policyId: number, ruleS: string,  
+export const createRule = async (policyId: number, ruleS: string,  
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
         return createRuleInternal(rulesEnginePolicyContract, policyId, ruleS, foreignCallNameToID, trackerNameToID)
 }
@@ -206,7 +206,7 @@ export const deleteRule = async(policyId: number, ruleId: number): Promise<numbe
  * @param ruleId - The ID of the rule to retrieve.
  * @returns The retrieved rule as a `RuleStruct`, or `null` if retrieval fails.
  */
-export const retrieveRule = async(policyId: number, ruleId: number): Promise<RuleStruct | null> => {
+export const getRule = async(policyId: number, ruleId: number): Promise<RuleStruct | null> => {
     return getRuleInternal(rulesEnginePolicyContract, policyId, ruleId)
 }
 

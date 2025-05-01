@@ -4,7 +4,7 @@
  *              It includes functionality for creating, updating, retrieving, and deleting policies, rules, foreign calls, 
  *              trackers and function signatures.
  * 
- * @module ContractInteraction
+ * @module RulesEngine
  * 
  * @dependencies
  * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
@@ -61,7 +61,7 @@ import {
 
 const config = getConfig()
 
-export class RulesEngine implements IRulesEngine {
+export class RulesEngine {
     private rulesEnginePolicyContract: RulesEnginePolicyContract
     private rulesEngineComponentContract: RulesEngineComponentContract
 
