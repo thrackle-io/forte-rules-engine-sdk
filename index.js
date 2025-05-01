@@ -9,3 +9,11 @@ export {
     getConfig,
     connectConfig
 } from './config.ts'
+
+export {
+    generateModifier
+} from './generateModifier.ts'
+
+export {
+    injectModifier
+} from './injectModifier.ts'

@@ -74,21 +74,24 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
 
     if (policySyntax !== undefined){
         let policyJSON: PolicyJSON = JSON.parse(policySyntax);
-        for(var foreignCall of policyJSON.ForeignCalls) {
-            var fcStruct = parseForeignCallDefinition(foreignCall)
-            const fcId = await createForeignCall(rulesEngineComponentContract, policyId, JSON.stringify(foreignCall))
-            var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
-            fcIds.push(struc)
+        if (policyJSON.ForeignCalls != null) {
+            for(var foreignCall of policyJSON.ForeignCalls) {
+                var fcStruct = parseForeignCallDefinition(foreignCall)
+                const fcId = await createForeignCall(rulesEngineComponentContract, policyId, JSON.stringify(foreignCall))
+                var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
+                fcIds.push(struc)
+            }
         }
-    
-        for(var tracker of policyJSON.Trackers) {
-            var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
-            const trId = await createTracker(rulesEngineComponentContract, policyId, JSON.stringify(tracker) )
-            var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
-            trackerIds.push(struc)
-            trackers.push(trackerStruct)
+        if (policyJSON.Trackers != null) {
+            for(var tracker of policyJSON.Trackers) {
+                var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
+                const trId = await createTracker(rulesEngineComponentContract, policyId, JSON.stringify(tracker) )
+                var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
+                trackerIds.push(struc)
+                trackers.push(trackerStruct)
+            }
         }
-    
+       
         for(var rule of policyJSON.RulesJSON) {
             var functionSignature = rule.functionSignature.trim()
             if(!functionSignatures.includes(functionSignature)) {
@@ -98,6 +101,9 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
             }
             
             const ruleId = await createRule(rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
+            if (ruleId == -1) {
+                return -1
+            }
             ruleIds.push(ruleId)
             if(ruleToFunctionSignature.has(functionSignature)) {
                 ruleToFunctionSignature.get(functionSignature)?.push(ruleId)

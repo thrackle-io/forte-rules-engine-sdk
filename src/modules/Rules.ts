@@ -57,6 +57,9 @@ export const createRule = async (rulesEnginePolicyContract: RulesEnginePolicyCon
 
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     let effectSyntax: ruleJSON = JSON.parse(ruleS)
+    if(!((effectSyntax.positiveEffects != null && effectSyntax.positiveEffects.length > 0) || (effectSyntax.negativeEffects != null && effectSyntax.negativeEffects.length > 0))) {
+        return -1 
+    } 
     var effects = buildAnEffectStruct(effectSyntax, trackerNameToID)
     var rule = buildARuleStruct(policyId, ruleSyntax, foreignCallNameToID, effects, trackerNameToID)
 
