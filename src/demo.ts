@@ -5,7 +5,9 @@ import { foundry } from 'viem/chains'
 import { getConfig, connectConfig } from '../config'
 import * as fs from 'fs';
 import * as path from 'path';
-import { createPolicy, getAllForeignCalls, getAllTrackers, getPolicy } from '..';
+import { createPolicy, getPolicy } from '../src/modules/Policy';
+import { getAllForeignCalls} from '../src/modules/ForeignCalls';
+import { getAllTrackers } from '../src/modules/Trackers';
 import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } from './modules/ContractInteractionUtils';
 /**
  * @file demo.ts

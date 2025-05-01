@@ -27,3 +27,11 @@ export {
     deleteForeignCall,
 } from './src/modules/RulesEngineInteractions';
 
+export {
+    RulesEngine
+} from './src/modules/RulesEngine'
+
+export {
+    getConfig,
+    connectConfig
+} from './config.ts'
