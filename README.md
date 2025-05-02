@@ -28,11 +28,11 @@ Forte’s work is aided and supported by our ecosystem partner, Thrackle, a team
 
 The primary license for Forte Protocol Rules Engine SDK is the Business Source License 1.1 (`BUSL-1.1`), see [`LICENSE`](./LICENSE). However, some files are dual licensed under `GPL-2.0-or-later`:
 
-- All files in `src/example/` may also be licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`src/example/LICENSE`](./src/example/LICENSE)
+- All files in `src/example/` may also be licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`LICENSE`](./LICENSE)
 
 ### Other Exceptions
 
-- All files in `src/example/` may also be licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [src/example/LICENSE](src/example/LICENSE)
+- All files in `src/example/` may also be licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`LICENSE`](./LICENSE)
 
 [version-image]: https://img.shields.io/badge/Version-0.0.1-brightgreen?style=for-the-badge&logo=appveyor
 [version-url]: https://github.com/thrackle-io/forte-rules-engine-sdk
