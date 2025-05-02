@@ -244,18 +244,13 @@ export const deletePolicy = async(rulesEnginePolicyContract: RulesEnginePolicyCo
  * @returns A JSON string representing the full policy.
  */
 export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
+    policyId: number, functionSignatureMappings?: hexToFunctionSignature[]): Promise<string> => {
     try {
         const retrievePolicy = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
             abi: rulesEnginePolicyContract.abi,
             functionName: "getPolicy",
             args: [ policyId],
-        });
-
-        await writeContract(config, {
-            ...retrievePolicy.request,
-            account
         });
 
         let policyResult = retrievePolicy.result
