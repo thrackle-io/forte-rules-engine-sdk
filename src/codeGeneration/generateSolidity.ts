@@ -5,7 +5,7 @@ import {
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ruleJSON } from '../modules/types';
+import { PolicyJSON, ruleJSON } from '../modules/types';
 /**
  * @file generateSolidity.ts
  * @description This file contains functionality for dynamically generating Solidity modifiers based on rule definitions.
@@ -48,40 +48,72 @@ import { ruleJSON } from '../modules/types';
  * template file at the placeholder `// Modifier Here`. The modified Solidity code is written 
  * to the specified output file.
  * 
- * @param ruleS - A JSON string representing the rule data. It must include an `encodedValues` 
+ * @param policyS - A JSON string representing the policy data. It must include an `encodedValues` 
  *                property containing the argument list for the modifiers.
  * @param outputFileName - The path to the output file where the modified Solidity code will be written.
  * 
  * @throws Will throw an error if the input JSON string is invalid or if file operations fail.
  */
-export function generateModifier(ruleS: string, outputFileName: string) { 
-    let syntax: ruleJSON = JSON.parse(ruleS);
-        var absPath = path.join(__dirname, "Template.sol")
-        const filePathOutput = outputFileName
+export function generateModifier(policyS: string, outputFileName: string) { 
+    var functionNames: String[] = []
+    let policySyntax: PolicyJSON = JSON.parse(policyS);
+    
+    var iter = 0
+    var count = 0
+    var countArray: string[] = []
+    for(var rule of policySyntax.RulesJSON) {
+        if(!countArray.includes(rule.functionSignature)) {
+            count += 1
+            countArray.push(rule.functionSignature)
+        }
+    }
+    var absPath = path.join(__dirname, "Template.sol")
+    var overallModifiedData = fs.readFileSync(absPath, 'utf-8')
+    
+    if (!fs.existsSync(path.dirname(outputFileName))) {
+        fs.mkdirSync(path.dirname(outputFileName), { recursive: true });
+    }
+    const filePathOutput = outputFileName
+    for(var syntax of policySyntax.RulesJSON) {
+
         var argList = syntax.encodedValues
-        
-        var modifierNameStr = 'modifier checkRulesBefore([]) {\n'
-        var modifierNameAfterStr = '\tmodifier checkRulesAfter([]) {\n'
+        var signatureName = syntax.functionSignature.split('(')[0]
+        if(functionNames.includes(signatureName)) {
+            continue
+        } else {
+            functionNames.push(signatureName)
+            var modifierNameStr = 'modifier checkRulesBefore' + signatureName + '([]) {\n'
+            var modifierNameAfterStr = '\tmodifier checkRulesAfter' + signatureName + '([]) {\n'
 
-        var argListUpdate = argList.replace(/address /g , '')
-        argListUpdate = argListUpdate.replace(/uint256 /g, '')
-        argListUpdate = argListUpdate.replace(/string /g, '')
-        argListUpdate = argListUpdate.replace(/bool /g, '')
-        argListUpdate = argListUpdate.replace(/bytes /g, '')
+            var argListUpdate = argList.replace(/address /g , '')
+            argListUpdate = argListUpdate.replace(/uint256 /g, '')
+            argListUpdate = argListUpdate.replace(/string /g, '')
+            argListUpdate = argListUpdate.replace(/bool /g, '')
+            argListUpdate = argListUpdate.replace(/bytes /g, '')
 
-        modifierNameStr = modifierNameStr.replace('[]', argList.trim())
-        modifierNameAfterStr = modifierNameAfterStr.replace('[]', argList.trim())
-        var encodeStr = '\t\tbytes memory encoded = abi.encodeWithSelector(msg.sig,[]);\n'
-        encodeStr = encodeStr.replace('[]', argListUpdate)
-        var thirdLine = '\t\t_invokeRulesEngine(encoded);\n'
-        var fourthLine = '\t\t_;\n'
-        var finalLine = '\t}'
-        var outputString = modifierNameStr + encodeStr + thirdLine + fourthLine + finalLine
-        var outputStringTwo = modifierNameAfterStr + encodeStr + fourthLine + thirdLine + finalLine
-        var replaceStr = outputString + '\n\n' + outputStringTwo
-        var data = fs.readFileSync(absPath, 'utf-8')
-        var modifiedData = data.replace('// Modifier Here', replaceStr);
-        
+            modifierNameStr = modifierNameStr.replace('[]', argList.trim())
+            modifierNameAfterStr = modifierNameAfterStr.replace('[]', argList.trim())
+            var encodeStr = '\t\tbytes memory encoded = abi.encodeWithSelector(msg.sig,[]);\n'
+            encodeStr = encodeStr.replace('[]', argListUpdate)
+            var thirdLine = '\t\t_invokeRulesEngine(encoded);\n'
+            var fourthLine = '\t\t_;\n'
+            var finalLine = '\t}'
+            var outputString = modifierNameStr + encodeStr + thirdLine + fourthLine + finalLine
+            var outputStringTwo = modifierNameAfterStr + encodeStr + fourthLine + thirdLine + finalLine
+            var replaceStr = outputString + '\n\n' + outputStringTwo
+            
+            
+            iter += 1
+            if(iter < count) {
+                replaceStr += '\n\n' 
+                replaceStr += '\t// Modifier Here'
+                replaceStr += '\n'
+            }
+             var modifiedData = overallModifiedData.replace('// Modifier Here', replaceStr);
+             overallModifiedData = modifiedData
+        }
+        }
         // Write the modified data back to the file
-        fs.writeFileSync(filePathOutput, modifiedData, 'utf-8');
+        fs.writeFileSync(filePathOutput, overallModifiedData, 'utf-8');
+    
 }
