@@ -1,3 +1,5 @@
+/// SPDX-License-Identifier: BUSL-1.1
+
 import { toFunctionSelector, Address } from "viem";
 
 import {

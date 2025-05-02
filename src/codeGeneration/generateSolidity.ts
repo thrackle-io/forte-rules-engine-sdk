@@ -33,7 +33,7 @@ import { PolicyJSON, ruleJSON } from '../modules/types';
  * 
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  * 
- * @license UNLICENSED
+ * @license BUSL-1.1
  * 
  * @note This file is a critical component of the Rules Engine SDK, enabling the dynamic generation of Solidity code
  *       for enforcing rules in smart contracts.

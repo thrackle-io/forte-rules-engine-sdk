@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import * as fs from 'fs';
 import * as path from 'path';
 import { generateModifier } from './generateSolidity';
@@ -165,4 +166,6 @@ if (require.main === module) {
     const filePaths = args.slice(2); // All remaining arguments are file paths
     
     policyModifierGeneration(configPath, outputFile, filePaths);
+
 }
+
