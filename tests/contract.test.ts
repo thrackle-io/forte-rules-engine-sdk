@@ -378,6 +378,13 @@ describe("Rules Engine Interactions", async () => {
       '{"Trackers":["Tracker 1 --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["Foreign Call 1 --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"RulesJSON":[{"condition":"value > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"functionSignature":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}'
     );
   });
+
+  test("Can get hex function signature mappings and apply them in getPolicy", async () => {
+    var policy = await getPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client), result, [{hex: "0xa9059cbb", functionSignature: "transfer(address to, uint256 value)", encodedValues: "address to, uint256 value"}, 
+        {hex: '0x71308757', functionSignature: "testSig(address)", encodedValues: ""}])
+    expect(policy).toEqual("Success")
+  });
+  
   test(
     "Can delete a full policy",
     async () => {
