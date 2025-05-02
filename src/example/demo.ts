@@ -2,13 +2,13 @@
 import { createTestClient, http, walletActions, publicActions, testActions, Address, decodeFunctionResult, toFunctionSelector, getAddress, stringToHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
-import { getConfig, connectConfig } from '../config'
+import { getConfig, connectConfig } from '../../config'
 import * as fs from 'fs';
 import * as path from 'path';
-import { createPolicy, getPolicy } from './modules/policy';
-import { getAllForeignCalls} from './modules/foreign-calls';
-import { getAllTrackers } from './modules/trackers';
-import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } from './modules/contract-interaction-utils';
+import { createPolicy, getPolicy } from '../modules/policy';
+import { getAllForeignCalls} from '../modules/foreign-calls';
+import { getAllTrackers } from '../modules/trackers';
+import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } from '../modules/contract-interaction-utils';
 /**
  * @file demo.ts
  * @description This script demonstrates the integration and usage of the Rules Engine SDK by creating, applying, 

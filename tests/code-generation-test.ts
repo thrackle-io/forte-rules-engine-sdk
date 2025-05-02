@@ -42,7 +42,7 @@ test('Code Generation test)', () => {
     expect(fs.existsSync('src/testOutput/diff.diff')).toBeTruthy()
     expect(fs.existsSync('src/testOutput/testFileA.sol')).toBeTruthy()
 
-    fs.readFile('src/testOutput/UserContract.sol', 'utf-8', (err, data) => {
+    fs.readFile('tests/testOutput/UserContract.sol', 'utf-8', (err, data) => {
         if (err) {
             console.error('Error reading file:', err);
             return;
