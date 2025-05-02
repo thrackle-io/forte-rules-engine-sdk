@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 import { simulateContract, writeContract, readContract } from "@wagmi/core";
 import { account, getConfig } from "../../config";
 import { sleep } from "./ContractInteractionUtils";

@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: BUSL-1.1
 /**
  * @file RulesEngineInteraction.ts
  * @description This module provides a comprehensive set of functions for interacting with the Rules Engine smart contracts.
