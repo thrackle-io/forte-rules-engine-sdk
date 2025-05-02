@@ -12,8 +12,12 @@ export {
 
 export {
     generateModifier
-} from './generateModifier.ts'
+} from './src/codeGeneration/generateSolidity.ts'
 
 export {
     injectModifier
-} from './injectModifier.ts'
+} from './src/codeGeneration/injectModifier.ts'
+
+export {
+    policyModifierGeneration
+} from './src/codeGeneration/codeModificationScript.ts'

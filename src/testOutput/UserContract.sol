@@ -1,5 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
+import "src/testOutput/testFileA.sol";
 import "src/client/RulesEngineClientCustom.sol";
 import "src/client/RulesEngineClientCustom.sol";
 
@@ -20,7 +21,7 @@ contract ExampleUserContract is RulesEngineClientCustom is RulesEngineClientCust
      * @param somethingElse An additional parameter for custom logic (purpose not specified in the given code).
      * @return bool Returns true if the transfer is successful.
      */
-    function transfer(address to, uint256 value, uint256 somethingElse) checkRulesBefore(to, value, somethinElse) checkRulesBefore(to, value, somethinElse) public returns (bool) {
+    function transfer(address to, uint256 value, uint256 somethingElse)checkRulesBefore(to, value, somethinElse) checkRulesBefore(to, value, somethinElse) public returns (bool) checkRulesBeforetransfer(to, value, somethinElse){
         somethingElse;
         to;
         value;

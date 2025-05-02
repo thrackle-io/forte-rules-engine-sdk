@@ -62,7 +62,7 @@ import * as diff from 'diff';
  * @throws Will throw an error if the file at `userFilePath` cannot be read or written.
  * @throws Will throw an error if the provided function name or variables are invalid.
  */
-export function injectModifier(funcName: string, variables: string, userFilePath: string, diffPath: string) {
+export function injectModifier(funcName: string, variables: string, userFilePath: string, diffPath: string, modifierFile: string) {
     funcName = cleanString(funcName)
 
     //find pragma line and inject import statement after 
@@ -73,11 +73,12 @@ export function injectModifier(funcName: string, variables: string, userFilePath
     for (const match of matches) {
         const fullFcExpr = match[0];
         // Check if import already exists
-        if (!modifiedData.includes('import "src/client/RulesEngineClientCustom.sol"')) {
-            modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ';\nimport "src/client/RulesEngineClientCustom.sol"');
+        if (!modifiedData.includes('import "' + modifierFile + '"')) {
+            modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ';\nimport "' + modifierFile + '"');
         }
         break
     }  
+    if(matches)
 
     // Find and replace Contract Name Line with proper inheritance
     // Improved regex that specifically targets contract declarations
@@ -122,7 +123,7 @@ export function injectModifier(funcName: string, variables: string, userFilePath
         const fullMatch = match[0];
         
         // Check if our modifier is already present
-        if (!fullMatch.includes(`checkRulesBefore(${argListUpdate})`)) {
+        if (!fullMatch.includes(`checkRulesBefore` + funcName + `(${argListUpdate})`)) {
             // Find the position of the closing parenthesis
             const closingParenIndex = fullMatch.indexOf(')');
             if (closingParenIndex !== -1) {
@@ -132,8 +133,8 @@ export function injectModifier(funcName: string, variables: string, userFilePath
                 
                 // Add our modifier after any existing modifiers
                 const newModifiers = afterParen.trim() 
-                    ? `${afterParen.trim()} checkRulesBefore(${argListUpdate})`
-                    : ` checkRulesBefore(${argListUpdate})`;
+                    ? `${afterParen.trim()} checkRulesBefore` + funcName + `(${argListUpdate})`
+                    : ` checkRulesBefore` + funcName + `(${argListUpdate})`;
                 
                 // Replace the full match with our modified version
                 modifiedData = modifiedData.replace(fullMatch, `${beforeParen}${newModifiers}`);

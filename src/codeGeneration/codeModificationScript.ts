@@ -88,7 +88,7 @@ function fileContainsFunction(filePath: string, functionSignature: string): bool
  * @param configPath Path to the policy JSON configuration file
  * @param filePaths Array of Solidity file paths to process
  */
-export function processPolicy(configPath: string, filePaths: string[]): void {
+export function processPolicy(configPath: string, filePaths: [string], outputFile: string): void {
     // Validate Solidity files
     const validFiles = validateSolidityFiles(filePaths);
     if (validFiles.length === 0) {
@@ -110,19 +110,10 @@ export function processPolicy(configPath: string, filePaths: string[]): void {
     if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
     }
-    
+    generateModifier(configData, outputFile)
     // Process each rule
     policyConfig.RulesJSON.forEach((rule, index) => {
         const functionName = rule.functionSignature.split('(')[0].trim();
-        const tempModifierFile = path.join(tempDir, `${functionName}_Rule${index + 1}.sol`);
-        
-        // Convert the rule to a JSON string
-        const ruleString = JSON.stringify(rule);
-        
-        console.log(`Generating modifier for rule ${index + 1} (${functionName})`);
-        
-        // Generate the modifier (still needed for reference, but saved to temp location)
-        generateModifier(ruleString, tempModifierFile);
         
         // Find files that contain the function signature and inject the modifier
         let injectionCount = 0;
@@ -135,7 +126,8 @@ export function processPolicy(configPath: string, filePaths: string[]): void {
                     functionName,
                     rule.encodedValues,
                     filePath,
-                    'diff.diff' // Empty string means no diff file will be created
+                    'diff.diff', // Empty string means no diff file will be created
+                    outputFile
                 );
                 
                 injectionCount++;
