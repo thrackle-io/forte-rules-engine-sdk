@@ -11,9 +11,41 @@ export {
 } from './config.ts'
 
 export {
+    RulesEnginePolicyContract,
+    RulesEngineComponentContract,
+    FCNameToID,
+    RuleStorageSet,
+    hexToFunctionSignature,
+    PolicyJSON,
+    foreignCallJSON,
+    ruleJSON,
+    EffectType,
+    RuleStruct,
+    ForeignCallDefinition,
+    PlaceholderStruct,
+    IndividualArugmentMapping,
+    ForeignCallArgumentMappings,
+    FunctionArgument,
+    stringReplacement,
+    trackerIndexNameMapping,
+    TrackerDefinition,
+    RawData,
+    matchArray,
+    truMatchArray,
+    operandArray,
+    supportedTrackerTypes,
+    pTypeEnum,
+    PT
+} from './src/modules/types.ts'
+
+export {
     generateModifier
-} from './generateModifier.ts'
+} from './src/codeGeneration/generateSolidity.ts'
 
 export {
     injectModifier
-} from './injectModifier.ts'
+} from './src/codeGeneration/injectModifier.ts'
+
+export {
+    policyModifierGeneration
+} from './src/codeGeneration/codeModificationScript.ts'
