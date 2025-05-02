@@ -17,7 +17,7 @@ import {
     cleanInstructionSet,
     buildForeignCallList,
     buildTrackerList
-} from "./Parser"
+} from "./parser"
 
 
 import { FCNameToID, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract } from "./types";

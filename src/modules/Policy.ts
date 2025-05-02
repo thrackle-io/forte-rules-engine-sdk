@@ -8,15 +8,15 @@ import {
 } from "@wagmi/core";
 
 import { account, getConfig } from "../../config";
-import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./Parser";
+import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./parser";
 import { RulesEnginePolicyContract, RulesEngineComponentContract, FCNameToID, TrackerDefinition, PolicyJSON, hexToFunctionSignature } from "./types";
-import { createForeignCall,getAllForeignCalls} from "./ForeignCalls"
-import {createRule } from "./Rules"
-import { getAllTrackers } from "./Trackers";
-import { sleep } from "./ContractInteractionUtils";
-import { createFunctionSignature } from "./FunctionSignatures";
-import { getRule } from "./Rules";
-import { createTracker } from "./Trackers";
+import { createForeignCall,getAllForeignCalls} from "./foreign-calls"
+import {createRule } from "./rules"
+import { getAllTrackers } from "./trackers";
+import { sleep } from "./contract-interaction-utils";
+import { createFunctionSignature } from "./function-signatures";
+import { getRule } from "./rules";
+import { createTracker } from "./trackers";
 
 /**
  * @file Policy.ts

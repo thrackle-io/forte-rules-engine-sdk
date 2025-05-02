@@ -29,7 +29,7 @@ import {createPolicy as createPolicyInternal,
     applyPolicy as applyPolicyInternal,
     deletePolicy as deletePolicyInternal,
     getPolicy as getPolicyInternal
- } from "./Policy"
+ } from "./policy"
 
 import {
     createRule as createRuleInternal,
@@ -37,7 +37,7 @@ import {
     deleteRule as deleteRuleInternal,
     getRule as getRuleInternal,
     getAllRules as getAllRulesInternal
-} from "./Rules"
+} from "./rules"
 
 import {
     createForeignCall as createForeignCallInternal,
@@ -45,7 +45,7 @@ import {
     deleteForeignCall as deleteForeignCallInternal,
     getForeignCall as getForeignCallInternal,
     getAllForeignCalls as getAllForeignCallsInternal
-} from "./ForeignCalls"
+} from "./foreign-calls"
 
 import {
     createTracker as createTrackerInternal,
@@ -53,11 +53,11 @@ import {
     deleteTracker as deleteTrackerInternal,
     getTracker as getTrackerInternal,
     getAllTrackers as getAllTrackersInternal
-} from "./Trackers"
+} from "./trackers"
     
 import {
     createFunctionSignature as createFunctionSignatureInternal
-} from "./FunctionSignatures"
+} from "./function-signatures"
 
 const config = getConfig()
 

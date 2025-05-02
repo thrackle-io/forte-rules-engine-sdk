@@ -7,8 +7,8 @@ import {
     readContract
 } from "@wagmi/core";
 import { account, getConfig } from "../../config"
-import { sleep } from "./ContractInteractionUtils"
-import { parseForeignCallDefinition } from "./Parser"
+import { sleep } from "./contract-interaction-utils"
+import { parseForeignCallDefinition } from "./parser"
 import { RulesEngineComponentContract } from "./types"
 
 /**

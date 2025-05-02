@@ -1,8 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { simulateContract, writeContract, readContract } from "@wagmi/core";
 import { account, getConfig } from "../../config";
-import { sleep } from "./ContractInteractionUtils";
-import { parseTrackerSyntax } from "./Parser";
+import { sleep } from "./contract-interaction-utils";
+import { parseTrackerSyntax } from "./parser";
 import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./types";
 
 /**

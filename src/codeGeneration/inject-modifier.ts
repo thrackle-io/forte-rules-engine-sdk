@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { 
     cleanString
-} from '../modules/Parser';
+} from '../modules/parser';
 
 import * as fs from 'fs';
 import * as diff from 'diff';
