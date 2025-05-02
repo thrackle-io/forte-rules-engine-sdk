@@ -86,9 +86,10 @@ function fileContainsFunction(filePath: string, functionSignature: string): bool
 /**
  * Processes a policy configuration file and injects modifiers into matching Solidity files
  * @param configPath Path to the policy JSON configuration file
+ * @param outputFile The directory and name of the file to create for the modifiers
  * @param filePaths Array of Solidity file paths to process
  */
-export function processPolicy(configPath: string, filePaths: [string], outputFile: string): void {
+export function policyModifierGeneration(configPath: string, outputFile: string, filePaths: string[]): void {
     // Validate Solidity files
     const validFiles = validateSolidityFiles(filePaths);
     if (validFiles.length === 0) {
@@ -152,15 +153,16 @@ export function processPolicy(configPath: string, filePaths: [string], outputFil
  */
 if (require.main === module) {
     // Parse command line arguments
-    const args = process.argv.slice(2);
+    const args = process.argv.slice(3);
     
-    if (args.length < 2) {
-        console.error('Usage: node codeModificationScript.js <config-path> <file-path-1> [file-path-2] ...');
+    if (args.length < 3) {
+        console.error('Usage: node codeModificationScript.js <config-path> < > <file-path-1> [file-path-2] ...');
         process.exit(1);
     }
     
     const configPath = args[0];
-    const filePaths = args.slice(1); // All remaining arguments are file paths
+    const outputFile = args[1]
+    const filePaths = args.slice(2); // All remaining arguments are file paths
     
-    processPolicy(configPath, filePaths);
+    policyModifierGeneration(configPath, outputFile, filePaths);
 }
