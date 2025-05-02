@@ -78,7 +78,6 @@ export function injectModifier(funcName: string, variables: string, userFilePath
         }
         break
     }  
-    if(matches)
 
     // Find and replace Contract Name Line with proper inheritance
     // Improved regex that specifically targets contract declarations
@@ -114,33 +113,14 @@ export function injectModifier(funcName: string, variables: string, userFilePath
                                 .replace(/string /g, '')
                                 .replace(/bool /g, '')
                                 .replace(/bytes /g, '');
-    
-    // More precise regex to find the function declaration and its modifiers
-    const functionRegex = new RegExp(`${functionName + funcName}\\s*\\([^)]*\\)(\\s*[^{]*)?(?={)`, 'g');
-    const funcMatches = modifiedData.matchAll(functionRegex);
-    
+     
+    const regex = new RegExp(`${functionName + funcName}(.*?)\\) public|private|internal|external `, 'g');
+    const funcMatches = data.matchAll(regex);
+
     for (const match of funcMatches) {
-        const fullMatch = match[0];
-        
-        // Check if our modifier is already present
-        if (!fullMatch.includes(`checkRulesBefore` + funcName + `(${argListUpdate})`)) {
-            // Find the position of the closing parenthesis
-            const closingParenIndex = fullMatch.indexOf(')');
-            if (closingParenIndex !== -1) {
-                // Split the string at the closing parenthesis
-                const beforeParen = fullMatch.substring(0, closingParenIndex + 1);
-                const afterParen = fullMatch.substring(closingParenIndex + 1);
-                
-                // Add our modifier after any existing modifiers
-                const newModifiers = afterParen.trim() 
-                    ? `${afterParen.trim()} checkRulesBefore` + funcName + `(${argListUpdate})`
-                    : ` checkRulesBefore` + funcName + `(${argListUpdate})`;
-                
-                // Replace the full match with our modified version
-                modifiedData = modifiedData.replace(fullMatch, `${beforeParen}${newModifiers}`);
-            }
-        }
-        break;
+        const fullFcExpr = match[0];
+        modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ' checkRulesBefore' + funcName + '(' + argListUpdate + ')')
+        break
     }
     
     // Write the modified data back to the file
