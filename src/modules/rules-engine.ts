@@ -9,7 +9,7 @@
  * 
  * @dependencies
  * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
- * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
  * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
  * - `config`: Provides configuration for interacting with the blockchain.
  * 

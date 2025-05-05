@@ -10,7 +10,7 @@ import "src/testOutput/testFileA.sol";
  *              It provides a sample function that showcases how custom arguments can be sent to the Rules Engine.
  * 
  */
-contract ExampleUserContract {
+contract ExampleUserContract is RulesEngineClientCustom {
     /**
      * @notice Transfers a specified amount of tokens to a given address.
      * @dev This function allows transferring tokens to another address with an additional parameter.
@@ -19,7 +19,7 @@ contract ExampleUserContract {
      * @param somethingElse An additional parameter for custom logic (purpose not specified in the given code).
      * @return bool Returns true if the transfer is successful.
      */
-    function transfer(address to, uint256 value, uint256 somethingElse) public returns (bool) {
+    function transfer(address to, uint256 value, uint256 somethingElse) public checkRulesBeforetransfer(to, value, somethinElse) returns (bool) {
         somethingElse;
         to;
         value;

@@ -19,15 +19,15 @@ import { getRule } from "./rules";
 import { createTracker } from "./trackers";
 
 /**
- * @file Policy.ts
+ * @file policy.ts
  * @description This module provides a comprehensive set of functions for interacting with the Policies within the Rules Engine smart contracts.
  *              It includes functionality for creating, updating, retrieving, and deleting policies.
  * 
- * @module ContractInteraction
+ * @module policy
  * 
  * @dependencies
  * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
- * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
  * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
  * - `config`: Provides configuration for interacting with the blockchain.
  * 
