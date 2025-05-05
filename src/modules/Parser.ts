@@ -360,6 +360,33 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
                     memAddressesMap.push({memAddr: currentMemAddress, value: placeHolderArray[instruction]})
                     currentMemAddress += 1
                     break;
+                case 12:
+                    break
+                case 13:
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                        memAddressesMap, currentActionIndex, currentInstructionValues, " = ")
+                    if(currentActionIndex == 1) {
+                        currentMemAddress += 1
+                        currentInstructionValues = []
+                    }
+                    break;
+                    break
+                case 14:
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                        memAddressesMap, currentActionIndex, currentInstructionValues, " >= ")
+                    if(currentActionIndex == 1) {
+                        currentMemAddress += 1
+                        currentInstructionValues = []
+                    }
+                    break;
+                case 15:
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                        memAddressesMap, currentActionIndex, currentInstructionValues, " <= ")
+                    if(currentActionIndex == 1) {
+                        currentMemAddress += 1
+                        currentInstructionValues = []
+                    }
+                    break;
                 default:
                     console.log("unknown instruction");
                     break;
@@ -543,6 +570,10 @@ export function cleanInstructionSet(instructionSet: any[]) {
             instructionSet[iter] = 12
         } else if(val == "=") {
             instructionSet[iter] = 13
+        } else if(val == ">=") {
+            instructionSet[iter] = 14;
+        } else if(val == "<=") {
+            instructionSet[iter] = 15;
         }
 
         iter++

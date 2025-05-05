@@ -50,6 +50,96 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
+test('Evaluates a simple syntax string with >= (using only values and operators)', () => {
+  /**
+   * Original Syntax:
+   * 3 + 4 >= 5 AND (1 == 1 AND 2 == 2)
+   * 
+   * Abtract Tree Syntax:
+   * [AND,
+   *  [">=",
+   *      ["+", "3", "4"],
+   *      "5"]
+   *  [AND,
+   *      ["==", "1", "1"],
+   *      ["==", "2", "2"]
+   *  ]
+   * ]
+   * 
+   * Instruction Set Syntax:
+   * [ 'N', 3, 'N', 4, '+', 0,
+   *    1, 'N', 5, '>=', 2, 3,
+   *   'N', 1, 'N', 1, '==', 5,
+   *    6, 'N', 2, 'N', 2, '==',
+   *    8, 9, 'AND', 7, 10, 'AND',
+   *    4, 11 ]
+   */
+  var expectedArray = [
+    'PLH', 0n,   'PLH', 1n,     '+',  0n,
+    1n,     'N', 5n,     '>=',   2n,    3n,
+    'PLH', 1n,   'N',   1n,     '==', 5n,
+    6n,     'N', 2n,     'PLH', 1n,    '==',
+    8n,     9n,   'AND', 7n,     10n,   'AND',
+    4n,     11n
+  ]
+
+  var ruleStringA = `{
+  "condition": "value + sAND >= 5 AND (sAND == 1 AND 2 == sAND)",
+  "positiveEffects": ["revert"],
+  "negativeEffects": [],
+  "functionSignature": "addValue(uint256 value, uint256 sAND)",
+  "encodedValues": "uint256 value, uint256 sAND"
+  }`
+  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  console.log(retVal.instructionSet)
+  expect(retVal.instructionSet).toEqual(expectedArray)
+});
+
+test('Evaluates a simple syntax string with <= (using only values and operators)', () => {
+  /**
+   * Original Syntax:
+   * 3 + 4 <= 5 AND (1 == 1 AND 2 == 2)
+   * 
+   * Abtract Tree Syntax:
+   * [AND,
+   *  ["<=",
+   *      ["+", "3", "4"],
+   *      "5"]
+   *  [AND,
+   *      ["==", "1", "1"],
+   *      ["==", "2", "2"]
+   *  ]
+   * ]
+   * 
+   * Instruction Set Syntax:
+   * [ 'N', 3, 'N', 4, '+', 0,
+   *    1, 'N', 5, '<=', 2, 3,
+   *   'N', 1, 'N', 1, '==', 5,
+   *    6, 'N', 2, 'N', 2, '==',
+   *    8, 9, 'AND', 7, 10, 'AND',
+   *    4, 11 ]
+   */
+  var expectedArray = [
+    'PLH', 0n,   'PLH', 1n,     '+',  0n,
+    1n,     'N', 5n,     '<=',   2n,    3n,
+    'PLH', 1n,   'N',   1n,     '==', 5n,
+    6n,     'N', 2n,     'PLH', 1n,    '==',
+    8n,     9n,   'AND', 7n,     10n,   'AND',
+    4n,     11n
+  ]
+
+  var ruleStringA = `{
+  "condition": "value + sAND <= 5 AND (sAND == 1 AND 2 == sAND)",
+  "positiveEffects": ["revert"],
+  "negativeEffects": [],
+  "functionSignature": "addValue(uint256 value, uint256 sAND)",
+  "encodedValues": "uint256 value, uint256 sAND"
+  }`
+  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  console.log(retVal.instructionSet)
+  expect(retVal.instructionSet).toEqual(expectedArray)
+});
+
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using only values and operators" test', () => {
   let instructionSet = [
     'N', 3, 'N', 4, '+', 0,
