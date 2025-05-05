@@ -96,7 +96,7 @@ describe("Rules Engine Interactions", async () => {
         "encodedValues": "uint256 value"
         }`
         var ruleId = await createRule(getRulesEnginePolicyContract(rulesEngineContract, client), 
-            policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
+            policyId, ruleStringA, [],  [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}])
         expect(ruleId).toBeGreaterThan(0)
         var functionSignature = "addValue(uint256 value)"
         const fsId = await createFunctionSignature(getRulesEngineComponentContract(rulesEngineContract, client), policyId, functionSignature)

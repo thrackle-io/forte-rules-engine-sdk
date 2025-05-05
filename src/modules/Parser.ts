@@ -1,7 +1,7 @@
 
 /// SPDX-License-Identifier: BUSL-1.1
 import { keccak256, encodePacked, Address, getAddress, toBytes, ByteArray, toHex, isAddress, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
-import { EffectType, ForeignCallArgumentMappings, ForeignCallDefinition, foreignCallJSON, FunctionArgument, IndividualArugmentMapping, matchArray, operandArray, PlaceholderStruct, PT, pTypeEnum, RawData, ruleJSON, RuleStruct, stringReplacement, supportedTrackerTypes, TrackerDefinition, trackerIndexNameMapping, trackerJSON, truMatchArray, Tuple } from './types';
+import { EffectType, FCNameToID, ForeignCallArgumentMappings, ForeignCallDefinition, foreignCallJSON, FunctionArgument, IndividualArugmentMapping, matchArray, operandArray, PlaceholderStruct, PT, pTypeEnum, RawData, ruleJSON, RuleStruct, stringReplacement, supportedTrackerTypes, TrackerDefinition, trackerIndexNameMapping, trackerJSON, truMatchArray, Tuple } from './types';
 
 /**
  * @file Parser.ts
@@ -47,7 +47,7 @@ import { EffectType, ForeignCallArgumentMappings, ForeignCallDefinition, foreign
  * @param indexMap - A mapping of tracker IDs to their names and types.
  * @returns An object containing the instruction set, raw data, positive effects, negative effects, placeholders, and effect placeholders.
  */
-export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapping[]) {
+export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapping[], foreignCallNameToID: FCNameToID[]) {
 
     var condition = syntax.condition
 
@@ -56,16 +56,16 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var functionSignature = syntax.encodedValues
     var names = parseFunctionArguments(functionSignature)
     var effectNames: any[] = []
-    condition = parseForeignCalls(condition, names.length, names)
-    parseTrackers(condition, names.length, names, indexMap)
+    condition = parseForeignCalls(condition, names, foreignCallNameToID)
+    parseTrackers(condition,  names, indexMap)
     
     for(var effectP in syntax.positiveEffects) {
-        syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames.length, effectNames)
-        parseTrackers(syntax.positiveEffects[effectP], effectNames.length, effectNames, indexMap)
+        syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames, foreignCallNameToID)
+        parseTrackers(syntax.positiveEffects[effectP],  effectNames, indexMap)
     }
     for(var effectN in syntax.negativeEffects) {
-        syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames.length, effectNames)
-        parseTrackers(syntax.negativeEffects[effectN], effectNames.length, effectNames, indexMap)
+        syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames, foreignCallNameToID)
+        parseTrackers(syntax.negativeEffects[effectN],  effectNames, indexMap)
     }
 
     var effectPlaceHolders: PlaceholderStruct[] = []
@@ -792,7 +792,7 @@ export function parseFunctionArguments(functionSignature: string) {
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
  */
-export function parseTrackers(condition: string, nextIndex: number, names: any[], indexMap: trackerIndexNameMapping[]) {
+export function parseTrackers(condition: string, names: any[], indexMap: trackerIndexNameMapping[]) {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
@@ -801,8 +801,10 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
         var uniq = [...new Set(matches)];
         for(var match of uniq!) {
             var type = "address"
+            var index = 0
             for(var ind of indexMap){
                 if(("TR:"+ind.name) == match) {
+                    index = ind.id
                     if(ind.type == 0) {
                         type = "address"
                     } else if(ind.type == 1) {
@@ -814,8 +816,7 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
                     }
                 }
             }
-            names.push({name: match, tIndex: nextIndex, rawType: "tracker", rawTypeTwo: type})
-            nextIndex++
+            names.push({name: match, tIndex: index, rawType: "tracker", rawTypeTwo: type})
         }
     }
 
@@ -824,11 +825,16 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
     if(matchesUpdate != null) {
         var uniq = [...new Set(matchesUpdate)];
         for(var match of uniq!) {
+            var index = 0
             match = match.replace("TRU:", "TR:")
-            names.push({name: match, tIndex: nextIndex, rawType: "tracker"})
-            nextIndex++
+            for(var ind of indexMap){
+                if(("TR:"+ind.name) == match) {
+                    index = ind.id
+                }
+            }
+            names.push({name: match, tIndex: index, rawType: "tracker"})
         }
-    }
+    } 
 }
 
 /**
@@ -848,7 +854,7 @@ export function parseTrackers(condition: string, nextIndex: number, names: any[]
  *   is reused.
  * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
  */
-function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
+function parseForeignCalls(condition: string, names: any[], foreignCallNameToID: FCNameToID[]) {
     let iter = 0
     // Use a regular expression to find all FC expressions
     const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
@@ -880,10 +886,17 @@ function parseForeignCalls(condition: string, nextIndex: number, names: any[]) {
             }
         }
         if(!alreadyFound) {
-            names.push({name: match, tIndex: nextIndex, rawType: "foreign call", fcPlaceholder: placeholder})
+
+            var index = 0
+            for(var fcMap of foreignCallNameToID) {
+                if(("FC:" + fcMap.name.split('(')[0]) == fullFcExpr.split('(')[0]) {
+
+                    index = fcMap.id
+                }
+            }
+            names.push({name: match, tIndex: index, rawType: "foreign call", fcPlaceholder: placeholder})
         }
         iter++;
-        nextIndex++;
     }
 
     condition = processedCondition
@@ -1402,12 +1415,14 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 var plhIter = 0
                 var copyFound = false
                 for(var place of placeHolders) {
-                    if(place.typeSpecificIndex == parameter.tIndex) {
+                    if(place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && !place.trackerValue) {
                         retVal.push("PLH")
                         retVal.push(plhIter)
                         copyFound = true
+                        break
                     }
                     plhIter += 1
+                    
                 }
                 if(!copyFound) { 
                     retVal.push("PLH")
