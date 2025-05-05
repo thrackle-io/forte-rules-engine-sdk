@@ -36,6 +36,7 @@ jobs:
       run: |
         npm install -g typescript
         npm install @rollup/rollup-linux-x64-gnu
+        npm install @esbuild/linux-x64
         npm install --no-optional
     - name: Run Anvil
       run: |
