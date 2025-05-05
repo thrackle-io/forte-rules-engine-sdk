@@ -107,7 +107,7 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
         }
     }
     
-    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID, foreignCallNameToID)
     var trList = buildTrackerList(ruleSyntax.condition)
     if(ruleSyntax.positiveEffects != null) {
         for(var eff of ruleSyntax.positiveEffects) {
@@ -137,31 +137,9 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
     }
     var iter = 0
     var tIter = 0
-    for(var index in output.placeHolders) {
-        if(output.placeHolders[index].foreignCall) {
-            output.placeHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
-            iter++
-        }
-        if(output.placeHolders[index].trackerValue) {
-            output.placeHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
-            tIter++
-        }
-    }
-
 
     iter = 0
     tIter = 0
-
-    for(var index in output.effectPlaceHolders) {
-        if(output.effectPlaceHolders[index].foreignCall) {
-            output.effectPlaceHolders[index].typeSpecificIndex = foreignCallNameToID[iter].id
-            iter++
-        }
-        if(output.effectPlaceHolders[index].trackerValue) {
-            output.effectPlaceHolders[index].typeSpecificIndex = trackerNameToID[tIter].id
-            tIter++
-        }
-    }
 
     var fcEffectList: string[] = []
     if(ruleSyntax.positiveEffects != null) {
@@ -223,8 +201,8 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
  * - `errorMessage`: The error message associated with the effect.
  * - `instructionSet`: The cleaned instruction set for the effect.
  */
-export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[]) {
-    var output = parseRuleSyntax(ruleSyntax, trackerNameToID)
+export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[], foreignCallNameToID: FCNameToID[]) {
+    var output = parseRuleSyntax(ruleSyntax, trackerNameToID, foreignCallNameToID)
     var pEffects = []
     var nEffects = []
 

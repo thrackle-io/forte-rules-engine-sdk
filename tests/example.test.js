@@ -46,7 +46,6 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
-  console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -91,7 +90,6 @@ test('Evaluates a simple syntax string with >= (using only values and operators)
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
-  console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -136,7 +134,6 @@ test('Evaluates a simple syntax string with <= (using only values and operators)
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
-  console.log(retVal.instructionSet)
   expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -513,7 +510,7 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
   "encodedValues": "address to, uint256 value"
   }`
 
-  let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [{id:1, name:"leaderboard", type: 0}])
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
@@ -527,7 +524,7 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
   var expectedString = "FC:leaderboard(to) > 100 AND value == 100"
   cleanInstructionSet(instructionSet)
   var placeholderArray = ["FC:leaderboard(to)", "value"]
-  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [], [{id: 1, name: "leaderboard", type: 0}])
   expect(retVal).toEqual(expectedString)
 });
 
@@ -592,7 +589,7 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
    "negativeEffects": [],
    "functionSignature": "transfer(address to, uint256 value)",
    "encodedValues": "address to, uint256 value" }`
-  let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [],  [{id: 1, name: "isAllowed", type: 0}, {id: 2, name: "isSuperCoolGuy", type: 0}, {id: 3, name: "isRich", type: 0}, {id: 4, name: "creditRisk", type: 0}])
   expect(retVal.instructionSet).toEqual(expectedArray)
 
 })
@@ -751,7 +748,7 @@ var expectedArray = [
   5n, '==', 5n, 6n,
   'AND', 4n, 7n, 'PLH',
   2n, 'PLH', 3n, '==',
-  9n, 10n, 'PLH', 1n, 'N', BigInt('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'), '==', 12n,
+  9n, 10n, 'PLH', 2n, 'N', BigInt('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'), '==', 12n,
   13n, 'OR', 11n, 14n,
   'OR', 8n, 15n
 ]
@@ -764,7 +761,7 @@ var ruleStringA = `{
 "encodedValues": "uint256 value, string info, address addr"
 }`
 
-var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"testOne", type: 0}, {id:2, name:"testTwo", type: 0}], [{id:3, name:"isAllowed", type: 0}])
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -784,7 +781,7 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
   var expectedString = "( FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5 ) OR ( info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )"
   cleanInstructionSet(instructionSet)
   var placeholderArray = ["FC:isAllowed(to)", "TR:testOne", "info", "TR:testTwo", "TR:testOne"]
-  var retVal = reverseParseRule(instructionSet, placeholderArray, [])
+  var retVal = reverseParseRule(instructionSet, placeholderArray, [{id:1, name:"testOne", type: 0}, {id:1, name:"testTwo", type: 0}], [{id:1, name:"isAllowed", type: 0}])
   expect(retVal).toEqual(expectedString)
 })
 
@@ -945,7 +942,7 @@ test('Evaluate a simple syntax string that contains multiple positive and negati
   "functionSignature": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id: 1, name:"simpleTrackler", type:0}], [{id: 2, name:"updateOracle"}, {id: 3, name:"alert"}])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -975,7 +972,7 @@ test('Evaluate a simple syntax string for an event effect with an instruction se
   "functionSignature": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"simpleTrackler", type: 0}], [{id:1, name:"updateOracle", type: 0}, {id:2, name:"alert", type: 0}])
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EXPRESSION);
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([
@@ -984,7 +981,6 @@ test('Evaluate a simple syntax string for an event effect with an instruction se
     'AND', 0, 1,
   ])
 })
-
 test('Simple Reverse Interpretation', () => {
     var numbers = [0, 1, 0, 2, 1, 0, 1, 0, 3, 7, 2, 3, 0, 1, 11, 0, 7, 5, 6, 8, 4, 7]
     var placeholderArray = ["value"]
@@ -1035,7 +1031,7 @@ var ruleStringA = `{
 "encodedValues": "uint256 value, string info, address addr"
 }`
 
-var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"testTwo", type: 0}])
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
 
@@ -1057,7 +1053,7 @@ test('Extraneous paraenthesis', () => {
   "functionSignature": "addValue(uint256 value, string info, address addr)",
   "encodedValues": "uint256 value, string info, address addr"
   }`
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"testTwo", type: 0}], [])
   expect(retVal.instructionSet).toEqual(expectedArray)
   });
 
@@ -1133,6 +1129,6 @@ test('Extraneous paraenthesis', () => {
     "encodedValues": ""
     }`
     
-    var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [])
+    var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [{id: 1, name: "updateOracle", type: 0}])
     expect(retVal.instructionSet).toEqual(expectedArray)
   });
