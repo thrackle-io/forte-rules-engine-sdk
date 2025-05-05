@@ -17,6 +17,7 @@ import { sleep } from "./contract-interaction-utils";
 import { createFunctionSignature } from "./function-signatures";
 import { getRule } from "./rules";
 import { createTracker } from "./trackers";
+import { getEncodedValues } from "./utils";
 
 /**
  * @file policy.ts
@@ -50,7 +51,7 @@ const config = getConfig()
  * @returns The ID of the newly created policy.
  */
 export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
-    policySyntax?: string): Promise<number> => {
+    policySyntax?: string): Promise<{policyId: number, functionSignatureMappings: hexToFunctionSignature[]}> => {
     var fcIds: FCNameToID[] = []
     var trackerIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
@@ -61,6 +62,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
+    var functionSignatureMappings: hexToFunctionSignature[] = []
 
     const addPolicy = await simulateContract(config, {
         address: rulesEnginePolicyContract.address,
@@ -104,7 +106,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
             
             const ruleId = await createRule(rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
             if (ruleId == -1) {
-                return -1
+                return {policyId: -1, functionSignatureMappings: []}
             }
             ruleIds.push(ruleId)
             if(ruleToFunctionSignature.has(functionSignature)) {
@@ -113,8 +115,9 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
                 ruleToFunctionSignature.set(functionSignature, [ruleId])
             }
         }
-        
+
         for(var fs of functionSignatures) {
+            functionSignatureMappings.push({hex: toFunctionSelector(fs), functionSignature: fs, encodedValues: getEncodedValues(fs)})
             if(ruleToFunctionSignature.has(fs)) {
                 rulesDoubleMapping.push(ruleToFunctionSignature.get(fs))
             } else {
@@ -124,7 +127,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
         }
         policyId = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
     } 
-    return policyId
+    return {policyId, functionSignatureMappings}
 } 
 
 /**
@@ -264,11 +267,13 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
             var functionString = ""
             var encodedValues: string = ""
             var fs = functionSignatures[iter]
-            for(var mapping of functionSignatureMappings) {
-                if(mapping.hex == fs) {
-                     functionString = mapping.functionSignature
-                     encodedValues = mapping.encodedValues
-                     break
+            if (functionSignatureMappings !== undefined) {
+                for(var mapping of functionSignatureMappings) {
+                    if(mapping.hex == fs) {
+                        functionString = mapping.functionSignature
+                        encodedValues = mapping.encodedValues
+                        break
+                    }
                 }
             }
             for (var ruleId of innerArray) {
