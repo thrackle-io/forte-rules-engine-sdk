@@ -37,10 +37,10 @@ test('Code Generation test)', () => {
             }
         ]
         }`;
-    generateModifier(policyJSON, "src/testOutput/testFileA.sol")
-    injectModifier("transfer", 'address to, uint256 value, uint256 somethinElse', 'src/testOutput/UserContract.sol', 'src/testOutput/diff.diff', "src/testOutput/testFileA.sol")
-    expect(fs.existsSync('src/testOutput/diff.diff')).toBeTruthy()
-    expect(fs.existsSync('src/testOutput/testFileA.sol')).toBeTruthy()
+    generateModifier(policyJSON, "tests/testOutput/testFileA.sol")
+    injectModifier("transfer", 'address to, uint256 value, uint256 somethinElse', 'tests/testOutput/UserContract.sol', 'tests/testOutput/diff.diff', "tests/testOutput/testFileA.sol")
+    expect(fs.existsSync('tests/testOutput/diff.diff')).toBeTruthy()
+    expect(fs.existsSync('tests/testOutput/testFileA.sol')).toBeTruthy()
 
     fs.readFile('tests/testOutput/UserContract.sol', 'utf-8', (err, data) => {
         if (err) {

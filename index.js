@@ -3,7 +3,7 @@
 
 export {
     RulesEngine
-} from './src/modules/RulesEngine'
+} from './src/modules/rules-engine'
 
 export {
     getConfig,
@@ -40,12 +40,12 @@ export {
 
 export {
     generateModifier
-} from './src/codeGeneration/generateSolidity.ts'
+} from './src/codeGeneration/generate-solidity.ts'
 
 export {
     injectModifier
-} from './src/codeGeneration/injectModifier.ts'
+} from './src/codeGeneration/inject-modifier.ts'
 
 export {
     policyModifierGeneration
-} from './src/codeGeneration/codeModificationScript.ts'
+} from './src/codeGeneration/code-modification-script.ts'

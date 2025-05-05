@@ -4,3 +4,9 @@
 # Desktop Services Store
 /.DS_Store
 
+# Testing output
+/tests/testOutput
+
+# Demo outpu
+/tests/demoOutput
+
