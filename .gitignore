@@ -1,2 +1,12 @@
 # dependencies
 /node_modules
+
+# Desktop Services Store
+/.DS_Store
+
+# Testing output
+/tests/testOutput
+
+# Demo output
+/tests/demoOutput
+

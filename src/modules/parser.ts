@@ -4,13 +4,13 @@ import { keccak256, encodePacked, Address, getAddress, toBytes, ByteArray, toHex
 import { EffectType, FCNameToID, ForeignCallArgumentMappings, ForeignCallDefinition, foreignCallJSON, FunctionArgument, IndividualArugmentMapping, matchArray, operandArray, PlaceholderStruct, PT, pTypeEnum, RawData, ruleJSON, RuleStruct, stringReplacement, supportedTrackerTypes, TrackerDefinition, trackerIndexNameMapping, trackerJSON, truMatchArray, Tuple } from './types';
 
 /**
- * @file Parser.ts
+ * @file parser.ts
  * @description This module provides a comprehensive set of parsing utilities for the Rules Engine SDK.
  *              It includes functions for parsing rule syntax, trackers, foreign calls, and converting
  *              human-readable conditions into abstract syntax trees (ASTs) and instruction sets.
  *              Additionally, it supports reverse parsing of instruction sets back into human-readable syntax.
  * 
- * @module Parser
+ * @module parser
  * 
  * @dependencies
  * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.

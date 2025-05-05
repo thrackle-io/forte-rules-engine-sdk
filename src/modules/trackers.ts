@@ -1,8 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { simulateContract, writeContract, readContract } from "@wagmi/core";
 import { account, getConfig } from "../../config";
-import { sleep } from "./ContractInteractionUtils";
-import { parseTrackerSyntax } from "./Parser";
+import { sleep } from "./contract-interaction-utils";
+import { parseTrackerSyntax } from "./parser";
 import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./types";
 
 /**
@@ -13,7 +13,7 @@ import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./
  * @module Trackers
  *
  * @dependencies
- * - `Parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
+ * - `parser`: Contains helper functions for parsing rule syntax, trackers, and foreign calls.
  * - `@wagmi/core`: Provides utilities for simulating, reading, and writing to Ethereum contracts.
  * - `config`: Provides configuration for interacting with the blockchain.
  *

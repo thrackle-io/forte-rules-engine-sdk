@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title UserContract Contract for Testing the Rules Engine
+ * @title ExampleUserContract Contract for Testing the Rules Engine
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  * @dev This file contains an example Solidity contract designed to demonstrate and test the integration of the Rules Engine.
  *              It provides a sample function that showcases how custom arguments can be sent to the Rules Engine.

@@ -1,8 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateModifier } from './generateSolidity';
-import { injectModifier } from './injectModifier';
+import { generateModifier } from './generate-solidity';
+import { injectModifier } from './inject-modifier';
 
 interface ForeignCall {
     name: string;

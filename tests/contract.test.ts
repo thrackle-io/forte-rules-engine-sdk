@@ -3,13 +3,13 @@ import { readContract } from "@wagmi/core";
 import { getAddress, toFunctionSelector, toHex } from "viem";
 import { expect, test, describe, beforeAll, beforeEach } from "vitest";
 import { getConfig, account, DiamondAddress, connectConfig } from "../config";
-import { getRulesEnginePolicyContract, getRulesEngineComponentContract } from "../src/modules/ContractInteractionUtils";
-import { createForeignCall, deleteForeignCall, updateForeignCall, getForeignCall, getAllForeignCalls } from "../src/modules/ForeignCalls";
-import { createFunctionSignature, deleteFunctionSignature } from "../src/modules/FunctionSignatures";
-import { createPolicy, updatePolicy, deletePolicy, getPolicy } from "../src/modules/Policy";
-import { createRule, getAllRules, updateRule, deleteRule } from "../src/modules/Rules";
-import { createTracker, updateTracker, getTracker, getAllTrackers, deleteTracker } from "../src/modules/Trackers";
-import { sleep } from "../src/modules/ContractInteractionUtils";
+import { getRulesEnginePolicyContract, getRulesEngineComponentContract } from "../src/modules/contract-interaction-utils";
+import { createForeignCall, deleteForeignCall, updateForeignCall, getForeignCall, getAllForeignCalls } from "../src/modules/foreign-calls";
+import { createFunctionSignature, deleteFunctionSignature } from "../src/modules/function-signatures";
+import { createPolicy, updatePolicy, deletePolicy, getPolicy } from "../src/modules/policy";
+import { createRule, getAllRules, updateRule, deleteRule } from "../src/modules/rules";
+import { createTracker, updateTracker, getTracker, getAllTrackers, deleteTracker } from "../src/modules/trackers";
+import { sleep } from "../src/modules/contract-interaction-utils";
 
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
 

@@ -7,7 +7,7 @@ import {
 } from "@wagmi/core";
 
 import { account, getConfig } from "../../config";
-import { buildAnEffectStruct, buildARuleStruct, sleep } from "./ContractInteractionUtils";
+import { buildAnEffectStruct, buildARuleStruct, sleep } from "./contract-interaction-utils";
 import { RulesEnginePolicyContract, FCNameToID, ruleJSON, RulesEngineComponentContract, RuleStruct, RuleStorageSet } from "./types";
 
 /**
