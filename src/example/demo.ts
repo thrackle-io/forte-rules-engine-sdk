@@ -39,7 +39,7 @@ import { getRulesEnginePolicyContract, getRulesEngineComponentContract, sleep } 
  * 
  * @usage
  * - Run this script to test the Rules Engine SDK and observe its functionality in creating and managing policies.
- * - Ensure that the `src/demo.json` file contains a valid policy JSON and the output paths are writable.
+ * - Ensure that the `src/example/demo.json` file contains a valid policy JSON and the output paths are writable.
  * 
  * @example
  * ```bash
@@ -96,7 +96,7 @@ const account = privateKeyToAccount(
     const policyApplicant: `0x${string}` = getAddress('0xa513E6E4b8f2a923D98304ec87F64353C4D5C853');
     await connectConfig(config, 0)
 
-    const absolutePath = path.resolve("src/demo.json")
+    const absolutePath = path.resolve("src/example/demo.json")
     const policyJSON = await fs.promises.readFile(absolutePath, 'utf-8');
     var result = await createPolicy(getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client),
     policyJSON)

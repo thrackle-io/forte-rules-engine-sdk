@@ -1,2 +1,6 @@
 # dependencies
 /node_modules
+
+# Desktop Services Store
+/.DS_Store
+
