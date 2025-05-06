@@ -62,7 +62,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
-    var functionSignatureMappings: hexToFunctionSignature[] = []
+    let functionSignatureMappings: hexToFunctionSignature[] = []
 
     const addPolicy = await simulateContract(config, {
         address: rulesEnginePolicyContract.address,
@@ -102,6 +102,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
                 functionSignatures.push(functionSignature)
                 const fsId = await createFunctionSignature(rulesEngineComponentContract, policyId, functionSignature)
                 functionSignatureIds.push(fsId)
+                functionSignatureMappings.push({hex: toFunctionSelector(functionSignature), functionSignature: functionSignature, encodedValues: rule.encodedValues})
             }
             
             const ruleId = await createRule(rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
@@ -117,7 +118,6 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
         }
 
         for(var fs of functionSignatures) {
-            functionSignatureMappings.push({hex: toFunctionSelector(fs), functionSignature: fs, encodedValues: getEncodedValues(fs)})
             if(ruleToFunctionSignature.has(fs)) {
                 rulesDoubleMapping.push(ruleToFunctionSignature.get(fs))
             } else {
@@ -127,8 +127,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
         }
         policyId = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
     }
-    console.log("YOU MUST SAVE THESE FUNCTION SIGNATURE MAPPINGS TO RETRIEVE THE FULL POLICY LATER: ", functionSignatureMappings)
-    return {policyId, functionSignatureMappings}
+    return {policyId, functionSignatureMappings: functionSignatureMappings}
 } 
 
 /**
