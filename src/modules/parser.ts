@@ -669,16 +669,14 @@ export function convertRuleStructToString(functionString: string, encodedValues:
  * Foreign Call 1 --> 0x1234567890abcdef --> myFunction(uint256) --> uint256 --> uint256, string
  * ```
  */
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings?: any[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: any[]) {
     var fcIter = 1
     if(foreignCalls != null) {
         for(var call of foreignCalls) {
             var signatureString = ""
-            if(functionSignatureMappings !== undefined) {
-                for(var mapping of functionSignatureMappings) {
-                    if(mapping.hex == call.signature) {
-                        signatureString = mapping.functionSignature
-                    }
+            for(var mapping of functionSignatureMappings) {
+                if(mapping.hex == call.signature) {
+                    signatureString = mapping.functionSignature
                 }
             }
             var returnTypeString = ""
