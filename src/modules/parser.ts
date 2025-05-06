@@ -1409,17 +1409,25 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
         var foundMatch = false
 
         for(var parameter of parameterNames) {
-            
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
                 var plhIter = 0
                 var copyFound = false
                 for(var place of placeHolders) {
-                    if(place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && !place.trackerValue) {
-                        retVal.push("PLH")
-                        retVal.push(plhIter)
-                        copyFound = true
-                        break
+                    if(expression[0].trim().includes("TR:")) {
+                        if(place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && place.trackerValue) {
+                            retVal.push("PLH")
+                            retVal.push(plhIter)
+                            copyFound = true
+                            break
+                        }
+                    } else {
+                        if(place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && !place.trackerValue) {
+                            retVal.push("PLH")
+                            retVal.push(plhIter)
+                            copyFound = true
+                            break
+                        }
                     }
                     plhIter += 1
                     
