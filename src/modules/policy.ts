@@ -17,7 +17,6 @@ import { sleep } from "./contract-interaction-utils";
 import { createFunctionSignature } from "./function-signatures";
 import { getRule } from "./rules";
 import { createTracker } from "./trackers";
-import { getEncodedValues } from "./utils";
 
 /**
  * @file policy.ts
@@ -116,7 +115,9 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
                 ruleToFunctionSignature.set(functionSignature, [ruleId])
             }
         }
-
+        
+        console.log("YOU MUST SAVE THESE FUNCTION SIGNATURE MAPPINGS TO RETRIEVE THE FULL POLICY LATER: ", functionSignatureMappings)
+        
         for(var fs of functionSignatures) {
             if(ruleToFunctionSignature.has(fs)) {
                 rulesDoubleMapping.push(ruleToFunctionSignature.get(fs))
@@ -306,4 +307,21 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
             return "";
     }    
 
+}
+
+export async function policyExists(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, policyId: number): Promise<boolean> {
+    try {
+        let policyExists = await simulateContract(config, {
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
+            functionName: "getPolicy",
+            args: [policyId],
+        });
+        if (policyExists.result[0] != null && policyExists.result[2] != null) {
+            return true
+        }
+        return false
+    } catch (error) {
+        return false
+    }
 }
