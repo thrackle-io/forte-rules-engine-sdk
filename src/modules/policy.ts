@@ -126,7 +126,8 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
             functionSignatureSelectors.push(toFunctionSelector(fs))
         }
         policyId = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
-    } 
+    }
+    console.log("YOU MUST SAVE THESE FUNCTION SIGNATURE MAPPINGS TO RETRIEVE THE FULL POLICY LATER: ", functionSignatureMappings)
     return {policyId, functionSignatureMappings}
 } 
 
@@ -247,7 +248,7 @@ export const deletePolicy = async(rulesEnginePolicyContract: RulesEnginePolicyCo
  * @returns A JSON string representing the full policy.
  */
 export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, functionSignatureMappings?: hexToFunctionSignature[]): Promise<string> => {
+    policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
     try {
         const retrievePolicy = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
@@ -267,13 +268,11 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
             var functionString = ""
             var encodedValues: string = ""
             var fs = functionSignatures[iter]
-            if (functionSignatureMappings !== undefined) {
-                for(var mapping of functionSignatureMappings) {
-                    if(mapping.hex == fs) {
-                        functionString = mapping.functionSignature
-                        encodedValues = mapping.encodedValues
-                        break
-                    }
+            for(var mapping of functionSignatureMappings) {
+                if(mapping.hex == fs) {
+                    functionString = mapping.functionSignature
+                    encodedValues = mapping.encodedValues
+                    break
                 }
             }
             for (var ruleId of innerArray) {
