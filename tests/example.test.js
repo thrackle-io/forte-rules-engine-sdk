@@ -748,7 +748,7 @@ var expectedArray = [
   5n, '==', 5n, 6n,
   'AND', 4n, 7n, 'PLH',
   2n, 'PLH', 3n, '==',
-  9n, 10n, 'PLH', 2n, 'N', BigInt('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'), '==', 12n,
+  9n, 10n, 'PLH', 1n, 'N', BigInt('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'), '==', 12n,
   13n, 'OR', 11n, 14n,
   'OR', 8n, 15n
 ]
