@@ -1,4 +1,4 @@
-name: test
+name: Run Tests
 
 on:
   push:
@@ -32,13 +32,10 @@ jobs:
       uses: foundry-rs/foundry-toolchain@v1
       with:
         version: nightly
-    - name: Install Dependencies
+    - name: Install NPM Dependencies
       run: |
-        npm install -g typescript
-        npm install @rollup/rollup-linux-x64-gnu
-        npm install @esbuild/linux-x64
-        npm install --no-optional
-    - name: Run Anvil
+        npm install
+    - name: Start Anvil with State File
       run: |
         anvil -p 8545 --load-state tests/diamondDeployedAnvilState.json &
         sleep 3
