@@ -28,7 +28,8 @@ import {createPolicy as createPolicyInternal,
      updatePolicy as updatePolicyInternal, 
     applyPolicy as applyPolicyInternal,
     deletePolicy as deletePolicyInternal,
-    getPolicy as getPolicyInternal
+    getPolicy as getPolicyInternal,
+    policyExists as policyExistsInternal
  } from "./policy"
 
 import {
@@ -95,9 +96,20 @@ export class RulesEngine {
      * @param policyJSON - Policy defined in a JSON string.
      * @returns The ID of the newly created policy.
      */
-    createPolicy(policyJSON: string): Promise<number> 
+    createPolicy(policyJSON: string): Promise<{ policyId: number; functionSignatureMappings: hexToFunctionSignature[]; }> 
     {
         return createPolicyInternal(this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyJSON)
+    }
+
+    /**
+     * Checks if a policy exists in the Rules Engine.
+     * 
+     * @param policyId - The ID of the policy to check.
+     * @returns True if the policy exists, false otherwise.
+     */
+    policyExists(policyId: number): Promise<boolean> 
+    {
+        return policyExistsInternal(this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId)
     }
 
     /**

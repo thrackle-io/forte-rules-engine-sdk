@@ -50,7 +50,7 @@ const config = getConfig()
  * @returns The ID of the newly created policy.
  */
 export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
-    policySyntax?: string): Promise<number> => {
+    policySyntax?: string): Promise<{policyId: number, functionSignatureMappings: hexToFunctionSignature[]}> => {
     var fcIds: FCNameToID[] = []
     var trackerIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
@@ -61,6 +61,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
     let functionSignatureIds: number[] = []
     let rulesDoubleMapping = []
     let functionSignatureSelectors = []
+    let functionSignatureMappings: hexToFunctionSignature[] = []
 
     const addPolicy = await simulateContract(config, {
         address: rulesEnginePolicyContract.address,
@@ -100,11 +101,12 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
                 functionSignatures.push(functionSignature)
                 const fsId = await createFunctionSignature(rulesEngineComponentContract, policyId, functionSignature)
                 functionSignatureIds.push(fsId)
+                functionSignatureMappings.push({hex: toFunctionSelector(functionSignature), functionSignature: functionSignature, encodedValues: rule.encodedValues})
             }
             
             const ruleId = await createRule(rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
             if (ruleId == -1) {
-                return -1
+                return {policyId: -1, functionSignatureMappings: []}
             }
             ruleIds.push(ruleId)
             if(ruleToFunctionSignature.has(functionSignature)) {
@@ -113,6 +115,8 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
                 ruleToFunctionSignature.set(functionSignature, [ruleId])
             }
         }
+        
+        console.log("YOU MUST SAVE THESE FUNCTION SIGNATURE MAPPINGS TO RETRIEVE THE FULL POLICY LATER: ", functionSignatureMappings)
         
         for(var fs of functionSignatures) {
             if(ruleToFunctionSignature.has(fs)) {
@@ -123,8 +127,8 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
             functionSignatureSelectors.push(toFunctionSelector(fs))
         }
         policyId = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
-    } 
-    return policyId
+    }
+    return {policyId, functionSignatureMappings: functionSignatureMappings}
 } 
 
 /**
@@ -253,11 +257,6 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
             args: [ policyId],
         });
 
-        await writeContract(config, {
-            ...retrievePolicy.request,
-            account
-        });
-
         let policyResult = retrievePolicy.result
         let functionSignatures: any = policyResult[0]
         let functionIds = policyResult[1]
@@ -271,9 +270,9 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
             var fs = functionSignatures[iter]
             for(var mapping of functionSignatureMappings) {
                 if(mapping.hex == fs) {
-                     functionString = mapping.functionSignature
-                     encodedValues = mapping.encodedValues
-                     break
+                    functionString = mapping.functionSignature
+                    encodedValues = mapping.encodedValues
+                    break
                 }
             }
             for (var ruleId of innerArray) {
@@ -308,4 +307,21 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
             return "";
     }    
 
+}
+
+export async function policyExists(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, policyId: number): Promise<boolean> {
+    try {
+        let policyExists = await simulateContract(config, {
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
+            functionName: "getPolicy",
+            args: [policyId],
+        });
+        if (policyExists.result[0] != null && policyExists.result[2] != null) {
+            return true
+        }
+        return false
+    } catch (error) {
+        return false
+    }
 }
