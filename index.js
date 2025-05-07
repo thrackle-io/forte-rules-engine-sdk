@@ -7,7 +7,8 @@ export {
 
 export {
     getConfig,
-    connectConfig
+    connectConfig,
+    setupConfig
 } from './config.ts'
 
 export {

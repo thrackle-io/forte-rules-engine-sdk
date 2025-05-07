@@ -4,7 +4,8 @@ import { toFunctionSelector } from "viem"
 import {
     simulateContract,
     writeContract, 
-    readContract
+    readContract,
+    Config
 } from "@wagmi/core";
 import { account, getConfig } from "../../config"
 import { sleep } from "./contract-interaction-utils"
@@ -32,8 +33,6 @@ import { RulesEngineComponentContract } from "./types"
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
 
-const config = getConfig()
-
 /**
  * Creates a foreign call in the rules engine component contract.
  *
@@ -50,7 +49,11 @@ const config = getConfig()
  *
  * @throws Will throw an error if the JSON parsing of `fcSyntax` fails.
  */
-export const createForeignCall = async(rulesEngineComponentContract: RulesEngineComponentContract, policyId: number, fcSyntax: string, 
+export const createForeignCall = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract, 
+    policyId: number, 
+    fcSyntax: string, 
     ): Promise<number> => {
     var json = JSON.parse(fcSyntax)
     var foreignCall = parseForeignCallDefinition(json)
@@ -106,8 +109,12 @@ export const createForeignCall = async(rulesEngineComponentContract: RulesEngine
  *
  * @throws Will throw an error if the JSON parsing of `fcSyntax` fails.
  */
-export const updateForeignCall = async(rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, foreignCallId: number, fcSyntax: string, 
+export const updateForeignCall = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract, 
+    policyId: number, 
+    foreignCallId: number, 
+    fcSyntax: string, 
     ): Promise<number> => {
     var json = JSON.parse(fcSyntax)
     var foreignCall = parseForeignCallDefinition(json)
@@ -159,8 +166,11 @@ export const updateForeignCall = async(rulesEngineComponentContract: RulesEngine
  *
  * @throws This function does not explicitly throw errors but will return `-1` if an error occurs during the simulation phase.
  */
-export const deleteForeignCall = async(rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, foreignCallId: number,  
+export const deleteForeignCall = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract, 
+    policyId: number, 
+    foreignCallId: number,  
     ): Promise<number> => {
 
     var addFC
@@ -195,8 +205,11 @@ export const deleteForeignCall = async(rulesEngineComponentContract: RulesEngine
  *
  * @throws Will log an error to the console if the contract interaction fails.
  */
-export const getForeignCall = async(rulesEngineComponentContract: RulesEngineComponentContract,
-    policyId: number, foreignCallId: number): Promise<any | null> => {
+export const getForeignCall = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number, 
+    foreignCallId: number): Promise<any | null> => {
     try {
         const addFC = await simulateContract(config, {
             address: rulesEngineComponentContract.address,
@@ -227,7 +240,9 @@ export const getForeignCall = async(rulesEngineComponentContract: RulesEngineCom
  *
  * @throws Will log an error to the console if the operation fails.
  */
-export const getAllForeignCalls = async(rulesEngineComponentContract: RulesEngineComponentContract, 
+export const getAllForeignCalls = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract, 
     policyId: number): Promise<any[] | null> => {
     try {
         const addFC = await simulateContract(config, {

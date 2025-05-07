@@ -3,6 +3,7 @@
 import { toFunctionSelector, Address } from "viem";
 
 import {
+    Config,
     simulateContract,
     writeContract
 } from "@wagmi/core";
@@ -39,8 +40,6 @@ import { createTracker } from "./trackers";
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
 
-const config = getConfig()
-
 /**
  * Creates a policy in the Rules Engine, including rules, trackers, and foreign calls.
  * 
@@ -49,7 +48,7 @@ const config = getConfig()
  * @param policySyntax - The JSON string representing the policy syntax.
  * @returns The ID of the newly created policy.
  */
-export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
+export const createPolicy = async (config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
     policySyntax?: string): Promise<{policyId: number, functionSignatureMappings: hexToFunctionSignature[]}> => {
     var fcIds: FCNameToID[] = []
     var trackerIds: FCNameToID[] = []
@@ -80,7 +79,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
         if (policyJSON.ForeignCalls != null) {
             for(var foreignCall of policyJSON.ForeignCalls) {
                 var fcStruct = parseForeignCallDefinition(foreignCall)
-                const fcId = await createForeignCall(rulesEngineComponentContract, policyId, JSON.stringify(foreignCall))
+                const fcId = await createForeignCall(config, rulesEngineComponentContract, policyId, JSON.stringify(foreignCall))
                 var struc : FCNameToID = {id: fcId, name: fcStruct.name.split('(')[0], type: 0}
                 fcIds.push(struc)
             }
@@ -88,7 +87,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
         if (policyJSON.Trackers != null) {
             for(var tracker of policyJSON.Trackers) {
                 var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
-                const trId = await createTracker(rulesEngineComponentContract, policyId, JSON.stringify(tracker) )
+                const trId = await createTracker(config, rulesEngineComponentContract, policyId, JSON.stringify(tracker) )
                 var struc : FCNameToID = {id: trId, name: trackerStruct.name, type: trackerStruct.type}
                 trackerIds.push(struc)
                 trackers.push(trackerStruct)
@@ -99,12 +98,12 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
             var functionSignature = rule.functionSignature.trim()
             if(!functionSignatures.includes(functionSignature)) {
                 functionSignatures.push(functionSignature)
-                const fsId = await createFunctionSignature(rulesEngineComponentContract, policyId, functionSignature)
+                const fsId = await createFunctionSignature(config, rulesEngineComponentContract, policyId, functionSignature)
                 functionSignatureIds.push(fsId)
                 functionSignatureMappings.push({hex: toFunctionSelector(functionSignature), functionSignature: functionSignature, encodedValues: rule.encodedValues})
             }
             
-            const ruleId = await createRule(rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
+            const ruleId = await createRule(config, rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
             if (ruleId == -1) {
                 return {policyId: -1, functionSignatureMappings: []}
             }
@@ -126,7 +125,8 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
             }
             functionSignatureSelectors.push(toFunctionSelector(fs))
         }
-        policyId = await updatePolicy(rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
+
+        policyId = await updatePolicy(config, rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
     }
     return {policyId, functionSignatureMappings: functionSignatureMappings}
 } 
@@ -141,7 +141,7 @@ export const createPolicy = async (rulesEnginePolicyContract: RulesEnginePolicyC
  * @param ruleIds - The mapping of rules to function signatures.
  * @returns The result of the policy update.
  */
-export const updatePolicy = async (
+export const updatePolicy = async (config: Config,
     rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
         var updatePolicy
         while(true) {
@@ -179,7 +179,7 @@ export const updatePolicy = async (
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
  * @returns The result of the policy application.
  */
-export const applyPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, 
+export const applyPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, 
     policyId: number, contractAddressForPolicy: Address): Promise<number> => {
 
     var applyPolicy
@@ -214,7 +214,7 @@ export const applyPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyCon
  * @param policyId - The ID of the policy to delete.
  * @returns `0` if successful, `-1` if an error occurs.
  */
-export const deletePolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number): Promise<number> => {
+export const deletePolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number): Promise<number> => {
 
     var addFC
     try {
@@ -247,7 +247,7 @@ export const deletePolicy = async(rulesEnginePolicyContract: RulesEnginePolicyCo
  * @param functionSignatureMappings - A mapping of function signatures to their hex representations.
  * @returns A JSON string representing the full policy.
  */
-export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
+export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
     policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
     try {
         const retrievePolicy = await simulateContract(config, {
@@ -276,7 +276,7 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
                 }
             }
             for (var ruleId of innerArray) {
-                var ruleS = await getRule(rulesEnginePolicyContract, policyId, ruleId)
+                var ruleS = await getRule(config, rulesEnginePolicyContract, policyId, ruleId)
                 var plhArray: string[] = []
                 if(ruleS != null) {
                     ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray))
@@ -287,11 +287,11 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
         }
 
 
-        var foreignCalls: any[] | null = await getAllForeignCalls(rulesEngineComponentContract, policyId)
+        var foreignCalls: any[] | null = await getAllForeignCalls(config, rulesEngineComponentContract, policyId)
         var callStrings: string[] = []
         convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
 
-        var trackers: any[] | null = await getAllTrackers(rulesEngineComponentContract, policyId)
+        var trackers: any[] | null = await getAllTrackers(config, rulesEngineComponentContract, policyId)
         var trackerStrings: string[] = []
         convertTrackerStructsToStrings(trackers, trackerStrings)
 
@@ -309,7 +309,7 @@ export const getPolicy = async(rulesEnginePolicyContract: RulesEnginePolicyContr
 
 }
 
-export async function policyExists(rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, policyId: number): Promise<boolean> {
+export async function policyExists(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, policyId: number): Promise<boolean> {
     try {
         let policyExists = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
