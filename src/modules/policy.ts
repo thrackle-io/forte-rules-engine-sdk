@@ -166,10 +166,13 @@ export const updatePolicy = async (config: Config,
             
         }
         if(updatePolicy != null) {
-            await writeContract(config, {
+            const returnHash = await writeContract(config, {
                 ...updatePolicy.request,
                 account
             });
+            await waitForTransactionReceipt(config, {
+                hash: returnHash,
+            })
     
             return updatePolicy.result;
         } 
@@ -205,10 +208,13 @@ export const applyPolicy = async(config: Config, rulesEnginePolicyContract: Rule
     }
 
     if(applyPolicy != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
         ...applyPolicy.request,
         account
         }) 
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
     }
     return applyPolicy.result
 }
@@ -235,10 +241,13 @@ export const deletePolicy = async(config: Config, rulesEnginePolicyContract: Rul
     }
 
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
     }
     
     return 0

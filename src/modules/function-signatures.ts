@@ -2,8 +2,8 @@
 import { toFunctionSelector } from "viem"
 import {
     simulateContract,
+    waitForTransactionReceipt,
     writeContract, 
-    readContract,
     Config
 } from "@wagmi/core";
 import { account, getConfig } from "../../config"
@@ -80,10 +80,13 @@ export const createFunctionSignature = async (
         }
     }
     if(addRule != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addRule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
 
         return addRule.result;
     }
@@ -118,10 +121,13 @@ export const deleteFunctionSignature = async (
     }
 
     if(addRule != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addRule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
 
         return addRule.result;
     }

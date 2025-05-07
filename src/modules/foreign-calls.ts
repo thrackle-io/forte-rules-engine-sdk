@@ -3,6 +3,7 @@
 import { toFunctionSelector } from "viem"
 import {
     simulateContract,
+    waitForTransactionReceipt,
     writeContract, 
     readContract,
     Config
@@ -83,10 +84,13 @@ export const createForeignCall = async(
         }
     }
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
         return addFC.result
         
     } 
@@ -144,12 +148,15 @@ export const updateForeignCall = async(
         }
     }
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
-           let foreignCallResult = addFC.result as any
-           return foreignCallResult.foreignCallIndex
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
+        let foreignCallResult = addFC.result as any
+        return foreignCallResult.foreignCallIndex
     } 
     return -1
 }
@@ -186,10 +193,13 @@ export const deleteForeignCall = async(
     }
 
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
     }
     
     return 0

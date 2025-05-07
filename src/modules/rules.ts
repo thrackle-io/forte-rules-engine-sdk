@@ -2,6 +2,7 @@
 import { hexToString } from "viem";
 import {
     simulateContract,
+    waitForTransactionReceipt,
     writeContract, 
     readContract,
     Config
@@ -80,10 +81,13 @@ export const createRule = async (config: Config, rulesEnginePolicyContract: Rule
         }
     }
     if(addRule != null) {
-        await writeContract(config, {
+        const returnHash =  await writeContract(config, {
             ...addRule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
         
         return addRule.result;
     } 
@@ -124,10 +128,13 @@ export const updateRule = async (config: Config, rulesEnginePolicyContract: Rule
         }
     }
     if(addRule != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addRule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
 
         return addRule.result;
     } 
@@ -162,10 +169,13 @@ export const deleteRule = async(config: Config, rulesEngineComponentContract: Ru
     }
 
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
     }
     
     return 0
@@ -189,10 +199,13 @@ export const getRule = async(config: Config, rulesEnginePolicyContract: RulesEng
             args: [ policyId, ruleId],
         });
 
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...getRuleule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
 
         let ruleResult = getRuleule.result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct

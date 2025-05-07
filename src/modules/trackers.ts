@@ -1,5 +1,5 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { simulateContract, writeContract, readContract, Config } from "@wagmi/core";
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, Config } from "@wagmi/core";
 import { account, getConfig } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "./parser";
@@ -61,9 +61,12 @@ export const createTracker = async (
     }
   }
   if (addTR != null) {
-    await writeContract(config, {
+    const returnHash = await writeContract(config, {
       ...addTR.request,
       account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
     });
 
     let trackerResult = addTR.result;
@@ -109,10 +112,13 @@ export const updateTracker = async (
     }
   }
   if (addTR != null) {
-    await writeContract(config, {
+    const returnHash = await writeContract(config, {
       ...addTR.request,
       account,
     });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    })
     return trackerId;
   }
   return -1;
@@ -149,10 +155,13 @@ export const deleteTracker = async (
   }
 
   if (addFC != null) {
-    await writeContract(config, {
+    const returnHash = await writeContract(config, {
       ...addFC.request,
       account,
     });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    })
   }
 
   return 0;
