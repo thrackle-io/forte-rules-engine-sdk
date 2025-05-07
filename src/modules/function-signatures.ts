@@ -3,7 +3,8 @@ import { toFunctionSelector } from "viem"
 import {
     simulateContract,
     writeContract, 
-    readContract
+    readContract,
+    Config
 } from "@wagmi/core";
 import { account, getConfig } from "../../config"
 import { sleep } from "./contract-interaction-utils"
@@ -31,8 +32,6 @@ import { RulesEngineComponentContract } from "./types"
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
 
-const config = getConfig()
-
 /**
  * Creates a function signature in the rules engine component contract.
  *
@@ -48,7 +47,9 @@ const config = getConfig()
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
-export const createFunctionSignature = async (rulesEngineComponentContract: RulesEngineComponentContract,
+export const createFunctionSignature = async (
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract,
     policyId: number, functionSignature: string
     ): Promise<number> => {
         var argsRaw = parseFunctionArguments(functionSignature)
@@ -99,7 +100,9 @@ export const createFunctionSignature = async (rulesEngineComponentContract: Rule
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
-export const deleteFunctionSignature = async (rulesEngineComponentContract: RulesEngineComponentContract,
+export const deleteFunctionSignature = async (
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract,
     policyId: number, functionSignatureId: number
     ): Promise<number> => {
     var addRule

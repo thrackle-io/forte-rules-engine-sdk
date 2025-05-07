@@ -59,8 +59,9 @@ import {
 import {
     createFunctionSignature as createFunctionSignatureInternal
 } from "./function-signatures"
+import { Config } from "@wagmi/core"
 
-const config = getConfig()
+var config : Config
 
 export class RulesEngine {
     private rulesEnginePolicyContract: RulesEnginePolicyContract
@@ -71,7 +72,7 @@ export class RulesEngine {
      * @param {Address} rulesEngineAddress - The address of the deployed Rules Engine smart contract.
      * @param {any} client - The client instance for interacting with the blockchain.
      */
-    constructor(rulesEngineAddress: Address, client: any) {
+    constructor(rulesEngineAddress: Address, localConfig: Config, client: any) {
         this.rulesEnginePolicyContract = getContract({
                 address: rulesEngineAddress,
                 abi: RulesEnginePolicyABI,
@@ -82,6 +83,7 @@ export class RulesEngine {
                 abi: RulesEngineComponentABI,
                 client
               });
+        config = localConfig
     }
     public getRulesEnginePolicyContract(): RulesEnginePolicyContract {
         return this.rulesEnginePolicyContract
@@ -98,7 +100,7 @@ export class RulesEngine {
      */
     createPolicy(policyJSON: string): Promise<{ policyId: number; functionSignatureMappings: hexToFunctionSignature[]; }> 
     {
-        return createPolicyInternal(this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyJSON)
+        return createPolicyInternal(config, this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyJSON)
     }
 
     /**
@@ -109,7 +111,7 @@ export class RulesEngine {
      */
     policyExists(policyId: number): Promise<boolean> 
     {
-        return policyExistsInternal(this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId)
+        return policyExistsInternal(config, this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId)
     }
 
     /**
@@ -123,7 +125,7 @@ export class RulesEngine {
      */
     updatePolicy(policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number> 
     {
-        return updatePolicyInternal(this.rulesEnginePolicyContract, policyId, signatures, ids, ruleIds)
+        return updatePolicyInternal(config, this.rulesEnginePolicyContract, policyId, signatures, ids, ruleIds)
     }
 
     /**
@@ -135,7 +137,7 @@ export class RulesEngine {
      */
     applyPolicy(policyId: number, contractAddressForPolicy: Address): Promise<number> 
     {
-        return applyPolicyInternal(this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
+        return applyPolicyInternal(config, this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
     }
 
     /**
@@ -146,7 +148,7 @@ export class RulesEngine {
      */
     deletePolicy(policyId: number): Promise<number>
     {
-        return deletePolicyInternal(this.rulesEnginePolicyContract, policyId)
+        return deletePolicyInternal(config, this.rulesEnginePolicyContract, policyId)
     }
 
     /**
@@ -158,7 +160,7 @@ export class RulesEngine {
      */
     getPolicy(policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string>
     {
-        return getPolicyInternal(this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId, functionSignatureMappings)
+        return getPolicyInternal(config, this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId, functionSignatureMappings)
     }
 
     /**
@@ -178,7 +180,7 @@ export class RulesEngine {
      */
     createNewRule(policyId: number, ruleS: string, foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number>
     {
-        return createRuleInternal(this.rulesEnginePolicyContract, policyId, ruleS, foreignCallNameToID, trackerNameToID)
+        return createRuleInternal(config, this.rulesEnginePolicyContract, policyId, ruleS, foreignCallNameToID, trackerNameToID)
     }
 
     /**
@@ -195,7 +197,7 @@ export class RulesEngine {
      */
     updateRule(policyId: number, ruleId: number, ruleS: string, foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number>  
     {
-        return updateRuleInternal(this.rulesEnginePolicyContract, policyId, ruleId, ruleS, foreignCallNameToID, trackerNameToID)
+        return updateRuleInternal(config, this.rulesEnginePolicyContract, policyId, ruleId, ruleS, foreignCallNameToID, trackerNameToID)
     }
 
     /**
@@ -211,7 +213,7 @@ export class RulesEngine {
      */
     deleteRule(policyId: number, ruleId: number): Promise<number>
     {
-        return deleteRuleInternal(this.rulesEngineComponentContract, policyId, ruleId, )
+        return deleteRuleInternal(config, this.rulesEngineComponentContract, policyId, ruleId, )
     }
 
     /**
@@ -223,7 +225,7 @@ export class RulesEngine {
      */
     getRule(policyId: number, ruleId: number): Promise<RuleStruct | null>
     {
-        return getRuleInternal(this.rulesEnginePolicyContract, policyId, ruleId)
+        return getRuleInternal(config, this.rulesEnginePolicyContract, policyId, ruleId)
     }
 
     /**
@@ -236,7 +238,7 @@ export class RulesEngine {
      */
     getAllRules(policyId: number): Promise<any[] | null>
     {
-        return getAllRulesInternal(this.rulesEnginePolicyContract, policyId)
+        return getAllRulesInternal(config, this.rulesEnginePolicyContract, policyId)
     }
 
     /**
@@ -256,7 +258,7 @@ export class RulesEngine {
      */
     createForeignCall(policyId: number, fcSyntax: string): Promise<number> 
     {
-        return createForeignCallInternal(this.rulesEngineComponentContract, policyId, fcSyntax)
+        return createForeignCallInternal(config, this.rulesEngineComponentContract, policyId, fcSyntax)
     }
 
     /**
@@ -277,7 +279,7 @@ export class RulesEngine {
      */
     updateForeignCall(policyId: number, foreignCallId: number, fcSyntax: string): Promise<number> 
     {
-        return updateForeignCallInternal(this.rulesEngineComponentContract, policyId, foreignCallId, fcSyntax)
+        return updateForeignCallInternal(config, this.rulesEngineComponentContract, policyId, foreignCallId, fcSyntax)
     }
 
     /**
@@ -293,7 +295,7 @@ export class RulesEngine {
      */
     deleteForeignCall(policyId: number, foreignCallId: number): Promise<number>
     {
-        return deleteForeignCallInternal(this.rulesEngineComponentContract, policyId, foreignCallId)
+        return deleteForeignCallInternal(config, this.rulesEngineComponentContract, policyId, foreignCallId)
     }
 
     /**
@@ -307,7 +309,7 @@ export class RulesEngine {
      */
     getForeignCall(policyId: number, foreignCallId: number): Promise<any | null>
     {
-        return getForeignCallInternal(this.rulesEngineComponentContract, policyId, foreignCallId)
+        return getForeignCallInternal(config, this.rulesEngineComponentContract, policyId, foreignCallId)
     }
 
     /**
@@ -320,7 +322,7 @@ export class RulesEngine {
      */
     getAllForeignCalls(policyId: number): Promise<any[] | null> 
     {
-        return getAllForeignCallsInternal(this.rulesEngineComponentContract, policyId)
+        return getAllForeignCallsInternal(config, this.rulesEngineComponentContract, policyId)
     }
 
     /**
@@ -335,7 +337,7 @@ export class RulesEngine {
     */
     createTracker(policyId: number, trSyntax: string): Promise<number>  
     {
-        return createTrackerInternal(this.rulesEngineComponentContract, policyId, trSyntax)
+        return createTrackerInternal(config, this.rulesEngineComponentContract, policyId, trSyntax)
     }
 
     /**
@@ -351,7 +353,7 @@ export class RulesEngine {
      */
     updateTracker(policyId: number, trackerId: number, trSyntax: string): Promise<number>   
     {
-        return updateTrackerInternal(this.rulesEngineComponentContract, policyId, trackerId, trSyntax)
+        return updateTrackerInternal(config, this.rulesEngineComponentContract, policyId, trackerId, trSyntax)
     }
 
     /**
@@ -367,7 +369,7 @@ export class RulesEngine {
      */
     deleteTracker(policyId: number, trackerId: number): Promise<number> 
     {
-        return deleteTrackerInternal(this.rulesEngineComponentContract, policyId, trackerId)
+        return deleteTrackerInternal(config, this.rulesEngineComponentContract, policyId, trackerId)
     }
 
     /**
@@ -381,7 +383,7 @@ export class RulesEngine {
      */
     getTracker(policyId: number, trackerId: number): Promise<any | null>        
     {
-        return getTrackerInternal(this.rulesEngineComponentContract, policyId, trackerId)
+        return getTrackerInternal(config, this.rulesEngineComponentContract, policyId, trackerId)
     }
 
     /**
@@ -395,7 +397,7 @@ export class RulesEngine {
      */
     getAllTrackers(policyId: number): Promise<any[] | null>
     {
-        return getAllTrackersInternal(this.rulesEngineComponentContract, policyId)
+        return getAllTrackersInternal(config, this.rulesEngineComponentContract, policyId)
     }
 
     /**
@@ -413,6 +415,6 @@ export class RulesEngine {
      */
     createFunctionSignature(policyId: number, functionSignature: string): Promise<number>
     {
-        return createFunctionSignatureInternal(this.rulesEngineComponentContract, policyId, functionSignature)
+        return createFunctionSignatureInternal(config, this.rulesEngineComponentContract, policyId, functionSignature)
     }       
 }

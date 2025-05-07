@@ -1,5 +1,5 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { simulateContract, writeContract, readContract } from "@wagmi/core";
+import { simulateContract, writeContract, readContract, Config } from "@wagmi/core";
 import { account, getConfig } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "./parser";
@@ -25,8 +25,6 @@ import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
 
-const config = getConfig();
-
 /**
  * Asynchronously creates a tracker in the rules engine component contract.
  *
@@ -39,6 +37,7 @@ const config = getConfig();
  *         Ensure proper error handling or timeout mechanisms are implemented to avoid infinite loops.
  */
 export const createTracker = async (
+  config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   trSyntax: string
@@ -85,6 +84,7 @@ export const createTracker = async (
  *         Ensure proper error handling or timeout mechanisms are implemented to avoid infinite loops.
  */
 export const updateTracker = async (
+  config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   trackerId: number,
@@ -131,6 +131,7 @@ export const updateTracker = async (
  * @throws This function does not explicitly throw errors but will return `-1` if an error occurs during the simulation phase.
  */
 export const deleteTracker = async (
+  config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   trackerId: number
@@ -168,6 +169,7 @@ export const deleteTracker = async (
  * @throws Will log an error to the console if the contract interaction fails.
  */
 export const getTracker = async (
+  config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   trackerId: number
@@ -204,6 +206,7 @@ export const getTracker = async (
  * @throws Will log an error to the console if the operation fails.
  */
 export const getAllTrackers = async (
+  config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number
 ): Promise<any[] | null> => {

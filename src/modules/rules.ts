@@ -3,7 +3,8 @@ import { hexToString } from "viem";
 import {
     simulateContract,
     writeContract, 
-    readContract
+    readContract,
+    Config
 } from "@wagmi/core";
 
 import { account, getConfig } from "../../config";
@@ -31,7 +32,6 @@ import { RulesEnginePolicyContract, FCNameToID, ruleJSON, RulesEngineComponentCo
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
 
-const config = getConfig()
 
 /**
  * Asynchronously creates a new rule in the rules engine policy contract.
@@ -52,7 +52,7 @@ const config = getConfig()
  * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
  * - If the rule creation is successful, it writes the contract, generates a rule modifier, and optionally injects the modifier into the specified contract.
  */
-export const createRule = async (rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleS: string, 
+export const createRule = async (config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleS: string, 
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
 
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
@@ -103,7 +103,7 @@ export const createRule = async (rulesEnginePolicyContract: RulesEnginePolicyCon
  *
  * @throws Will retry indefinitely if the contract simulation fails, with a 1-second delay between retries.
  */
-export const updateRule = async (rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number, ruleS: string, 
+export const updateRule = async (config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number, ruleS: string, 
     foreignCallNameToID: FCNameToID[], trackerNameToID: FCNameToID[]): Promise<number> => {
     let ruleSyntax: ruleJSON = JSON.parse(ruleS);
     var effects = buildAnEffectStruct(ruleSyntax, trackerNameToID, foreignCallNameToID)
@@ -146,7 +146,7 @@ export const updateRule = async (rulesEnginePolicyContract: RulesEnginePolicyCon
  *
  * @throws This function does not throw errors directly but returns `-1` in case of an exception.
  */
-export const deleteRule = async(rulesEngineComponentContract: RulesEngineComponentContract, 
+export const deleteRule = async(config: Config, rulesEngineComponentContract: RulesEngineComponentContract, 
         policyId: number, ruleId: number): Promise<number> => {
 
     var addFC
@@ -179,7 +179,7 @@ export const deleteRule = async(rulesEngineComponentContract: RulesEngineCompone
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @returns The retrieved rule as a `RuleStruct`, or `null` if retrieval fails.
  */
-export const getRule = async(rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number): Promise<RuleStruct | null> => {
+export const getRule = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number): Promise<RuleStruct | null> => {
     
     try {
         const getRuleule = await simulateContract(config, {
@@ -224,7 +224,7 @@ export const getRule = async(rulesEnginePolicyContract: RulesEnginePolicyContrac
  *
  * @throws Will log an error to the console if the operation fails.
  */
-export const getAllRules = async(rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number): Promise<any[] | null> => {
+export const getAllRules = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number): Promise<any[] | null> => {
     try {
         const retrieveTR = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
