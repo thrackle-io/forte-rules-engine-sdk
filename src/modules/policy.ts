@@ -5,6 +5,7 @@ import { toFunctionSelector, Address } from "viem";
 import {
     Config,
     simulateContract,
+    waitForTransactionReceipt,
     writeContract
 } from "@wagmi/core";
 
@@ -72,6 +73,11 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
         ...addPolicy.request,
         account
     });
+
+    const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash: returnHash,
+    })
+
     let policyId:number = addPolicy.result
 
     if (policySyntax !== undefined){
