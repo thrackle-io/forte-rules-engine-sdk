@@ -113,14 +113,24 @@ export function injectModifier(funcName: string, variables: string, userFilePath
                                 .replace(/string /g, '')
                                 .replace(/bool /g, '')
                                 .replace(/bytes /g, '');
-     
-    const regex = new RegExp(`${functionName + funcName}(.*?)\\) public|private|internal|external `, 'g');
+
+    const modifierToAdd = `checkRulesBefore${funcName}(${argListUpdate})`;
+    const regex = new RegExp(`${functionName}\\s*${funcName}\\s*\\([^)]*\\)\\s*(public|private|internal|external)[^{]*`, 'g');
     const funcMatches = data.matchAll(regex);
 
     for (const match of funcMatches) {
-        const fullFcExpr = match[0];
-        modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ' checkRulesBefore' + funcName + '(' + argListUpdate + ')')
-        break
+        const fullFuncDecl = match[0];
+        
+        // Only add modifier if it's not already present in the full function declaration
+        if (!fullFuncDecl.includes(modifierToAdd)) {
+            const visibilityKeywordRegex = /(public|private|internal|external)\s*/;
+            const newDecl = fullFuncDecl.replace(
+                visibilityKeywordRegex, 
+                `$1 ${modifierToAdd} `
+            );
+            modifiedData = modifiedData.replace(fullFuncDecl, newDecl);
+        }
+        break;
     }
     
     // Write the modified data back to the file
