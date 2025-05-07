@@ -1501,8 +1501,11 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 foundMatch = true
                 var trackerName = expression[0].replace('TRU:', 'TR:')
                 var values = trackerName.split(' ')
-
-                if(values[1] == parameter.name) {
+                var comparison = values[0]
+                if(values.length > 1) {
+                    comparison = values[1]
+                }
+                if(comparison == parameter.name) {
                     retVal.push("PLH")
                     retVal.push(plhIndex)
                     plhIndex += 1
@@ -1526,7 +1529,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
 
-                }
+                } 
             }
         }
         if(!foundMatch) {
@@ -1559,7 +1562,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 retVal.push(mem[mem.length - 1])
                 mem.pop()
                 mem.pop()
-                
                 if(truMatchArray.includes(expression[0].trim())) {
                     retVal.push('TRU')
                     retVal.push(truIndex)
