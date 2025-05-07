@@ -6,7 +6,7 @@ import {
     writeContract, 
     Config
 } from "@wagmi/core";
-import { account, getConfig } from "../../config"
+import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseFunctionArguments } from "./parser"
 import { RulesEngineComponentContract } from "./types"

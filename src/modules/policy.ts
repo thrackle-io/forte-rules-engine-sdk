@@ -9,7 +9,7 @@ import {
     writeContract
 } from "@wagmi/core";
 
-import { account, getConfig } from "../../config";
+import { account } from "../../config";
 import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./parser";
 import { RulesEnginePolicyContract, RulesEngineComponentContract, FCNameToID, TrackerDefinition, PolicyJSON, hexToFunctionSignature } from "./types";
 import { createForeignCall,getAllForeignCalls} from "./foreign-calls"

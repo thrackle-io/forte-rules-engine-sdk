@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, Config } from "@wagmi/core";
-import { account, getConfig } from "../../config";
+import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "./parser";
 import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./types";
@@ -184,20 +184,13 @@ export const getTracker = async (
   trackerId: number
 ): Promise<any | null> => {
   try {
-    const retrieveTR = await simulateContract(config, {
+    const retrieveTR = await readContract(config, {
       address: rulesEngineComponentContract.address,
       abi: rulesEngineComponentContract.abi,
       functionName: "getTracker",
       args: [policyId, trackerId],
     });
-
-    await readContract(config, {
-      ...retrieveTR.request,
-      account,
-    });
-
-    let trackerResult = retrieveTR.result;
-    return trackerResult;
+    return retrieveTR;
   } catch (error) {
     console.error(error);
     return null;
@@ -220,19 +213,14 @@ export const getAllTrackers = async (
   policyId: number
 ): Promise<any[] | null> => {
   try {
-    const retrieveTR = await simulateContract(config, {
+    const retrieveTR = await readContract(config, {
       address: rulesEngineComponentContract.address,
       abi: rulesEngineComponentContract.abi,
       functionName: "getAllTrackers",
       args: [policyId],
     });
 
-    await readContract(config, {
-      ...retrieveTR.request,
-      account,
-    });
-
-    let trackerResult = retrieveTR.result;
+    let trackerResult = retrieveTR as any[];
     return trackerResult;
   } catch (error) {
     console.error(error);

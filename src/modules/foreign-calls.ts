@@ -8,7 +8,7 @@ import {
     readContract,
     Config
 } from "@wagmi/core";
-import { account, getConfig } from "../../config"
+import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseForeignCallDefinition } from "./parser"
 import { RulesEngineComponentContract } from "./types"
@@ -221,18 +221,14 @@ export const getForeignCall = async(
     policyId: number, 
     foreignCallId: number): Promise<any | null> => {
     try {
-        const addFC = await simulateContract(config, {
+        const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "getForeignCall",
             args: [ policyId, foreignCallId ],
         });
-        await readContract(config, {
-            ...addFC.request,
-            account
-        });
 
-        let foreignCallResult = addFC.result 
+        let foreignCallResult = addFC as any;
         return foreignCallResult;
     } catch (error) {
         console.error(error);
@@ -255,19 +251,14 @@ export const getAllForeignCalls = async(
     rulesEngineComponentContract: RulesEngineComponentContract, 
     policyId: number): Promise<any[] | null> => {
     try {
-        const addFC = await simulateContract(config, {
+        const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "getAllForeignCalls",
             args: [ policyId ],
         });
-    
-        await readContract(config, {
-            ...addFC.request,
-            account
-        });
-
-        return addFC.result;
+        let foreignCallResult = addFC as any[];
+        return foreignCallResult;
     } catch (error) {
         console.error(error);
         return null;
