@@ -832,7 +832,16 @@ export function parseTrackers(condition: string, names: any[], indexMap: tracker
                     index = ind.id
                 }
             }
-            names.push({name: match, tIndex: index, rawType: "tracker"})
+            var found = false
+            for(var name of names) {
+                if(name.name == match) {
+                    found = true
+                    break
+                }
+            }
+            if(!found) {
+                names.push({name: match, tIndex: index, rawType: "tracker"})
+            }
         }
     } 
 }
@@ -1529,7 +1538,9 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
 
-                } 
+                } else {
+                    plhIndex += 1
+                }
             }
         }
         if(!foundMatch) {
