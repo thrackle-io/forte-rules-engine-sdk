@@ -1,4 +1,4 @@
-name: Run Tests
+name: Run Tests & TypeDoc Check
 
 on:
   push:
@@ -41,3 +41,5 @@ jobs:
         sleep 3
     - name: Run Tests
       run: npm run test
+    - name: Run Typedoc Check
+      run: npx typedoc --entryPointStrategy Expand src --tsconfig tsconfig.json

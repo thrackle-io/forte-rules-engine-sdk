@@ -2,12 +2,13 @@
 import { hexToString } from "viem";
 import {
     simulateContract,
+    waitForTransactionReceipt,
     writeContract, 
     readContract,
     Config
 } from "@wagmi/core";
 
-import { account, getConfig } from "../../config";
+import { account } from "../../config";
 import { buildAnEffectStruct, buildARuleStruct, sleep } from "./contract-interaction-utils";
 import { RulesEnginePolicyContract, FCNameToID, ruleJSON, RulesEngineComponentContract, RuleStruct, RuleStorageSet } from "./types";
 
@@ -80,10 +81,13 @@ export const createRule = async (config: Config, rulesEnginePolicyContract: Rule
         }
     }
     if(addRule != null) {
-        await writeContract(config, {
+        const returnHash =  await writeContract(config, {
             ...addRule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
         
         return addRule.result;
     } 
@@ -124,10 +128,13 @@ export const updateRule = async (config: Config, rulesEnginePolicyContract: Rule
         }
     }
     if(addRule != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addRule.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
 
         return addRule.result;
     } 
@@ -162,10 +169,13 @@ export const deleteRule = async(config: Config, rulesEngineComponentContract: Ru
     }
 
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
     }
     
     return 0
@@ -182,19 +192,14 @@ export const deleteRule = async(config: Config, rulesEngineComponentContract: Ru
 export const getRule = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, ruleId: number): Promise<RuleStruct | null> => {
     
     try {
-        const getRuleule = await simulateContract(config, {
+        const result = await readContract(config, {
             address: rulesEnginePolicyContract.address,
             abi: rulesEnginePolicyContract.abi,
             functionName: "getRule",
             args: [ policyId, ruleId],
         });
 
-        await writeContract(config, {
-            ...getRuleule.request,
-            account
-        });
-
-        let ruleResult = getRuleule.result as RuleStorageSet
+        let ruleResult = result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct
 
 
@@ -226,20 +231,14 @@ export const getRule = async(config: Config, rulesEnginePolicyContract: RulesEng
  */
 export const getAllRules = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number): Promise<any[] | null> => {
     try {
-        const retrieveTR = await simulateContract(config, {
+        const result = await readContract(config, {
             address: rulesEnginePolicyContract.address,
             abi: rulesEnginePolicyContract.abi,
             functionName: "getAllRules",
             args: [ policyId],
         });
-    
 
-        await readContract(config, {
-            ...retrieveTR.request,
-            account
-        });
-
-        let trackerResult = retrieveTR.result
+        let trackerResult = result as RuleStorageSet[];
         return trackerResult;
     } catch (error) {
         console.error(error);

@@ -23,7 +23,6 @@
 
 import { Address, getContract } from "viem"
 import { FCNameToID, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types"
-import { getConfig } from "../../config"
 import {createPolicy as createPolicyInternal,
      updatePolicy as updatePolicyInternal, 
     applyPolicy as applyPolicyInternal,

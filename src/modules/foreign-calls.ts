@@ -3,11 +3,12 @@
 import { toFunctionSelector } from "viem"
 import {
     simulateContract,
+    waitForTransactionReceipt,
     writeContract, 
     readContract,
     Config
 } from "@wagmi/core";
-import { account, getConfig } from "../../config"
+import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseForeignCallDefinition } from "./parser"
 import { RulesEngineComponentContract } from "./types"
@@ -83,10 +84,13 @@ export const createForeignCall = async(
         }
     }
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
         return addFC.result
         
     } 
@@ -144,12 +148,15 @@ export const updateForeignCall = async(
         }
     }
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
-           let foreignCallResult = addFC.result as any
-           return foreignCallResult.foreignCallIndex
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
+        let foreignCallResult = addFC.result as any
+        return foreignCallResult.foreignCallIndex
     } 
     return -1
 }
@@ -186,10 +193,13 @@ export const deleteForeignCall = async(
     }
 
     if(addFC != null) {
-        await writeContract(config, {
+        const returnHash = await writeContract(config, {
             ...addFC.request,
             account
         });
+        await waitForTransactionReceipt(config, {
+            hash: returnHash,
+        })
     }
     
     return 0
@@ -211,18 +221,14 @@ export const getForeignCall = async(
     policyId: number, 
     foreignCallId: number): Promise<any | null> => {
     try {
-        const addFC = await simulateContract(config, {
+        const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "getForeignCall",
             args: [ policyId, foreignCallId ],
         });
-        await readContract(config, {
-            ...addFC.request,
-            account
-        });
 
-        let foreignCallResult = addFC.result 
+        let foreignCallResult = addFC as any;
         return foreignCallResult;
     } catch (error) {
         console.error(error);
@@ -245,19 +251,14 @@ export const getAllForeignCalls = async(
     rulesEngineComponentContract: RulesEngineComponentContract, 
     policyId: number): Promise<any[] | null> => {
     try {
-        const addFC = await simulateContract(config, {
+        const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "getAllForeignCalls",
             args: [ policyId ],
         });
-    
-        await readContract(config, {
-            ...addFC.request,
-            account
-        });
-
-        return addFC.result;
+        let foreignCallResult = addFC as any[];
+        return foreignCallResult;
     } catch (error) {
         console.error(error);
         return null;

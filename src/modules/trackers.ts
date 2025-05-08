@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { simulateContract, writeContract, readContract, Config } from "@wagmi/core";
-import { account, getConfig } from "../../config";
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, Config } from "@wagmi/core";
+import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "./parser";
 import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./types";
@@ -61,9 +61,12 @@ export const createTracker = async (
     }
   }
   if (addTR != null) {
-    await writeContract(config, {
+    const returnHash = await writeContract(config, {
       ...addTR.request,
       account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
     });
 
     let trackerResult = addTR.result;
@@ -109,10 +112,13 @@ export const updateTracker = async (
     }
   }
   if (addTR != null) {
-    await writeContract(config, {
+    const returnHash = await writeContract(config, {
       ...addTR.request,
       account,
     });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    })
     return trackerId;
   }
   return -1;
@@ -149,10 +155,13 @@ export const deleteTracker = async (
   }
 
   if (addFC != null) {
-    await writeContract(config, {
+    const returnHash = await writeContract(config, {
       ...addFC.request,
       account,
     });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    })
   }
 
   return 0;
@@ -175,20 +184,13 @@ export const getTracker = async (
   trackerId: number
 ): Promise<any | null> => {
   try {
-    const retrieveTR = await simulateContract(config, {
+    const retrieveTR = await readContract(config, {
       address: rulesEngineComponentContract.address,
       abi: rulesEngineComponentContract.abi,
       functionName: "getTracker",
       args: [policyId, trackerId],
     });
-
-    await readContract(config, {
-      ...retrieveTR.request,
-      account,
-    });
-
-    let trackerResult = retrieveTR.result;
-    return trackerResult;
+    return retrieveTR;
   } catch (error) {
     console.error(error);
     return null;
@@ -211,19 +213,14 @@ export const getAllTrackers = async (
   policyId: number
 ): Promise<any[] | null> => {
   try {
-    const retrieveTR = await simulateContract(config, {
+    const retrieveTR = await readContract(config, {
       address: rulesEngineComponentContract.address,
       abi: rulesEngineComponentContract.abi,
       functionName: "getAllTrackers",
       args: [policyId],
     });
 
-    await readContract(config, {
-      ...retrieveTR.request,
-      account,
-    });
-
-    let trackerResult = retrieveTR.result;
+    let trackerResult = retrieveTR as any[];
     return trackerResult;
   } catch (error) {
     console.error(error);
