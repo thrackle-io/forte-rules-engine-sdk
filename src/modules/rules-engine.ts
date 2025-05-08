@@ -134,11 +134,10 @@ export class RulesEngine {
      * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
      * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
      * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
-     * @returns The result of the policy application.
      */
-    setPolicies(policyIds: [number], contractAddressForPolicy: Address): Promise<number> 
+    setPolicies(policyIds: [number], contractAddressForPolicy: Address)
     {
-        return setPoliciesInternal(config, this.rulesEnginePolicyContract, policyIds, contractAddressForPolicy)
+        setPoliciesInternal(config, this.rulesEnginePolicyContract, policyIds, contractAddressForPolicy)
     }
 
     /**
@@ -146,11 +145,10 @@ export class RulesEngine {
      * 
      * @param policyId - The ID of the policy to apply.
      * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
-     * @returns The result of the policy application.
      */
-    appendPolicy(policyId: number, contractAddressForPolicy: Address): Promise<number> 
+    appendPolicy(policyId: number, contractAddressForPolicy: Address)
     {
-        return appendPolicyInternal(config, this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
+        appendPolicyInternal(config, this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
     }
 
     /**

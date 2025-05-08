@@ -186,10 +186,9 @@ export const updatePolicy = async (config: Config,
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
- * @returns The result of the policy application.
  */
 export const setPolicies = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, 
-    policyIds: [number], contractAddressForPolicy: Address): Promise<number> => {
+    policyIds: [number], contractAddressForPolicy: Address) => {
 
     var applyPolicy
     while(true) {
@@ -216,7 +215,6 @@ export const setPolicies = async(config: Config, rulesEnginePolicyContract: Rule
             hash: returnHash,
         })
     }
-    return applyPolicy.result
 }
 
 /**
@@ -225,10 +223,9 @@ export const setPolicies = async(config: Config, rulesEnginePolicyContract: Rule
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to apply.
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
- * @returns The result of the policy application.
  */
 export const appendPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, 
-    policyId: number, contractAddressForPolicy: Address): Promise<number> => {
+    policyId: number, contractAddressForPolicy: Address) => {
     
     const retrievePolicies = await simulateContract(config, {
         address: rulesEnginePolicyContract.address,
@@ -240,33 +237,7 @@ export const appendPolicy = async(config: Config, rulesEnginePolicyContract: Rul
     let policyResult = retrievePolicies.result as [number]
     policyResult.push(policyId)
 
-    var applyPolicy
-
-    while(true) {
-        try {
-            applyPolicy = await simulateContract(config, {
-                address: rulesEnginePolicyContract.address,
-                abi: rulesEnginePolicyContract.abi,
-                functionName: "applyPolicy",
-                args: [contractAddressForPolicy, policyResult],
-            })
-            break
-        } catch (error) {
-            // TODO: Look into replacing this loop/sleep with setTimeout
-            await sleep(1000);
-        } 
-    }
-
-    if(applyPolicy != null) {
-        const returnHash = await writeContract(config, {
-        ...applyPolicy.request,
-        account
-        }) 
-        await waitForTransactionReceipt(config, {
-            hash: returnHash,
-        })
-    }
-    return applyPolicy.result
+    setPolicies(config, rulesEnginePolicyContract, policyResult, contractAddressForPolicy)
 }
 
 /**
