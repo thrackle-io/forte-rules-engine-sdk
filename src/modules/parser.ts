@@ -54,11 +54,15 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     condition = removeExtraParenthesis(condition)
 
     var functionSignature = syntax.encodedValues
-    var names = parseFunctionArguments(functionSignature)
+
+    var names = parseFunctionArguments(functionSignature, condition)
     var effectNames: any[] = []
     condition = parseForeignCalls(condition, names, foreignCallNameToID)
     parseTrackers(condition,  names, indexMap)
     
+    var placeHolders: PlaceholderStruct[] = []
+    placeHolders = buildPlaceholderList(names)
+
     for(var effectP in syntax.positiveEffects) {
         syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames, foreignCallNameToID)
         parseTrackers(syntax.positiveEffects[effectP],  effectNames, indexMap)
@@ -68,6 +72,8 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
         parseTrackers(syntax.negativeEffects[effectN],  effectNames, indexMap)
     }
     var effectPlaceHolders: PlaceholderStruct[] = []
+    effectPlaceHolders = buildPlaceholderList(effectNames)
+
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
     if (syntax.positiveEffects != null) {
@@ -86,7 +92,7 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     }
 
     
-    var placeHolders: PlaceholderStruct[] = []
+    
     var retVal = interpretToInstructionSet(condition, names, indexMap, placeHolders)
     var excludeArray = []
     for(var name of names) {
@@ -99,6 +105,50 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
     return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
          placeHolders: placeHolders, effectPlaceHolders: effectPlaceHolders}
+}
+
+/**
+ * Build the placeholder struct array from the names array
+ * 
+ * @param names - array in the SDK internal format for placeholders 
+ * @returns Placeholder array in the chain specific format
+ */
+function buildPlaceholderList(names: any[]) {
+    var placeHolders: PlaceholderStruct[] = []
+    for(var name of names) {
+
+        var placeHolderEnum = 0
+        var tracker = false
+        if(name.rawType == "address") {
+            placeHolderEnum = 0
+        } else if (name.rawType == "string") {
+            placeHolderEnum = 1
+        } else if(name.rawType == "uint256") {
+            placeHolderEnum = 2
+        } else if(name.rawType == "bytes") {
+            placeHolderEnum = 5
+        } else if(name.rawType == "tracker") {
+            if((name as any).rawTypeTwo == "address") {
+                placeHolderEnum = 0
+            } else if((name as any).rawTypeTwo == "string") {
+                placeHolderEnum = 1
+            } else if((name as any).rawTypeTwo == "bytes") {
+                placeHolderEnum = 5
+            } else {
+                placeHolderEnum = 2
+            }
+            tracker = true
+        }
+
+        var placeHolder : PlaceholderStruct = {
+            pType: placeHolderEnum,
+            typeSpecificIndex: name.tIndex,
+            trackerValue: tracker,
+            foreignCall: name.rawType == "foreign call"
+        }
+        placeHolders.push(placeHolder)
+    }
+    return placeHolders
 }
 
 /**
@@ -754,9 +804,10 @@ export function convertTrackerStructsToStrings(trackers: any[] | null, trackerSt
  * Parses the function signature string and builds an array of argument placeholders.
  * 
  * @param functionSignature - The function signature string.
+ * @param condition - Optional parameter for the condition statement of a rule
  * @returns An array of argument placeholders.
  */
-export function parseFunctionArguments(functionSignature: string) {
+export function parseFunctionArguments(functionSignature: string, condition?: string) {
     var params = functionSignature.split(", ");
     var names = []
     var typeIndex = 0
@@ -767,16 +818,16 @@ export function parseFunctionArguments(functionSignature: string) {
 
     for(var param of params) {
         var typeName = param.split(" ");
-        if(typeName[0].trim() == "uint256") {
+        if(typeName[0].trim() == "uint256" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             uint256Index++
-        } else if(typeName[0].trim() == "string") {
+        } else if(typeName[0].trim() == "string" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             stringIndex++
-        } else if(typeName[0].trim() == "address") {
+        } else if(typeName[0].trim() == "address" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             addressIndex++
-        } else if(typeName[0].trim() == "bytes") {
+        } else if(typeName[0].trim() == "bytes" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
             bytesIndex++
         }
@@ -1454,36 +1505,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     retVal.push("PLH")
                     retVal.push(plhIndex)
                     plhIndex += 1
-                    var placeHolderEnum = 0
-                    var tracker = false
-                    if(parameter.rawType == "address") {
-                        placeHolderEnum = 0
-                    } else if (parameter.rawType == "string") {
-                        placeHolderEnum = 1
-                    } else if(parameter.rawType == "uint256") {
-                        placeHolderEnum = 2
-                    } else if(parameter.rawType == "bytes") {
-                        placeHolderEnum = 5
-                    } else if(parameter.rawType == "tracker") {
-                        if(parameter.rawTypeTwo == "address") {
-                            placeHolderEnum = 0
-                        } else if(parameter.rawTypeTwo == "string") {
-                            placeHolderEnum = 1
-                        } else if(parameter.rawTypeTwo == "bytes") {
-                            placeHolderEnum = 5
-                        } else {
-                            placeHolderEnum = 2
-                        }
-                        tracker = true
-                    }
-
-                    var placeHolder : PlaceholderStruct = {
-                        pType: placeHolderEnum,
-                        typeSpecificIndex: parameter.tIndex,
-                        trackerValue: tracker,
-                        foreignCall: false
-                    }
-                    placeHolders.push(placeHolder)
                 }
                 var sliced = expression.slice(1)
                 mem.push(iterator.value)
@@ -1500,15 +1521,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         if(pHold.foreignCall && pHold.typeSpecificIndex == parameter.tIndex) {
                             found = true
                         }
-                    }
-                    if(!found) {
-                        var placeHolder : PlaceholderStruct = {
-                            pType: 0,
-                            typeSpecificIndex: parameter.tIndex,
-                            trackerValue: false,
-                            foreignCall: true
-                        }
-                        placeHolders.push(placeHolder)
                     }
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
@@ -1530,12 +1542,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     retVal.push(plhIndex)
                     plhIndex += 1
 
-                    var placeHolder : PlaceholderStruct = {
-                        pType: 0,
-                        typeSpecificIndex: parameter.tIndex,
-                        trackerValue: true,
-                        foreignCall: false
-                    }
 
                     for(var ind of indexMap) {
                         if(parameter.name == "TR:"+ind.name) {
@@ -1543,7 +1549,6 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                         }
                     }
                     
-                    placeHolders.push(placeHolder)
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
                     iterator.value += 1
