@@ -25,7 +25,8 @@ import { Address, getContract } from "viem"
 import { FCNameToID, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types"
 import {createPolicy as createPolicyInternal,
      updatePolicy as updatePolicyInternal, 
-    applyPolicy as applyPolicyInternal,
+    setPolicies as setPoliciesInternal,
+    appendPolicy as appendPolicyInternal,
     deletePolicy as deletePolicyInternal,
     getPolicy as getPolicyInternal,
     policyExists as policyExistsInternal
@@ -128,15 +129,26 @@ export class RulesEngine {
     }
 
     /**
-     * Applies a policy to a specific contract address.
+     * Sets the policies appled to a specific contract address.
+     * 
+     * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+     * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
+     * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
+     */
+    setPolicies(policyIds: [number], contractAddressForPolicy: Address)
+    {
+        setPoliciesInternal(config, this.rulesEnginePolicyContract, policyIds, contractAddressForPolicy)
+    }
+
+    /**
+     * Appends a policy to the list of policies applied to a specific contract address.
      * 
      * @param policyId - The ID of the policy to apply.
      * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
-     * @returns The result of the policy application.
      */
-    applyPolicy(policyId: number, contractAddressForPolicy: Address): Promise<number> 
+    appendPolicy(policyId: number, contractAddressForPolicy: Address)
     {
-        return applyPolicyInternal(config, this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
+        appendPolicyInternal(config, this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
     }
 
     /**

@@ -181,15 +181,14 @@ export const updatePolicy = async (config: Config,
     }
 
 /**
- * Applies a policy to a specific contract address.
+ * Sets the policies appled to a specific contract address.
  * 
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
- * @param policyId - The ID of the policy to apply.
+ * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
- * @returns The result of the policy application.
  */
-export const applyPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, 
-    policyId: number, contractAddressForPolicy: Address): Promise<number> => {
+export const setPolicies = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+    policyIds: [number], contractAddressForPolicy: Address) => {
 
     var applyPolicy
     while(true) {
@@ -198,7 +197,7 @@ export const applyPolicy = async(config: Config, rulesEnginePolicyContract: Rule
                 address: rulesEnginePolicyContract.address,
                 abi: rulesEnginePolicyContract.abi,
                 functionName: "applyPolicy",
-                args: [contractAddressForPolicy, [policyId]],
+                args: [contractAddressForPolicy, policyIds],
             })
             break
         } catch (error) {
@@ -216,7 +215,29 @@ export const applyPolicy = async(config: Config, rulesEnginePolicyContract: Rule
             hash: returnHash,
         })
     }
-    return applyPolicy.result
+}
+
+/**
+ * Appends a policy to the list of policies applied to a specific contract address.
+ * 
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to apply.
+ * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
+ */
+export const appendPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, 
+    policyId: number, contractAddressForPolicy: Address) => {
+    
+    const retrievePolicies = await simulateContract(config, {
+        address: rulesEnginePolicyContract.address,
+        abi: rulesEnginePolicyContract.abi,
+        functionName: "getAppliedPolicyIds",
+        args: [ contractAddressForPolicy],
+    });
+
+    let policyResult = retrievePolicies.result as [number]
+    policyResult.push(policyId)
+
+    setPolicies(config, rulesEnginePolicyContract, policyResult, contractAddressForPolicy)
 }
 
 /**
