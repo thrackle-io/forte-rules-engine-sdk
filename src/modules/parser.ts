@@ -67,7 +67,6 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
         syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames, foreignCallNameToID)
         parseTrackers(syntax.negativeEffects[effectN],  effectNames, indexMap)
     }
-
     var effectPlaceHolders: PlaceholderStruct[] = []
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
@@ -78,12 +77,15 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
 
         }
     }
+
     if (syntax.negativeEffects != null) {
         for(var effectN of syntax.negativeEffects) {
             let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
             negativeEffectsFinal.push(effect)
         }
     }
+
+    
     var placeHolders: PlaceholderStruct[] = []
     var retVal = interpretToInstructionSet(condition, names, indexMap, placeHolders)
     var excludeArray = []
@@ -865,6 +867,13 @@ export function parseTrackers(condition: string, names: any[], indexMap: tracker
  */
 function parseForeignCalls(condition: string, names: any[], foreignCallNameToID: FCNameToID[]) {
     let iter = 0
+
+    for(var name of names) {
+        if(name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
+            iter += 1
+        }
+    }
+
     // Use a regular expression to find all FC expressions
     const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
     const matches = condition.matchAll(fcRegex);
@@ -1416,7 +1425,7 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
     // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if(typeof expression[0] == "string") {
         var foundMatch = false
-
+        plhIndex = 0
         for(var parameter of parameterNames) {
             if(parameter.name == expression[0].trim()) {
                 foundMatch = true
@@ -1505,6 +1514,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                     mem.push(iterator.value)
                     iterator.value += 1
                     convertToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                } else {
+                    plhIndex += 1
                 }
             } else if(expression[0].trim().includes('TRU:')) {
                 foundMatch = true
@@ -1541,6 +1552,8 @@ function convertToInstructionSet(retVal: any[], mem: any[], expression: any[], i
                 } else {
                     plhIndex += 1
                 }
+            } else {
+                plhIndex += 1
             }
         }
         if(!foundMatch) {
