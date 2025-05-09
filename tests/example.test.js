@@ -497,7 +497,7 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
  *   'AND', 2, 5, 
  */
   let expectedArray = [
-    'PLH', 0n, 'N', 100n,
+    'PLH', 2n, 'N', 100n,
     '>', 0n, 1n,
     'PLH', 1n, 'N', 100n, '==',
     3n, 4n, 'AND', 2n, 5n
@@ -566,10 +566,10 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
   */
 
   let expectedArray = [
-    'PLH', 0n, 
+    'PLH', 1n, 
     'N', 1n,
     '==', 0n, 1n,
-    'PLH', 1n,
+    'PLH', 0n,
     'N', BigInt('0xdeadbeefdeadbeef'), '==',
     3n, 4n, 'AND',
     2n, 5n, 'PLH',
@@ -590,6 +590,7 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
    "functionSignature": "transfer(address to, uint256 value)",
    "encodedValues": "address to, uint256 value" }`
   let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [],  [{id: 1, name: "isAllowed", type: 0}, {id: 2, name: "isSuperCoolGuy", type: 0}, {id: 3, name: "isRich", type: 0}, {id: 4, name: "creditRisk", type: 0}])
+  console.log(retVal.placeHolders)
   expect(retVal.instructionSet).toEqual(expectedArray)
 
 })
@@ -741,14 +742,14 @@ test('Evaluates a simple syntax string (using AND + OR operators, trackers and f
  * 'OR', 8, 15
  */
 var expectedArray = [
-  'PLH', 0n, 'N',
+  'PLH', 1n, 'N',
   4n, '+', 0n, 1n,
   'N', 5n, '>', 2n,
-  3n, 'PLH', 1n, 'N',
+  3n, 'PLH', 2n, 'N',
   5n, '==', 5n, 6n,
   'AND', 4n, 7n, 'PLH',
-  2n, 'PLH', 3n, '==',
-  9n, 10n, 'PLH', 1n, 'N', BigInt('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'), '==', 12n,
+  0n, 'PLH', 3n, '==',
+  9n, 10n, 'PLH', 2n, 'N', BigInt('0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC'), '==', 12n,
   13n, 'OR', 11n, 14n,
   'OR', 8n, 15n
 ]
@@ -762,6 +763,7 @@ var ruleStringA = `{
 }`
 
 var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"testOne", type: 0}, {id:2, name:"testTwo", type: 0}], [{id:3, name:"isAllowed", type: 0}])
+console.log(retVal.placeHolders)
 expect(retVal.instructionSet).toEqual(expectedArray)
 });
 

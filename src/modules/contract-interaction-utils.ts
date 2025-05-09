@@ -177,6 +177,7 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
         negEffects: effect.negativeEffects
     } as const
     console.log(rule)
+
     return rule
 }
 
