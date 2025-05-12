@@ -9,6 +9,5 @@
     "resolveJsonModule": true,
     "types": ["diff", "node"],
     "typeRoots": ["node_modules/@types"]
-  },
-  "include": ["src/**/*.ts", "index.ts"]
+  }
 }
