@@ -23,7 +23,7 @@ export function load(app) {
 
     const resultArray = navigation.map((item) => ({
       group: item.title,
-      pages: item.children.map((child) => `sdk-reference/${child.path.replace(".mdx", "")}`),
+      pages: item.children.map((child) => `v2/sdk-reference/${child.path.replace(".mdx", "")}`),
     }));
 
     // simply output to console, we then manually copy/paste into mint.json in Mintlify
