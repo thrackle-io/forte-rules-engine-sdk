@@ -10,3 +10,7 @@
 # Demo output
 /tests/demoOutput
 
+# forge auto gen stuff
+/cache
+/out
+/docs
