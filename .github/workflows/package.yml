@@ -39,6 +39,8 @@ jobs:
           # Defaults to the user or organization that owns the workflow file
           scope: "@thrackle-io"
           always-auth: true
+      - name: Install dependencies
+        run: npm install
       - name: Update version if necessary
         if: github.event.inputs.versionUpdateSignificance != 'current'
         env:
@@ -60,6 +62,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
           tags: true
+      - name: Build package
+        if: github.event.inputs.publish
+        run: npm run build
       - name: Publish the NPM package
         if: github.event.inputs.publish
         run: |
