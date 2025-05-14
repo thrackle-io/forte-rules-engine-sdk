@@ -1,7 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from 'vitest'
-import { parseRuleSyntax, parseForeignCallDefinition, parseTrackerSyntax,stringReplacement, 
-  buildForeignCallArgumentMapping, reverseParseRule, cleanInstructionSet } from '../src/modules/parser.ts';
+import { parseRuleSyntax, parseForeignCallDefinition, parseTrackerSyntax,stringReplacement, reverseParseRule, cleanInstructionSet } from '../src/modules/parser.ts';
 import { EffectType, pTypeEnum } from '../src/modules/types.ts';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes, toHex, encodeAbiParameters, parseAbiParameters } from 'viem';
 
@@ -786,61 +785,6 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
   var retVal = reverseParseRule(instructionSet, placeholderArray, [{id:1, name:"testOne", type: 0}, {id:1, name:"testTwo", type: 0}], [{id:1, name:"isAllowed", type: 0}])
   expect(retVal).toEqual(expectedString)
 })
-
-test('Tests building foreign call argument mapping', () => {
-  var fc = ["testCall(to, value, somethingElse, TR:trackerTest)"];
-  var strings = [
-    {name:'to', tIndex: 0, rawType: "address"}, 
-    {name: 'someValue', tIndex: 0, rawType: "uint256"}, 
-    {name: 'someString', tIndex: 0, rawType: "string"}, 
-    {name: 'somethingElse', tIndex: 0, rawtype: "string"}, 
-    {name: 'value', tIndex: 0, rawType: "uint256"}, 
-    {name: 'anotherValue', tIndex: 0, rawType: "uint256"}
-  ]
-  var trackers = [
-    {name: 'trackerTest', rawType: "address"}
-  ]
-  
-  var expected = [
-    { 
-      foreignCallIndex: 0,
-      mappings: [
-        { 
-          functionCallArgumentType: 0, functionSignatureArg: {
-            pType: 0,
-            typeSpecificIndex: 0,
-            trackerValue: false,
-            foreignCall: false
-          } 
-        }, { 
-          functionCallArgumentType: 2, functionSignatureArg:  {
-            pType: 2,
-            typeSpecificIndex: 4,
-            trackerValue: false,
-            foreignCall: false
-          }
-        }, { 
-          functionCallArgumentType: 0, functionSignatureArg: {
-              pType: 0,
-              typeSpecificIndex: 3,
-              trackerValue: false,
-              foreignCall: false
-            } 
-        }, { 
-          functionCallArgumentType: 0, functionSignatureArg: {
-              pType: 0,
-              foreignCall: false,
-              trackerValue: true,
-              typeSpecificIndex: 6,
-          },
-        },
-      ]
-    }
-  ]
-  
-  var retVal = buildForeignCallArgumentMapping([0], fc, strings, trackers)
-  expect(retVal).toEqual(expected)
-});
 
 test('Evaluate a simple syntax string for a revert effect', () => {
   var ruleStringA = `{

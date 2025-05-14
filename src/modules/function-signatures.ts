@@ -8,7 +8,7 @@ import {
 } from "@wagmi/core";
 import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
-import { parseFunctionArguments } from "./parser"
+import { parseFunctionArguments } from "./parsing/parser"
 import { RulesEngineComponentContract } from "./types"
 
 /**

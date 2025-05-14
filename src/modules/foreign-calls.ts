@@ -10,7 +10,7 @@ import {
 } from "@wagmi/core";
 import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
-import { parseForeignCallDefinition } from "./parser"
+import { parseForeignCallDefinition } from "./parsing/parser"
 import { RulesEngineComponentContract } from "./types"
 
 /**
