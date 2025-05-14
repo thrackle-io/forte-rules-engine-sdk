@@ -14,3 +14,6 @@
 /cache
 /out
 /docs
+
+# Build output
+/dist
