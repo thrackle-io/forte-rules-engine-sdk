@@ -1,10 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { 
-    cleanString
-} from '../modules/parsing/parser';
-
 import * as fs from 'fs';
 import * as diff from 'diff';
+import { cleanString } from '../modules/parsing/parsing-utilities';
+
 /**
  * @file injectModifier.ts
  * @description This file contains functionality for injecting Solidity modifiers into existing Solidity contracts.

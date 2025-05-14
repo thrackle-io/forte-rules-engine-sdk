@@ -142,6 +142,8 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 mem.push(iterator.value)
                 iterator.value += 1
                 convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+
+            // Check if the expression is a foreign call
             } else if(parameter.fcPlaceholder) {
                 if(parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
@@ -160,6 +162,8 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 } else {
                     plhIndex += 1
                 }
+
+            // Check if the expression is a tracker update
             } else if(expression[0].trim().includes('TRU:')) {
                 foundMatch = true
                 var trackerName = expression[0].replace('TRU:', 'TR:')
@@ -186,6 +190,7 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 } else {
                     plhIndex += 1
                 }
+            // The current parameter does not match the expression
             } else {
                 plhIndex += 1
             }

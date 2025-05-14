@@ -1,11 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { 
-    cleanString
-} from '../modules/parsing/parser';
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { PolicyJSON, ruleJSON } from '../modules/types';
+
 /**
  * @file generateSolidity.ts
  * @description This file contains functionality for dynamically generating Solidity modifiers based on rule definitions.
