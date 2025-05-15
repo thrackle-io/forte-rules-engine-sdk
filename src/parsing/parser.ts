@@ -14,7 +14,7 @@ import {
     supportedTrackerTypes, 
     trackerIndexNameMapping, 
     trackerJSON
-} from '../types';
+} from '../modules/types';
 import { convertHumanReadableToInstructionSet } from './internal-parsing-logic';
 import { 
     removeExtraParenthesis, 

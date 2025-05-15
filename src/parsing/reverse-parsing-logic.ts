@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 
-import { stringReplacement, RuleStruct, ruleJSON, PT } from "../types"
+import { stringReplacement, RuleStruct, ruleJSON, PT } from "../modules/types"
 import { parseFunctionArguments } from "./parsing-utilities"
 
 /**

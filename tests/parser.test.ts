@@ -2,8 +2,8 @@
 import { expect, test } from 'vitest'
 import { EffectType, pTypeEnum } from '../src/modules/types.js';
 import { keccak256, hexToNumber, encodePacked, getAddress, toBytes, toHex, encodeAbiParameters, parseAbiParameters } from 'viem';
-import { parseRuleSyntax, cleanInstructionSet, parseTrackerSyntax, parseForeignCallDefinition } from '../src/modules/parsing/parser.js';
-import { reverseParseRule } from '../src/modules/parsing/reverse-parsing-logic.js';
+import { parseRuleSyntax, cleanInstructionSet, parseTrackerSyntax, parseForeignCallDefinition } from '../src/parsing/parser.js';
+import { reverseParseRule } from '../src/parsing/reverse-parsing-logic.js';
 
 test('Evaluates a simple syntax string (using only values and operators)', () => {
   /**

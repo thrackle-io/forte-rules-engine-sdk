@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { isAddress } from "viem"
-import { trackerIndexNameMapping, PlaceholderStruct, matchArray, truMatchArray, Tuple } from "../types"
+import { trackerIndexNameMapping, PlaceholderStruct, matchArray, truMatchArray, Tuple } from "../modules/types"
 
 /**
  * @file internal-parsing-logic.ts

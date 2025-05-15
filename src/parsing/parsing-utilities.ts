@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { ByteArray, encodeAbiParameters, isAddress, keccak256, parseAbiParameters, toBytes } from "viem";
-import { trackerIndexNameMapping, FCNameToID, EffectType, PlaceholderStruct, operandArray, RawData } from "../types";
+import { trackerIndexNameMapping, FCNameToID, EffectType, PlaceholderStruct, operandArray, RawData } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 
 /**

@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import * as fs from 'fs';
 import * as diff from 'diff';
-import { cleanString } from '../modules/parsing/parsing-utilities';
+import { cleanString } from '../parsing/parsing-utilities';
 
 /**
  * @file injectModifier.ts

@@ -10,7 +10,7 @@ import {
 } from "@wagmi/core";
 
 import { account } from "../../config";
-import { parseForeignCallDefinition, parseTrackerSyntax } from "./parsing/parser";
+import { parseForeignCallDefinition, parseTrackerSyntax } from "../parsing/parser";
 import { 
     RulesEnginePolicyContract, 
     RulesEngineComponentContract, 
@@ -25,7 +25,7 @@ import { sleep } from "./contract-interaction-utils";
 import { createFunctionSignature } from "./function-signatures";
 import { getRule } from "./rules";
 import { createTracker } from "./trackers";
-import { convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./parsing/reverse-parsing-logic";
+import { convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "../parsing/reverse-parsing-logic";
 
 /**
  * @file policy.ts
