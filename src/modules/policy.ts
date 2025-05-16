@@ -10,8 +10,14 @@ import {
 } from "@wagmi/core";
 
 import { account } from "../../config";
-import { parseForeignCallDefinition, parseTrackerSyntax, convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "./parser";
-import { RulesEnginePolicyContract, RulesEngineComponentContract, FCNameToID, TrackerDefinition, PolicyJSON, hexToFunctionSignature } from "./types";
+import { parseForeignCallDefinition, parseTrackerSyntax } from "../parsing/parser";
+import { 
+    RulesEnginePolicyContract, 
+    RulesEngineComponentContract, 
+    FCNameToID, TrackerDefinition, 
+    PolicyJSON, 
+    hexToFunctionSignature 
+} from "./types";
 import { createForeignCall,getAllForeignCalls} from "./foreign-calls"
 import {createRule } from "./rules"
 import { getAllTrackers } from "./trackers";
@@ -19,6 +25,7 @@ import { sleep } from "./contract-interaction-utils";
 import { createFunctionSignature } from "./function-signatures";
 import { getRule } from "./rules";
 import { createTracker } from "./trackers";
+import { convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "../parsing/reverse-parsing-logic";
 
 /**
  * @file policy.ts

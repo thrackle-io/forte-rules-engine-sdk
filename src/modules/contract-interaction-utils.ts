@@ -2,8 +2,6 @@
 import { 
     getContract, 
     Address,
-    toFunctionSelector,
-
     toHex,
     encodeAbiParameters,
     parseAbiParameters,
@@ -17,7 +15,7 @@ import {
     cleanInstructionSet,
     buildForeignCallList,
     buildTrackerList
-} from "./parser"
+} from "../parsing/parser"
 
 
 import { FCNameToID, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract } from "./types";

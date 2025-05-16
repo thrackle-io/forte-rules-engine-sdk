@@ -2,7 +2,7 @@
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, Config } from "@wagmi/core";
 import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
-import { parseTrackerSyntax } from "./parser";
+import { parseTrackerSyntax } from "../parsing/parser";
 import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./types";
 
 /**
