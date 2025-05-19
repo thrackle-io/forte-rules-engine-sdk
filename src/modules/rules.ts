@@ -202,7 +202,6 @@ export const getRule = async(config: Config, rulesEnginePolicyContract: RulesEng
         let ruleResult = result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct
 
-
         for(var posEffect of ruleS.posEffects) {
             posEffect.text = hexToString(posEffect.text).replace(/\u0000/g, "")
         }

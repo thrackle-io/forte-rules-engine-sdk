@@ -16,13 +16,15 @@ import {
     RulesEngineComponentContract, 
     FCNameToID, TrackerDefinition, 
     PolicyJSON, 
-    hexToFunctionSignature 
+    hexToFunctionSignature, 
+    ForeignCallOnChain,
+    TrackerOnChain
 } from "./types";
-import { createForeignCall,getAllForeignCalls} from "./foreign-calls"
+import { createForeignCall,getAllForeignCalls, getForeignCallMetadata} from "./foreign-calls"
 import {createRule } from "./rules"
-import { getAllTrackers } from "./trackers";
+import { getAllTrackers, getTrackerMetadata } from "./trackers";
 import { sleep } from "./contract-interaction-utils";
-import { createFunctionSignature } from "./function-signatures";
+import { createFunctionSignature, getFunctionSignatureMetadata } from "./function-signatures";
 import { getRule } from "./rules";
 import { createTracker } from "./trackers";
 import { convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "../parsing/reverse-parsing-logic";
@@ -62,7 +64,6 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
     var trackerIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
     let ruleIds = []
-    let result = 0
     let ruleToFunctionSignature = new Map<string, number[]>();
     let functionSignatures: string[] = []
     let functionSignatureIds: number[] = []
@@ -80,7 +81,6 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
         ...addPolicy.request,
         account
     });
-
     const transactionReceipt = await waitForTransactionReceipt(config, {
         hash: returnHash,
     })
@@ -97,6 +97,7 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
                 fcIds.push(struc)
             }
         }
+        console.log("pre tracker create")
         if (policyJSON.Trackers != null) {
             for(var tracker of policyJSON.Trackers) {
                 var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
@@ -106,14 +107,14 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
                 trackers.push(trackerStruct)
             }
         }
-       
+       console.log("post tracker create")
         for(var rule of policyJSON.RulesJSON) {
             var functionSignature = rule.functionSignature.trim()
             if(!functionSignatures.includes(functionSignature)) {
                 functionSignatures.push(functionSignature)
-                const fsId = await createFunctionSignature(config, rulesEngineComponentContract, policyId, functionSignature)
+                const fsId = await createFunctionSignature(config, rulesEngineComponentContract, policyId, functionSignature, rule.encodedValues)
                 functionSignatureIds.push(fsId)
-                functionSignatureMappings.push({hex: toFunctionSelector(functionSignature), functionSignature: functionSignature, encodedValues: rule.encodedValues})
+                functionSignatureMappings.push({hex: toFunctionSelector(functionSignature), functionSignature: functionSignature, encodedValues: rule.encodedValues, index: -1})
             }
             
             const ruleId = await createRule(config, rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
@@ -138,7 +139,6 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
             }
             functionSignatureSelectors.push(toFunctionSelector(fs))
         }
-
         policyId = await updatePolicy(config, rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
     }
     return {policyId, functionSignatureMappings: functionSignatureMappings}
@@ -291,8 +291,10 @@ export const deletePolicy = async(config: Config, rulesEnginePolicyContract: Rul
  * @returns A JSON string representing the full policy.
  */
 export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string> => {
-    try {
+    policyId: number): Promise<string> => {
+
+        var functionSignatureMappings: hexToFunctionSignature[] = []
+        try {
         const retrievePolicy = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
             abi: rulesEnginePolicyContract.abi,
@@ -302,8 +304,55 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
 
         let policyResult = retrievePolicy.result
         let functionSignatures: any = policyResult[0]
-        let functionIds = policyResult[1]
         let ruleIds2DArray: any = policyResult[2]
+
+        var iter = 1
+        for(var fsId in functionSignatures) {
+            var mapp = await getFunctionSignatureMetadata(config, rulesEngineComponentContract, policyId, iter)
+            var newMapping: hexToFunctionSignature = {
+                hex: mapp.signature,
+                functionSignature: mapp.functionSignature,
+                encodedValues: mapp.encodedValues,
+                index: -1
+            }
+            functionSignatureMappings.push(newMapping)
+            iter++
+        }
+
+        var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(config, rulesEngineComponentContract, policyId)
+        var foreignCallNames: string[] = []
+        for(var fc of foreignCalls) {
+            var name = await getForeignCallMetadata(config, rulesEngineComponentContract, policyId, fc.foreignCallIndex)
+            foreignCallNames.push(name)
+            var newMapping: hexToFunctionSignature = {
+                hex: fc.signature,
+                functionSignature: name,
+                encodedValues: "",
+                index: -1
+            }
+            functionSignatureMappings.push(newMapping)
+        }
+
+        var callStrings: string[] = []
+        convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings, foreignCallNames)
+
+        var trackers: TrackerOnChain[] = await getAllTrackers(config, rulesEngineComponentContract, policyId)
+        var trackerNames: string[] = []
+        for(var tracker of trackers) {
+            var name = await getTrackerMetadata(config, rulesEngineComponentContract, policyId, tracker.trackerIndex)
+            console.log("NAME", name)
+            trackerNames.push(name)
+            var newMapping: hexToFunctionSignature = {
+                hex: "",
+                functionSignature: name,
+                encodedValues: "",
+                index: tracker.trackerIndex
+            }
+            functionSignatureMappings.push(newMapping)
+        }
+
+        var trackerStrings: string[] = []
+        convertTrackerStructsToStrings(trackers, trackerStrings, trackerNames)
 
         var iter = 0
         var ruleJSONObjs = []
@@ -322,21 +371,12 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
                 var ruleS = await getRule(config, rulesEnginePolicyContract, policyId, ruleId)
                 var plhArray: string[] = []
                 if(ruleS != null) {
-                    ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray))
+                    ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray, foreignCalls, trackers, functionSignatureMappings))
                 }
                 
             }
             iter++
         }
-
-
-        var foreignCalls: any[] | null = await getAllForeignCalls(config, rulesEngineComponentContract, policyId)
-        var callStrings: string[] = []
-        convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings)
-
-        var trackers: any[] | null = await getAllTrackers(config, rulesEngineComponentContract, policyId)
-        var trackerStrings: string[] = []
-        convertTrackerStructsToStrings(trackers, trackerStrings)
 
         var jsonObj = {
             Trackers: trackerStrings,
