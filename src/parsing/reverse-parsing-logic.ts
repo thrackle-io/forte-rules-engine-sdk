@@ -257,9 +257,6 @@ export function convertRuleStructToString(functionString: string, encodedValues:
         encodedValues: ""
     }
 
-    console.log(ruleS.placeHolders)
-    console.log(trackers)
-
     var names = parseFunctionArguments(encodedValues)
 
     for(var plh of ruleS!.placeHolders) {
@@ -278,8 +275,6 @@ export function convertRuleStructToString(functionString: string, encodedValues:
                 if(tracker.trackerIndex == plh.typeSpecificIndex) {
                     for(var map of mappings) {
                         if(map.index == plh.typeSpecificIndex) {
-                            console.log("found match", map)
-                            console.log("mappings", mappings)
                             plhArray.push("TR:" + map.functionSignature)
                         } 
                     }

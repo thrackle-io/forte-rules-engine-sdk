@@ -75,7 +75,6 @@ export const createRule = async (config: Config, rulesEnginePolicyContract: Rule
             });
             break
         } catch (err) {
-            console.log(err)
             // TODO: Look into replacing this loop/sleep with setTimeout
             await sleep(1000)
         }

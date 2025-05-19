@@ -97,7 +97,6 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
                 fcIds.push(struc)
             }
         }
-        console.log("pre tracker create")
         if (policyJSON.Trackers != null) {
             for(var tracker of policyJSON.Trackers) {
                 var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker)
@@ -107,7 +106,6 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
                 trackers.push(trackerStruct)
             }
         }
-       console.log("post tracker create")
         for(var rule of policyJSON.RulesJSON) {
             var functionSignature = rule.functionSignature.trim()
             if(!functionSignatures.includes(functionSignature)) {
@@ -128,8 +126,6 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
                 ruleToFunctionSignature.set(functionSignature, [ruleId])
             }
         }
-        
-        console.log("YOU MUST SAVE THESE FUNCTION SIGNATURE MAPPINGS TO RETRIEVE THE FULL POLICY LATER: ", functionSignatureMappings)
         
         for(var fs of functionSignatures) {
             if(ruleToFunctionSignature.has(fs)) {
@@ -340,7 +336,6 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
         var trackerNames: string[] = []
         for(var tracker of trackers) {
             var name = await getTrackerMetadata(config, rulesEngineComponentContract, policyId, tracker.trackerIndex)
-            console.log("NAME", name)
             trackerNames.push(name)
             var newMapping: hexToFunctionSignature = {
                 hex: "",
