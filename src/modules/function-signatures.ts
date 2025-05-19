@@ -135,6 +135,16 @@ export const deleteFunctionSignature = async (
     return -1 
 }
 
+/**
+ * retrieves the metadata for a function signature from the rules engine component contract.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI
+ * @param policyId - The ID of the policy for which the function signature is being created.
+ * @param functionSignatureId - The function signature ID.
+ * @returns A promise that resolves to the result of the contract interaction.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
 export const getFunctionSignatureMetadata = async(
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,

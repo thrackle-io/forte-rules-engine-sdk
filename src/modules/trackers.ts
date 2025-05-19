@@ -56,7 +56,6 @@ export const createTracker = async (
       });
       break;
     } catch (err) {
-      console.log(err)
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -108,7 +107,6 @@ export const updateTracker = async (
       });
       break;
     } catch (err) {
-      console.log(err)
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -204,6 +202,16 @@ export const getTracker = async (
   }
 };
 
+/**
+ * Retrieves the metadata for a tracker from the Rules Engine Component Contract based on the provided policy ID and tracker ID.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @param policyId - The ID of the policy associated with the tracker.
+ * @param trackerId - The ID of the tracker to retrieve.
+ * @returns A promise that resolves to the tracker metadata result if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
 export const getTrackerMetadata = async(
   config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,

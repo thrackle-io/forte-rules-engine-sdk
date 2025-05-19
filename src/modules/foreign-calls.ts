@@ -236,6 +236,16 @@ export const getForeignCall = async(
     }
 }
 
+/**
+ * Retrieves the metadata for a foreign call from the rules engine component contract.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @param policyId - The ID of the policy associated with the foreign call.
+ * @param foreignCallId - The ID of the foreign call to retrieve.
+ * @returns A promise that resolves to the result of the foreign call, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
 export const getForeignCallMetadata = async(
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
