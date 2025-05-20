@@ -297,6 +297,8 @@ export function cleanInstructionSet(instructionSet: any[]) {
             instructionSet[iter] = 14;
         } else if(val == "<=") {
             instructionSet[iter] = 15;
+        } else if(val == "!=") {
+            instructionSet[iter] = 16;
         }
 
         iter++
