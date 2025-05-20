@@ -11,7 +11,7 @@ import {
 import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseForeignCallDefinition } from "../parsing/parser"
-import { RulesEngineComponentContract } from "./types"
+import { ForeignCallOnChain, RulesEngineComponentContract } from "./types"
 
 /**
  * @file ForeignCalls.ts
@@ -75,7 +75,7 @@ export const createForeignCall = async(
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "createForeignCall",
-                args: [ policyId, fc ],
+                args: [ policyId, fc, foreignCall.name ],
             });
             break
         } catch (err) {
@@ -237,6 +237,37 @@ export const getForeignCall = async(
 }
 
 /**
+ * Retrieves the metadata for a foreign call from the rules engine component contract.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @param policyId - The ID of the policy associated with the foreign call.
+ * @param foreignCallId - The ID of the foreign call to retrieve.
+ * @returns A promise that resolves to the result of the foreign call, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
+export const getForeignCallMetadata = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number, 
+    foreignCallId: number): Promise<string> => {
+        try {
+            const getMeta = await readContract(config, {
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
+                functionName: "getForeignCallMetadata",
+                args: [ policyId, foreignCallId ],
+            });
+    
+            let foreignCallResult = getMeta as string;
+            return foreignCallResult;
+        } catch (error) {
+            console.error(error);
+            return "";
+        }
+    }
+
+/**
  * Retrieves all foreign calls associated with a specific policy ID from the Rules Engine Component Contract.
  *
  * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract, 
@@ -249,7 +280,7 @@ export const getForeignCall = async(
 export const getAllForeignCalls = async(
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number): Promise<any[] | null> => {
+    policyId: number): Promise<ForeignCallOnChain[]> => {
     try {
         const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
@@ -257,11 +288,11 @@ export const getAllForeignCalls = async(
             functionName: "getAllForeignCalls",
             args: [ policyId ],
         });
-        let foreignCallResult = addFC as any[];
+        let foreignCallResult = addFC as ForeignCallOnChain[];
         return foreignCallResult;
     } catch (error) {
         console.error(error);
-        return null;
+        return [];
     }
 
 }

@@ -22,7 +22,7 @@
  */
 
 import { Address, getContract } from "viem"
-import { FCNameToID, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types"
+import { FCNameToID, FunctionSignatureHashMapping, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types"
 import {createPolicy as createPolicyInternal,
      updatePolicy as updatePolicyInternal, 
     setPolicies as setPoliciesInternal,
@@ -45,7 +45,8 @@ import {
     updateForeignCall as updateForeignCallInternal,
     deleteForeignCall as deleteForeignCallInternal,
     getForeignCall as getForeignCallInternal,
-    getAllForeignCalls as getAllForeignCallsInternal
+    getAllForeignCalls as getAllForeignCallsInternal,
+    getForeignCallMetadata as getForeignCallMetadataInternal
 } from "./foreign-calls"
 
 import {
@@ -53,11 +54,13 @@ import {
     updateTracker as updateTrackerInternal,
     deleteTracker as deleteTrackerInternal,
     getTracker as getTrackerInternal,
-    getAllTrackers as getAllTrackersInternal
+    getAllTrackers as getAllTrackersInternal,
+    getTrackerMetadata as getTrackerMetadataInternal
 } from "./trackers"
     
 import {
-    createFunctionSignature as createFunctionSignatureInternal
+    createFunctionSignature as createFunctionSignatureInternal,
+    getFunctionSignatureMetadata as getFunctionSignatureMetadataInternal
 } from "./function-signatures"
 import { Config } from "@wagmi/core"
 
@@ -337,6 +340,20 @@ export class RulesEngine {
     }
 
     /**
+     * Retrieves the metadata for a foreign call from the rules engine component contract.
+     *
+     * @param policyId - The ID of the policy associated with the foreign call.
+     * @param foreignCallId - The ID of the foreign call to retrieve.
+     * @returns A promise that resolves to the result of the foreign call, or `null` if an error occurs.
+     *
+     * @throws Will log an error to the console if the contract interaction fails.
+     */
+    getForeignCallMetadata(policyId: number, foreignCallId: number): Promise<any | null> 
+    {
+        return getForeignCallMetadataInternal(config, this.rulesEngineComponentContract, policyId, foreignCallId)
+    }
+
+    /**
     * Asynchronously creates a tracker in the rules engine component contract.
     *
     * @param policyId - The ID of the policy associated with the tracker.
@@ -412,6 +429,20 @@ export class RulesEngine {
     }
 
     /**
+     * Retrieves the metadata for a tracker from the Rules Engine Component Contract based on the provided policy ID and tracker ID.
+     *
+     * @param policyId - The ID of the policy associated with the tracker.
+     * @param trackerId - The ID of the tracker to retrieve.
+     * @returns A promise that resolves to the tracker metadata result if successful, or `null` if an error occurs.
+     *
+     * @throws Will log an error to the console if the contract interaction fails.
+     */
+    getTrackerMetadata(policyId: number, trackerId: number): Promise<string | null>
+    {
+        return getTrackerMetadataInternal(config, this.rulesEngineComponentContract, policyId, trackerId)
+    }
+
+    /**
      * Creates a function signature in the rules engine component contract.
      *
      * This function parses the provided function signature, maps its arguments to their respective
@@ -420,12 +451,28 @@ export class RulesEngine {
      *
      * @param policyId - The ID of the policy for which the function signature is being created.
      * @param functionSignature - The function signature string to be parsed and added to the contract.
+     * @param encodedValues - the encoded values that will be sent along with the rules invocation.
      * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
      *
      * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
      */
-    createFunctionSignature(policyId: number, functionSignature: string): Promise<number>
+    createFunctionSignature(policyId: number, functionSignature: string, encodedValues: string): Promise<number>
     {
-        return createFunctionSignatureInternal(config, this.rulesEngineComponentContract, policyId, functionSignature)
-    }       
+        return createFunctionSignatureInternal(config, this.rulesEngineComponentContract, policyId, functionSignature, encodedValues)
+    } 
+    
+    /**
+     * retrieves the metadata for a function signature from the rules engine component contract.
+     *
+     * @param rulesEngineComponentContract - The contract instance containing the address and ABI
+     * @param policyId - The ID of the policy for which the function signature is being created.
+     * @param functionSignatureId - The function signature ID.
+     * @returns A promise that resolves to the result of the contract interaction.
+     *
+     * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+     */
+    getFunctionSignatureMetadata(policyId: number, functionSignatureId: number): Promise<FunctionSignatureHashMapping>
+    {
+        return getFunctionSignatureMetadataInternal(config, this.rulesEngineComponentContract, policyId, functionSignatureId)
+    }
 }

@@ -46,6 +46,14 @@ export type RuleStorageSet = {
 export type hexToFunctionSignature = {
     hex: string,
     functionSignature: string,
+    encodedValues: string,
+    index: number
+}
+
+
+export type FunctionSignatureHashMapping = {
+    functionSignature: string,
+    signature: string,
     encodedValues: string
 }
 
@@ -101,6 +109,23 @@ export type RuleStruct = {
     fcArgumentMappingsEffects: any[],
     posEffects: any[],
     negEffects: any[]
+}
+
+export type ForeignCallOnChain = {
+    set: boolean,
+    foreignCallAddress: string,
+    signature: string,
+    returnType: number,
+    foreignCallIndex: number,
+    parameterTypes: number[],
+    typeSpecificIndices: number[]
+}
+
+export type TrackerOnChain = {
+    set: boolean,
+    pType: number,
+    trackerValue: string,
+    trackerIndex: number
 }
 
 export type ForeignCallDefinition = {

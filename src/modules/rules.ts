@@ -75,7 +75,6 @@ export const createRule = async (config: Config, rulesEnginePolicyContract: Rule
             });
             break
         } catch (err) {
-            console.log(err)
             // TODO: Look into replacing this loop/sleep with setTimeout
             await sleep(1000)
         }
@@ -201,7 +200,6 @@ export const getRule = async(config: Config, rulesEnginePolicyContract: RulesEng
 
         let ruleResult = result as RuleStorageSet
         let ruleS = ruleResult.rule as RuleStruct
-
 
         for(var posEffect of ruleS.posEffects) {
             posEffect.text = hexToString(posEffect.text).replace(/\u0000/g, "")

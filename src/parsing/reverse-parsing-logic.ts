@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 
-import { stringReplacement, RuleStruct, ruleJSON, PT } from "../modules/types"
+import { stringReplacement, RuleStruct, ruleJSON, PT, ForeignCallOnChain, hexToFunctionSignature, TrackerOnChain } from "../modules/types"
 import { parseFunctionArguments } from "./parsing-utilities"
 
 /**
@@ -247,7 +247,7 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
  * - Reverse parse the rule's instruction set to generate a condition string.
  * - Populate the `ruleJSON` object with the processed data.
  */
-export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[]) {
+export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[], foreignCalls: ForeignCallOnChain[], trackers: TrackerOnChain[],  mappings: hexToFunctionSignature[]) {
     
     var rJSON: ruleJSON = {
         condition: "",
@@ -260,7 +260,29 @@ export function convertRuleStructToString(functionString: string, encodedValues:
     var names = parseFunctionArguments(encodedValues)
 
     for(var plh of ruleS!.placeHolders) {
-        plhArray.push(names[plh.typeSpecificIndex].name)
+        if(plh.foreignCall) {
+            for(var call of foreignCalls) {
+                if(call.foreignCallIndex == plh.typeSpecificIndex) {
+                    for(var map of mappings) {
+                        if(map.hex == call.signature) {
+                            plhArray.push("FC:" + map.functionSignature)
+                        }
+                    }
+                }
+            }
+        } else if(plh.trackerValue) {
+            for(var tracker of trackers) {
+                if(tracker.trackerIndex == plh.typeSpecificIndex) {
+                    for(var map of mappings) {
+                        if(map.index == plh.typeSpecificIndex) {
+                            plhArray.push("TR:" + map.functionSignature)
+                        } 
+                    }
+                }
+            }
+        } else {
+            plhArray.push(names[plh.typeSpecificIndex].name)
+        }
     }
 
     var posIter = 0
@@ -289,7 +311,6 @@ export function convertRuleStructToString(functionString: string, encodedValues:
             rJSON.negativeEffects.push(effectString)
         }
     }
-
     rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, [])
     rJSON.functionSignature = functionString
     rJSON.encodedValues = encodedValues
@@ -321,8 +342,9 @@ export function convertRuleStructToString(functionString: string, encodedValues:
  * Foreign Call 1 --> 0x1234567890abcdef --> myFunction(uint256) --> uint256 --> uint256, string
  * ```
  */
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: any[] | null, functionSignatureMappings: any[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallOnChain[], functionSignatureMappings: any[], names: string[]) {
     var fcIter = 1
+    var iter = 0
     if(foreignCalls != null) {
         for(var call of foreignCalls) {
             var signatureString = ""
@@ -349,7 +371,8 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
             }
 
             var outputString = ""
-            outputString += "Foreign Call " + String(fcIter) + " --> "
+            outputString += names[iter]
+            outputString += " --> "
             outputString += call.foreignCallAddress
             outputString += " --> "
             outputString += signatureString
@@ -367,6 +390,7 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
 
             callStrings.push(outputString)
             fcIter += 1
+            iter += 1
         }
     }
 }
@@ -377,9 +401,9 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
  * @param trackers - An array of tracker structures.
  * @param trackerStrings - An array to store the resulting strings.
  */
-export function convertTrackerStructsToStrings(trackers: any[] | null, trackerStrings: string[]) {
-    var trackerIter = 1
+export function convertTrackerStructsToStrings(trackers: TrackerOnChain[], trackerStrings: string[], trackerNames: string[]) {
     if(trackers != null) {
+        var iter = 0
         for(var tracker of trackers) {
 
             var trackerType = ""
@@ -390,12 +414,13 @@ export function convertTrackerStructsToStrings(trackers: any[] | null, trackerSt
             }
 
             var outputString = ""
-            outputString += "Tracker " + String(trackerIter) + " --> "
+            outputString += trackerNames[iter]
+            outputString += " --> "
             outputString += trackerType
             outputString += " --> "
             outputString += tracker.trackerValue
             trackerStrings.push(outputString)
-            trackerIter += 1
+            iter += 1
         }
     }
 }

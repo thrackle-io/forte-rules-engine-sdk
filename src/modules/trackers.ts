@@ -3,7 +3,7 @@ import { simulateContract, waitForTransactionReceipt, writeContract, readContrac
 import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "../parsing/parser";
-import { RulesEngineComponentContract, trackerJSON, TrackerDefinition } from "./types";
+import { RulesEngineComponentContract, trackerJSON, TrackerDefinition, TrackerOnChain } from "./types";
 
 /**
  * @file Trackers.ts
@@ -44,7 +44,7 @@ export const createTracker = async (
 ): Promise<number> => {
   var json: trackerJSON = JSON.parse(trSyntax);
   var tracker: TrackerDefinition = parseTrackerSyntax(json);
-  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue };
+  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: 0 };
   var addTR;
   while (true) {
     try {
@@ -52,7 +52,7 @@ export const createTracker = async (
         address: rulesEngineComponentContract.address,
         abi: rulesEngineComponentContract.abi,
         functionName: "createTracker",
-        args: [policyId, transactionTracker],
+        args: [policyId, transactionTracker, tracker.name],
       });
       break;
     } catch (err) {
@@ -95,7 +95,7 @@ export const updateTracker = async (
 ): Promise<number> => {
   var json: trackerJSON = JSON.parse(trSyntax);
   var tracker: TrackerDefinition = parseTrackerSyntax(json);
-  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue };
+  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: trackerId };
   var addTR;
   while (true) {
     try {
@@ -182,7 +182,7 @@ export const getTracker = async (
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   trackerId: number
-): Promise<any | null> => {
+): Promise<TrackerOnChain> => {
   try {
     const retrieveTR = await readContract(config, {
       address: rulesEngineComponentContract.address,
@@ -190,12 +190,48 @@ export const getTracker = async (
       functionName: "getTracker",
       args: [policyId, trackerId],
     });
-    return retrieveTR;
+    return retrieveTR as TrackerOnChain;
   } catch (error) {
     console.error(error);
-    return null;
+    return {
+      set: false,
+      pType: 0,
+      trackerValue: "",
+      trackerIndex: -1
+    };
   }
 };
+
+/**
+ * Retrieves the metadata for a tracker from the Rules Engine Component Contract based on the provided policy ID and tracker ID.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
+ * @param policyId - The ID of the policy associated with the tracker.
+ * @param trackerId - The ID of the tracker to retrieve.
+ * @returns A promise that resolves to the tracker metadata result if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
+export const getTrackerMetadata = async(
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  policyId: number, 
+  trackerId: number): Promise<string> => {
+      try {
+          const getMeta = await readContract(config, {
+              address: rulesEngineComponentContract.address,
+              abi: rulesEngineComponentContract.abi,
+              functionName: "getTrackerMetadata",
+              args: [ policyId, trackerId ],
+          });
+  
+          let foreignCallResult = getMeta as string;
+          return foreignCallResult;
+      } catch (error) {
+          console.error(error);
+          return "";
+      }
+  }
 
 /**
  * Retrieves all trackers associated with a specific policy ID from the Rules Engine Component Contract.
@@ -211,7 +247,7 @@ export const getAllTrackers = async (
   config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number
-): Promise<any[] | null> => {
+): Promise<TrackerOnChain[]> => {
   try {
     const retrieveTR = await readContract(config, {
       address: rulesEngineComponentContract.address,
@@ -220,10 +256,10 @@ export const getAllTrackers = async (
       args: [policyId],
     });
 
-    let trackerResult = retrieveTR as any[];
+    let trackerResult = retrieveTR as TrackerOnChain[];
     return trackerResult;
   } catch (error) {
     console.error(error);
-    return null;
+    return []
   }
 };

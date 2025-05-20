@@ -4,12 +4,13 @@ import {
     simulateContract,
     waitForTransactionReceipt,
     writeContract, 
-    Config
+    Config,
+    readContract
 } from "@wagmi/core";
 import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseFunctionArguments } from "../parsing/parser"
-import { RulesEngineComponentContract } from "./types"
+import { FunctionSignatureHashMapping, RulesEngineComponentContract } from "./types"
 
 /**
  * @file FunctionSignatures.ts
@@ -50,7 +51,7 @@ import { RulesEngineComponentContract } from "./types"
 export const createFunctionSignature = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
-    policyId: number, functionSignature: string
+    policyId: number, functionSignature: string, encodedValues: string
     ): Promise<number> => {
         var argsRaw = parseFunctionArguments(functionSignature)
         var args = []
@@ -71,7 +72,7 @@ export const createFunctionSignature = async (
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "createFunctionSignature",
-                args: [ policyId, toFunctionSelector(functionSignature), args ],
+                args: [ policyId, toFunctionSelector(functionSignature), args, functionSignature, encodedValues ],
             });
             break
         } catch (err) {
@@ -133,3 +134,38 @@ export const deleteFunctionSignature = async (
     }
     return -1 
 }
+
+/**
+ * retrieves the metadata for a function signature from the rules engine component contract.
+ *
+ * @param rulesEngineComponentContract - The contract instance containing the address and ABI
+ * @param policyId - The ID of the policy for which the function signature is being created.
+ * @param functionSignatureId - The function signature ID.
+ * @returns A promise that resolves to the result of the contract interaction.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const getFunctionSignatureMetadata = async(
+    config: Config,
+    rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number, 
+    functionSignatureId: number): Promise<FunctionSignatureHashMapping> => {
+        try {
+            const getMeta = await readContract(config, {
+                address: rulesEngineComponentContract.address,
+                abi: rulesEngineComponentContract.abi,
+                functionName: "getFunctionSignatureMetadata",
+                args: [ policyId, functionSignatureId ],
+            });
+    
+            let functionSignatureResult = getMeta as FunctionSignatureHashMapping;
+            return functionSignatureResult;
+        } catch (error) {
+            console.error(error);
+            return {
+                functionSignature: "",
+                signature: "",
+                encodedValues: ""
+            };
+        }
+    }
