@@ -65,7 +65,6 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var effectNames: any[] = []
     condition = parseForeignCalls(condition, names, foreignCallNameToID)
     parseTrackers(condition,  names, indexMap)
-    
     var placeHolders: PlaceholderStruct[] = []
     placeHolders = buildPlaceholderList(names)
 

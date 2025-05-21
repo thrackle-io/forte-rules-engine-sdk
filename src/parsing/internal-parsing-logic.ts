@@ -33,7 +33,7 @@ var truIndex = -1
 // --------------------------------------------------------------------------------------------------
 
 
-
+var originalDelimiters: string[] = []
 /**
  * Interprets a given syntax string into an instruction set and placeholders.
  * 
@@ -52,18 +52,25 @@ var truIndex = -1
  */
 export function convertHumanReadableToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[], existingPlaceHolders: PlaceholderStruct[]) {
         
-        //Replace AND and OR with a placeholder value (PLA) so we can parse them simultaneously 
-        var originalDelimiters: string[] = []
+        //Replace AND, OR and NOT with a placeholder value (PLA) so we can parse them simultaneously 
+        originalDelimiters = []
         var whiteSpaceSplit = syntax.split(" ")
         var delimiterIterator = 0
-
+        var first = true
         for(var str of whiteSpaceSplit) {
-            if(str == "AND" || str == "OR") {
+            if(str == "AND" || str == "OR" || str == "NOT") {
                 originalDelimiters.push(str)
-                syntax = syntax.replace(" " + str, " PLA" + String(delimiterIterator))
+                if(first) {
+                    syntax = syntax.replace(str, " PLA" + String(delimiterIterator))
+                } else {
+                    syntax = syntax.replace(" " + str, " PLA" + String(delimiterIterator))
+                }
+                
                 delimiterIterator += 1
             } 
+            first = false
         }
+        
         // Create the initial Abstract Syntax Tree (AST) splitting on PLA (placeholder)
         var array = convertToTree(syntax, "PLA")
         
@@ -77,11 +84,13 @@ export function convertHumanReadableToInstructionSet(syntax: string, names: any[
             // Recursively iterate over the tree splitting on the available operators
             for(var matchCase of matchArray) {
                 
-                //AND and OR have been relaced with placeholders, just iterate over the placeholder itself
+                //AND, OR and NOT have been relaced with placeholders, just iterate over the placeholder itself
                 if(matchCase == 'OR') { 
                     continue
-                } if(matchCase == 'AND') {
+                } else if(matchCase == 'AND') {
                     matchCase = "PLA"
+                } else if(matchCase == 'NOT') {
+                    continue
                 }
 
                 iterate(array, matchCase)
@@ -250,7 +259,14 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 } else {
                     retVal.push(expression[0])
                 }
-                if(expression[0].trim() == 'NOT') {
+                var not = false
+                if( expression[0].includes("PLA")) {
+                    var it = parseInt(expression[0].replace("PLA", "").trim())
+                    if(originalDelimiters[it] == 'NOT') {
+                        not = true
+                    }
+                }
+                if(not) {
                     retVal.push(mem[mem.length - 1])
                     mem.pop()
                 } else {
@@ -327,9 +343,7 @@ function convertToTree(condition : string, splitOn : string) {
         // Repeat this process until all parenthesis have been accounted for
         var start = condition.lastIndexOf("(")
         var substr = condition.substring(start, condition.indexOf(")", start) + 1)
-        // if(condition.substring(start - 4, start) == "NOT " && splitOn != 'NOT') {
-        //     substr = " NOT " + substr
-        // } 
+
         condition = condition.replace(substr, "i:".concat(iter.toString()))
         var index = "i:".concat(iter.toString())
         var tuple: Tuple = { i: index, s: substr }
@@ -345,7 +359,7 @@ function convertToTree(condition : string, splitOn : string) {
         uniq = [...new Set(matches)]
         delimiterSplit = condition.split(reg)
     } else {
-        delimiterSplit = splitOn == "NOT" ? condition.split("NOT ") : condition.split(" " + splitOn + " ")
+        delimiterSplit = condition.split(" " + splitOn + " ")
     }
     // 3. Convert to syntax array
     // Start from the back of the array and work forwards
@@ -378,12 +392,21 @@ function convertToTree(condition : string, splitOn : string) {
 
                 var outerArray = new Array()
                 if(splitOn == "PLA") {
+
                     outerArray.push(uniq[addOnIter].trim())
                     addOnIter += 1
                 } else {
                     outerArray.push(splitOn)
                 }
-                if(splitOn != 'NOT') {
+                var pushArray = true
+                
+                if(splitOn == 'PLA') {
+                    var it = parseInt(uniq[addOnIter - 1].replace("PLA", "").trim())
+                     if(originalDelimiters[it] == 'NOT') {
+                        pushArray = false
+                     }
+                }
+                if(pushArray) {
                     outerArray.push(innerArray)
                 }
                 outerArray.push(innerArrayTwo)
@@ -427,9 +450,6 @@ function iterate(array: any[], splitOn: string) {
     while(iter < array.length) {
         if(!Array.isArray(array[iter])) {
             var checkVal = " " + splitOn + " "
-            if(splitOn == "NOT") {
-                checkVal = "NOT "
-            }
             if(splitOn == "PLA") {
                 checkVal = " PLA"
             }
