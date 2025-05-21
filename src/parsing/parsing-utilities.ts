@@ -402,7 +402,7 @@ export function removeExtraParenthesis(strToClean: string) {
         var sub = strToClean.substring(initialIndex, closingIndex + 1)
         var removed = false
 
-        if(sub.includes('AND') || sub.includes('OR')) {
+        if(sub.includes('AND') || sub.includes('OR') || sub.includes('NOT')) {
             holders.push(sub)
             var replacement = "rep:" + iter
             iter += 1

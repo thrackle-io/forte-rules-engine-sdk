@@ -32,6 +32,8 @@ var truIndex = -1
 //   - convertASTToInstructionSet
 // --------------------------------------------------------------------------------------------------
 
+
+
 /**
  * Interprets a given syntax string into an instruction set and placeholders.
  * 
@@ -50,11 +52,37 @@ var truIndex = -1
  */
 export function convertHumanReadableToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[], existingPlaceHolders: PlaceholderStruct[]) {
         // Create the initial Abstract Syntax Tree (AST) splitting on AND
-        var array = convertToTree(syntax, "AND")
-        if(array.length == 0) {
-            // If array is empty the top level conditional must be an OR instead of an AND
-            array = convertToTree(syntax, "OR")
+        var repurpose: string[] = []
+        var iterable = syntax.split(" ")
+        console.log(iterable)
+        var thisthatiterat = 0
+        for(var str of iterable) {
+            if(str == "AND" || str == "OR") {
+                console.log("f", str)
+                repurpose.push(str)
+                syntax = syntax.replace(" " + str, " PLA" + String(thisthatiterat))
+                thisthatiterat += 1
+            } else {
+                console.log("nf", str)
+            }
         }
+        console.log(syntax)
+// return {instructionSet: [], placeHolders: []}
+        for(var str of repurpose) {
+            console.log("repurpose", str)
+        }
+
+        // syntax = syntax.split(" AND ").join(" PLA ")
+        // syntax = syntax.split(" OR ").join(" PLA ")
+        var plaIter = 0
+        console.log(syntax)
+        var array = convertToTree(syntax, "PLA")
+        console.log("array", array)
+        // var array = convertToTree(syntax, "AND")
+        // if(array.length == 0) {
+        //     // If array is empty the top level conditional must be an OR instead of an AND
+        //     array = convertToTree(syntax, "OR")
+        // }
         
         if(array.length == 1) {
             array = array[0]
@@ -62,22 +90,49 @@ export function convertHumanReadableToInstructionSet(syntax: string, names: any[
             // If the array is still empty than a single top level statement without an AND or OR was used.
             array.push(syntax)
         }
-        
+        console.log("ARRAY", array)
+        // return {instructionSet: [], placeHolders: []}
         if(array.length > 0) {
             // Recursively iterate over the tree splitting on the available operators
             for(var matchCase of matchArray) {
+                if(matchCase == 'OR') { 
+                    continue
+                } if(matchCase == 'AND') {
+                    matchCase = "PLA"
+                }
                 iterate(array, matchCase)
+                // break
             }
+            console.log("array", array)
+            
             removeArrayWrappers(array)
+            console.log(array)
             intify(array)
+            console.log("ARRAYRRAYRRAY", array)
         }
         var instructionSet: any[] = []
         var mem: any[] = []
         var placeHolders: PlaceholderStruct[] = []
         const iter = { value: 0 };
+        
         // Convert the AST into the Instruction Set Syntax 
         convertASTToInstructionSet(instructionSet, mem, array, iter, names, existingPlaceHolders, indexMap)
+        console.log("HEREREREER", instructionSet)
+        console.log(instructionSet.length)
+        for(var myiter in instructionSet) {
+            if(typeof instructionSet[myiter] == "string") {
+            if(instructionSet[myiter].includes("PLA")) {
+                var inmyIter = parseInt(instructionSet[myiter].replace("PLA", "").trim())
+                console.log(inmyIter)
+                instructionSet[myiter] = repurpose[inmyIter]
+                // instructionSet[myiter] = repurpose.shift()
+                //     console.log("shift", expression[0])
+                //     console.log("remaining", repurpose)
+            } 
+        }
+        }
         return {instructionSet: instructionSet, placeHolders: placeHolders}
+        // return {instructionSet: [], placeHolders: []}
 }
 
 /**
@@ -196,7 +251,12 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
             }
         }
         if(!foundMatch) {
-            if(matchArray.includes(expression[0].trim()) ) {
+            if(matchArray.includes(expression[0].trim()) || expression[0].includes("PLA")){
+                // if(expression[0].trim().includes("PLA")) {
+                //     expression[0] = repurpose.pop()
+                //     console.log("shift", expression[0])
+                //     console.log("remaining", repurpose)
+                // }
                 foundMatch = true
                 var sliced = expression.slice(1)
                 convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
@@ -221,10 +281,15 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 } else {
                     retVal.push(expression[0])
                 }
-                retVal.push(mem[mem.length - 2])
-                retVal.push(mem[mem.length - 1])
-                mem.pop()
-                mem.pop()
+                if(expression[0].trim() == 'NOT') {
+                    retVal.push(mem[mem.length - 1])
+                    mem.pop()
+                } else {
+                    retVal.push(mem[mem.length - 2])
+                    retVal.push(mem[mem.length - 1])
+                    mem.pop()
+                    mem.pop()
+                }
                 if(truMatchArray.includes(expression[0].trim())) {
                     retVal.push('TRU')
                     retVal.push(truIndex)
@@ -283,9 +348,7 @@ function convertToTree(condition : string, splitOn : string) {
     var substrs = new Array()
 
     var delimiterSplit = condition.split(splitOn)
-
     let iter = 0
-
     let leng = condition.split('(').length
 
     while(iter <= (leng - 2)) {
@@ -295,20 +358,33 @@ function convertToTree(condition : string, splitOn : string) {
         // Repeat this process until all parenthesis have been accounted for
         var start = condition.lastIndexOf("(")
         var substr = condition.substring(start, condition.indexOf(")", start) + 1)
+        // if(condition.substring(start - 4, start) == "NOT " && splitOn != 'NOT') {
+        //     substr = " NOT " + substr
+        // } 
         condition = condition.replace(substr, "i:".concat(iter.toString()))
         var index = "i:".concat(iter.toString())
         var tuple: Tuple = { i: index, s: substr }
         substrs.push(tuple)
         iter++
     }
-
+    console.log("substrs", substrs)
     // 2. Split based on the passed in delimiter (splitOn)
-    var delimiterSplit = condition.split(" " + splitOn + " ")
+    var delimiterSplit: string[] = []
+    var uniq: string[] = []
+    if(splitOn == "PLA") {
+        var reg: RegExp = / PLA\d{1,6} /
+        var matches = condition.match(reg)
+        uniq = [...new Set(matches)]
+        delimiterSplit = condition.split(reg)
+    } else {
+        delimiterSplit = splitOn == "NOT" ? condition.split("NOT ") : condition.split(" " + splitOn + " ")
+    }
     // 3. Convert to syntax array
     // Start from the back of the array and work forwards
     var endIndex = delimiterSplit.length - 1
 
     var overAllArray = new Array()
+    var addOnIter = 0
     while (endIndex > 0) {
         if(endIndex >= 1) {
             var innerArray = new Array()
@@ -330,9 +406,18 @@ function convertToTree(condition : string, splitOn : string) {
             // If this is the first entry in the overall array, add the values in an array wrapper
             // otherwise add them directly
             if(overAllArray.length == 0) {
+
+
                 var outerArray = new Array()
-                outerArray.push(splitOn)
-                outerArray.push(innerArray)
+                if(splitOn == "PLA") {
+                    outerArray.push(uniq[addOnIter].trim())
+                    addOnIter += 1
+                } else {
+                    outerArray.push(splitOn)
+                }
+                if(splitOn != 'NOT') {
+                    outerArray.push(innerArray)
+                }
                 outerArray.push(innerArrayTwo)
                 overAllArray.unshift(outerArray)
             } else {
@@ -374,6 +459,12 @@ function iterate(array: any[], splitOn: string) {
     while(iter < array.length) {
         if(!Array.isArray(array[iter])) {
             var checkVal = " " + splitOn + " "
+            if(splitOn == "NOT") {
+                checkVal = "NOT "
+            }
+            if(splitOn == "PLA") {
+                checkVal = " PLA"
+            }
             if(array[iter].includes(checkVal)) {
                 var output = convertToTree(array[iter], splitOn)
                 if(output.length > 0) {
