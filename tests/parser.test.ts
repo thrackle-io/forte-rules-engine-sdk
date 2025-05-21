@@ -514,6 +514,45 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
+test('Evaluates a simple syntax string with a Foreign Call and !=', () => {
+  /*
+   * Original Syntax:
+   * FC:leaderboard(to) > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value
+   * 
+   * Abstract Tree Syntax:
+   *  [AND,
+   *    [>,
+   *      [FC:leaderboard, "to"], 100],
+   *    [==, "value", 100],
+   * ]
+   * 
+   * Instruction Set Syntax:
+   * [ 'PLH, 0, 
+   *   'N', 100, 
+   *   '>', 0, 1, 
+   *   'PLH', 1, 
+   *   'N', 100, 
+   *   '==', 3, 4, 
+   *   'AND', 2, 5, 
+   */
+    let expectedArray = [
+      'PLH', 2n, 'N', 100n,
+      '>', 0n, 1n,
+      'PLH', 1n, 'N', 100n, '!=',
+      3n, 4n, 'AND', 2n, 5n
+    ]
+    var ruleStringA = `{
+    "condition": "FC:leaderboard(to) > 100 AND value != 100 ",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "functionSignature": "transfer(address to, uint256 value)",
+    "encodedValues": "address to, uint256 value"
+    }`
+  
+    let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [{id:1, name:"leaderboard", type: 0}])
+    expect(retVal.instructionSet).toEqual(expectedArray)
+  })
+
 test('Reverse Interpretation for the: "Evaluates a simple syntax string with a Foreign Call" test', () => {
   let instructionSet = [
     'PLH', 0, 'N', 100,
