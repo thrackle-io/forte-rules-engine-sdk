@@ -13,7 +13,7 @@
   },
   "version": "0.0.3",
   "description": "",
-  "main": "dist/index.js",
+  "main": "index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
