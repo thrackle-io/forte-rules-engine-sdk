@@ -267,13 +267,9 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     }
                 }
                 if(not) {
-                    retVal.push(mem[mem.length - 1])
-                    mem.pop()
+                    retVal.push(mem.pop())
                 } else {
-                    retVal.push(mem[mem.length - 2])
-                    retVal.push(mem[mem.length - 1])
-                    mem.pop()
-                    mem.pop()
+                    retVal.push(...mem.splice(mem.length - 2, 2))
                 }
                 if(truMatchArray.includes(expression[0].trim())) {
                     retVal.push('TRU')
