@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 
-import { toFunctionSelector, Address } from "viem";
+import { toFunctionSelector, Address, getAddress } from "viem";
 
 import {
     Config,
@@ -386,7 +386,13 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
     }    
 
 }
-
+/**
+ * Checks if a policy exists in the Rules Engine.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
+ * @param policyId - The ID of the policy to check.
+ * @returns True if the policy exists, false otherwise.
+ */
 export async function policyExists(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, policyId: number): Promise<boolean> {
     try {
         let policyExists = await simulateContract(config, {
@@ -401,5 +407,25 @@ export async function policyExists(config: Config, rulesEnginePolicyContract: Ru
         return false
     } catch (error) {
         return false
+    }
+}
+
+/**
+ * Retrieves the IDs of all of the policies that have been applied to a contract address.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param address - The ID of the policy to check.
+ * @returns array of all of the policy ids applied to the contract
+ */
+export async function getAppliedPolicyIds(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, address: string): Promise<number[]> {
+    try {
+        let appliedPolicies = await simulateContract(config, {
+            address: rulesEnginePolicyContract.address,
+            abi: rulesEnginePolicyContract.abi,
+            functionName: "getAppliedPolicyIds",
+            args: [getAddress(address)]
+        });
+        return appliedPolicies.result
+    } catch (error) {
+        return []
     }
 }

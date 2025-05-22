@@ -29,7 +29,8 @@ import {createPolicy as createPolicyInternal,
     appendPolicy as appendPolicyInternal,
     deletePolicy as deletePolicyInternal,
     getPolicy as getPolicyInternal,
-    policyExists as policyExistsInternal
+    policyExists as policyExistsInternal,
+    getAppliedPolicyIds as getAppliedPolicyIdsInternal
  } from "./policy"
 
 import {
@@ -169,12 +170,21 @@ export class RulesEngine {
      * Retrieves the full policy, including rules, trackers, and foreign calls, as a JSON string.
      * 
      * @param policyId - The ID of the policy to retrieve.
-     * @param functionSignatureMappings - A mapping of function signatures to their hex representations.
      * @returns A JSON string representing the full policy.
      */
-    getPolicy(policyId: number, functionSignatureMappings: hexToFunctionSignature[]): Promise<string>
+    getPolicy(policyId: number): Promise<string>
     {
-        return getPolicyInternal(config, this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId, functionSignatureMappings)
+        return getPolicyInternal(config, this.rulesEnginePolicyContract, this.rulesEngineComponentContract, policyId)
+    }
+
+    /** 
+     * Retrieves the IDs of all of the policies that have been applied to a contract address.
+     * @param address - The ID of the policy to check.
+     * @returns array of all of the policy ids applied to the contract
+     */
+    getAppliedPolicyIds(address: string): Promise<number[]> 
+    {
+        return getAppliedPolicyIdsInternal(config, this.rulesEnginePolicyContract, address)
     }
 
     /**

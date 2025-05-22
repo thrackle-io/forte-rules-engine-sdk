@@ -5,7 +5,7 @@ import { getConfig, account, DiamondAddress, connectConfig, createTestConfig } f
 import { getRulesEnginePolicyContract, getRulesEngineComponentContract } from "../src/modules/contract-interaction-utils";
 import { createForeignCall, deleteForeignCall, updateForeignCall, getForeignCall, getAllForeignCalls } from "../src/modules/foreign-calls";
 import { createFunctionSignature, deleteFunctionSignature } from "../src/modules/function-signatures";
-import { createPolicy, updatePolicy, deletePolicy, getPolicy, policyExists } from "../src/modules/policy";
+import { createPolicy, updatePolicy, deletePolicy, getPolicy, policyExists, getAppliedPolicyIds, setPolicies } from "../src/modules/policy";
 import { createRule, getAllRules, updateRule, deleteRule } from "../src/modules/rules";
 import { createTracker, updateTracker, getTracker, getAllTrackers, deleteTracker } from "../src/modules/trackers";
 import { sleep } from "../src/modules/contract-interaction-utils";
@@ -472,6 +472,45 @@ describe("Rules Engine Interactions", async () => {
     expect(exists).toEqual(true)
   })
   
+  test("Can retrieve applied policy ids", async () => {
+    var policyJSON = `
+    {
+    "Policy": "Test Policy", 
+    "PolicyType": "open",
+    "ForeignCalls": [
+        {
+            "name": "Simple Foreign Call",
+            "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "signature": "testSig(address)",
+            "returnType": "uint256",
+            "parameterTypes": "address",
+            "encodedIndices": "0"
+        }
+    ], 
+    "Trackers": [
+    {
+        "name": "Simple String Tracker",
+        "type": "string",
+        "defaultValue": "test" 
+    }
+    ],
+    "RulesJSON": [
+        {
+            "condition": "value > 500",
+            "positiveEffects": ["emit Success"],
+            "negativeEffects": ["revert()"],
+            "functionSignature": "transfer(address to, uint256 value)",
+            "encodedValues": "address to, uint256 value"
+        }
+        ]
+        }`;
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
+    await setPolicies(config, getRulesEnginePolicyContract(rulesEngineContract, client), [result.policyId], getAddress("0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef"))
+    var ids = await getAppliedPolicyIds(config, getRulesEnginePolicyContract(rulesEngineContract, client), "0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef")
+    expect(ids.length).toEqual(1)
+    expect(ids[0]).toEqual(result.policyId)
+  })
+
   test(
     "Can delete a full policy",
     async () => {
