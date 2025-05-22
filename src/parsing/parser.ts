@@ -144,6 +144,12 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
           )
 
         trackerDefaultValue = bytes
+    } else if(trackerType == "bool") {
+        if(syntax.defaultValue == "true") {
+            trackerDefaultValue = encodePacked(['uint256'], [1n])
+        } else {
+            trackerDefaultValue = encodePacked(['uint256'], [0n])
+        }
     } else {
         trackerDefaultValue = encodeAbiParameters(
                             parseAbiParameters('string'),

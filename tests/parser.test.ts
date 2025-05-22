@@ -410,6 +410,19 @@ expect(retVal.defaultValue).toEqual(encodeAbiParameters(
   parseAbiParameters('uint256'), [BigInt(14)]))
 });
 
+test('Creates a simple bool tracker', () => {
+  var str = `{
+        "name": "Simple bool Tracker",
+        "type": "bool",
+        "defaultValue": "true"
+        }`
+var retVal = parseTrackerSyntax(JSON.parse(str))
+expect(retVal.name).toEqual("Simple bool Tracker")
+expect(retVal.type).toEqual(pTypeEnum.BOOL)
+expect(retVal.defaultValue).toEqual(encodeAbiParameters(
+  parseAbiParameters('uint256'), [BigInt(1)]))
+});
+
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
   let instructionSet = [
     'PLH', 0, 'N',
@@ -460,7 +473,7 @@ expect(retVal.defaultValue).toEqual(encodeAbiParameters(
 test('Tests unsupported type', () => {
   var str = `{
   "name": "Simple String Tracker",
-  "type": "bool",
+  "type": "book",
   "defaultValue": "test"
   }`
 expect(() => parseTrackerSyntax(JSON.parse(str))).toThrowError("Unsupported type")
@@ -1299,3 +1312,107 @@ test('Extraneous paraenthesis', () => {
     var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"trackerOne", type: 0}, {id:2, name:"trackerTwo", type: 0}, {id:2, name:"trackerThree", type: 2}], [])
     expect(retVal.instructionSet).toEqual(expectedArray)
   });
+
+  test('Evaluates a simple syntax string involving a boolean variable', () => {
+    /**
+     * Original Syntax:
+     * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+     * 
+     * Abtract Tree Syntax:
+     * [AND,
+     *  [">",
+     *      ["+", "3", "4"],
+     *      "5"]
+     *  [AND,
+     *      ["==", "1", "1"],
+     *      ["==", "2", "2"]
+     *  ]
+     * ]
+     * 
+     * Instruction Set Syntax:
+     * [ 'N', 3, 'N', 4, '+', 0,
+     *    1, 'N', 5, '>', 2, 3,
+     *   'N', 1, 'N', 1, '==', 5,
+     *    6, 'N', 2, 'N', 2, '==',
+     *    8, 9, 'AND', 7, 10, 'AND',
+     *    4, 11 ]
+     */
+    var expectedArray = [
+      'PLH', 0n,    'N',   1n,
+      '==',  0n,    1n,    'PLH',
+      1n,    'N',   2n,    '==',
+      3n,    4n,    'AND', 2n,
+      5n,    'NOT', 6n
+    ]
+  
+    var ruleStringA = `{
+    "condition": "value == true",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "functionSignature": "addValue(bool value, uint256 sAND)",
+    "encodedValues": "bool value, uint256 sAND"
+    }`
+    var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"trackerOne", type: 0}, {id:2, name:"trackerTwo", type: 0}], [])
+    // expect(retVal.instructionSet).toEqual(expectedArray)
+    console.log(retVal.instructionSet)
+    console.log(retVal.placeHolders)
+  });
+
+  test('Evaluates a simple syntax string involving a boolean tracker', () => {
+    /**
+     * Original Syntax:
+     * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+     * 
+     * Abtract Tree Syntax:
+     * [AND,
+     *  [">",
+     *      ["+", "3", "4"],
+     *      "5"]
+     *  [AND,
+     *      ["==", "1", "1"],
+     *      ["==", "2", "2"]
+     *  ]
+     * ]
+     * 
+     * Instruction Set Syntax:
+     * [ 'N', 3, 'N', 4, '+', 0,
+     *    1, 'N', 5, '>', 2, 3,
+     *   'N', 1, 'N', 1, '==', 5,
+     *    6, 'N', 2, 'N', 2, '==',
+     *    8, 9, 'AND', 7, 10, 'AND',
+     *    4, 11 ]
+     */
+    var expectedArray = [
+      'PLH', 0n,   'N',
+      1n,     '==', 0n,
+      1n
+    ]
+  
+    var ruleStringA = `{
+    "condition": "TR:trackerOne == true",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "functionSignature": "addValue(bool value, uint256 sAND)",
+    "encodedValues": "bool value, uint256 sAND"
+    }`
+    var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"trackerOne", type: 3}, {id:2, name:"trackerTwo", type: 0}], [])
+    expect(retVal.instructionSet).toEqual(expectedArray)
+  });
+
+test('Creates a simple foreign call with a boolean return', () => {
+ var str = `{
+  "name": "Simple Foreign Call",
+  "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+  "signature": "testSig(address,string,uint256)",
+  "returnType": "bool",
+  "parameterTypes": "address, string, uint256",
+  "encodedIndices": "0, 1, 2"
+  }`
+
+var retVal = parseForeignCallDefinition(JSON.parse(str))
+expect(retVal.name).toEqual("Simple Foreign Call")
+expect(retVal.address).toEqual(getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"))
+expect(retVal.signature).toEqual("testSig(address,string,uint256)")
+expect(retVal.returnType).toEqual(3)
+expect(retVal.parameterTypes).toEqual([0,1,2])
+});
