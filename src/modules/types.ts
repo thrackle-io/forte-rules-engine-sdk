@@ -1,6 +1,6 @@
 
 /// SPDX-License-Identifier: BUSL-1.1
-import { 
+import {
     Address,
     ByteArray,
     GetContractReturnType
@@ -39,7 +39,7 @@ export type FCNameToID = {
 }
 
 export type RuleStorageSet = {
-    set: boolean, 
+    set: boolean,
     rule: any
 }
 
@@ -97,14 +97,27 @@ export enum EffectType {
     REVERT = 0,
     EVENT = 1,
     EXPRESSION = 2
-    
+
 }
 
-export type RuleStruct = {
+export type EffectDefinition = {
+    type: EffectType;
+    text: string;
+    instructionSet: any[];
+    pType: number;
+    parameterValue: any;
+}
+
+export type RuleDefinition = {
     instructionSet: number[],
-    rawData: RawData,          
+    rawData: RawData,
     placeHolders: any[],
     effectPlaceHolders: any[],
+    positiveEffects: EffectDefinition[],
+    negativeEffects: EffectDefinition[]
+}
+
+export type RuleStruct = RuleDefinition & {
     fcArgumentMappingsConditions: any[],
     fcArgumentMappingsEffects: any[],
     posEffects: any[],
@@ -129,7 +142,6 @@ export type TrackerOnChain = {
 }
 
 export type ForeignCallDefinition = {
-
     name: string;
     address: Address;
     signature: string;
@@ -197,6 +209,6 @@ export enum pTypeEnum {
     VOID = 4,
     BYTES = 5
 }
-export const PT = [ {name: 'address', enumeration: pTypeEnum.ADDRESS}, {name: 'string', enumeration: pTypeEnum.STRING}, 
-    {name: 'uint256', enumeration: pTypeEnum.UINT256}, {name: 'bool', enumeration: pTypeEnum.BOOL}, 
-    {name: 'void', enumeration: pTypeEnum.VOID}, {name: 'bytes', enumeration: pTypeEnum.BYTES} ]
+export const PT = [{ name: 'address', enumeration: pTypeEnum.ADDRESS }, { name: 'string', enumeration: pTypeEnum.STRING },
+{ name: 'uint256', enumeration: pTypeEnum.UINT256 }, { name: 'bool', enumeration: pTypeEnum.BOOL },
+{ name: 'void', enumeration: pTypeEnum.VOID }, { name: 'bytes', enumeration: pTypeEnum.BYTES }]
