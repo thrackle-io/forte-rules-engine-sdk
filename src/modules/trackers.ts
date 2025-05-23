@@ -42,8 +42,8 @@ export const createTracker = async (
   policyId: number,
   trSyntax: string
 ): Promise<number> => {
-  var json: trackerJSON = JSON.parse(trSyntax);
-  var tracker: TrackerDefinition = parseTrackerSyntax(json);
+  const json: trackerJSON = JSON.parse(trSyntax);
+  const tracker = parseTrackerSyntax(json);
   var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: 0 };
   var addTR;
   while (true) {
@@ -93,8 +93,8 @@ export const updateTracker = async (
   trackerId: number,
   trSyntax: string
 ): Promise<number> => {
-  var json: trackerJSON = JSON.parse(trSyntax);
-  var tracker: TrackerDefinition = parseTrackerSyntax(json);
+  const json: trackerJSON = JSON.parse(trSyntax);
+  const tracker = parseTrackerSyntax(json);
   var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: trackerId };
   var addTR;
   while (true) {
@@ -212,26 +212,26 @@ export const getTracker = async (
  *
  * @throws Will log an error to the console if the contract interaction fails.
  */
-export const getTrackerMetadata = async(
+export const getTrackerMetadata = async (
   config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
-  policyId: number, 
+  policyId: number,
   trackerId: number): Promise<string> => {
-      try {
-          const getMeta = await readContract(config, {
-              address: rulesEngineComponentContract.address,
-              abi: rulesEngineComponentContract.abi,
-              functionName: "getTrackerMetadata",
-              args: [ policyId, trackerId ],
-          });
-  
-          let foreignCallResult = getMeta as string;
-          return foreignCallResult;
-      } catch (error) {
-          console.error(error);
-          return "";
-      }
+  try {
+    const getMeta = await readContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "getTrackerMetadata",
+      args: [policyId, trackerId],
+    });
+
+    let foreignCallResult = getMeta as string;
+    return foreignCallResult;
+  } catch (error) {
+    console.error(error);
+    return "";
   }
+}
 
 /**
  * Retrieves all trackers associated with a specific policy ID from the Rules Engine Component Contract.

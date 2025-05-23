@@ -56,8 +56,8 @@ export const createForeignCall = async (
     policyId: number,
     fcSyntax: string,
 ): Promise<number> => {
-    var json = JSON.parse(fcSyntax)
-    var foreignCall = parseForeignCallDefinition(json)
+    const json = JSON.parse(fcSyntax)
+    const foreignCall = parseForeignCallDefinition(json)
     var fc = {
         set: true,
         foreignCallAddress: foreignCall.address,
@@ -120,8 +120,8 @@ export const updateForeignCall = async (
     foreignCallId: number,
     fcSyntax: string,
 ): Promise<number> => {
-    var json = JSON.parse(fcSyntax)
-    var foreignCall = parseForeignCallDefinition(json)
+    const json = JSON.parse(fcSyntax)
+    const foreignCall = parseForeignCallDefinition(json)
     var fc = {
         set: true,
         foreignCallAddress: foreignCall.address,

@@ -100,11 +100,24 @@ export enum EffectType {
 
 }
 
-export type RuleStruct = {
+export type EffectDefinition = {
+    type: EffectType;
+    text: string;
+    instructionSet: any[];
+    pType: number;
+    parameterValue: any;
+}
+
+export type RuleDefinition = {
     instructionSet: number[],
     rawData: RawData,
     placeHolders: any[],
     effectPlaceHolders: any[],
+    positiveEffects: EffectDefinition[],
+    negativeEffects: EffectDefinition[]
+}
+
+export type RuleStruct = RuleDefinition & {
     fcArgumentMappingsConditions: any[],
     fcArgumentMappingsEffects: any[],
     posEffects: any[],
@@ -129,7 +142,6 @@ export type TrackerOnChain = {
 }
 
 export type ForeignCallDefinition = {
-
     name: string;
     address: Address;
     signature: string;
