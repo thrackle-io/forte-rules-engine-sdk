@@ -23,12 +23,12 @@ import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 /**
  * Parses the function signature string and builds an array of argument placeholders.
  * 
- * @param functionSignature - The function signature string.
+ * @param encodedValues - The encoded values string.
  * @param condition - Optional parameter for the condition statement of a rule
  * @returns An array of argument placeholders.
  */
-export function parseFunctionArguments(functionSignature: string, condition?: string) {
-    var params = functionSignature.split(", ");
+export function parseFunctionArguments(encodedValues: string, condition?: string) {
+    var params = encodedValues.split(", ");
     var names = []
     var typeIndex = 0
 

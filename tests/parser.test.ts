@@ -44,7 +44,7 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
   "condition": "3 == 3 AND (1 == 1 OR (2 == 2 AND 3 == 3))",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value, uint256 sAND)",
+  "callingFunction": "addValue(uint256 value, uint256 sAND)",
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -89,7 +89,7 @@ test('Evaluates a simple syntax string (using only values and operators)', () =>
   "condition": "value + sAND > 5 AND (sAND == 1 AND 2 == sAND)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value, uint256 sAND)",
+  "callingFunction": "addValue(uint256 value, uint256 sAND)",
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -133,7 +133,7 @@ test('Evaluates a simple syntax string with >= (using only values and operators)
   "condition": "value + sAND >= 5 AND (sAND == 1 AND 2 == sAND)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value, uint256 sAND)",
+  "callingFunction": "addValue(uint256 value, uint256 sAND)",
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -177,7 +177,7 @@ test('Evaluates a simple syntax string with <= (using only values and operators)
   "condition": "value + sAND <= 5 AND (sAND == 1 AND 2 == sAND)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value, uint256 sAND)",
+  "callingFunction": "addValue(uint256 value, uint256 sAND)",
   "encodedValues": "uint256 value, uint256 sAND"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -246,7 +246,7 @@ test('Evaluates a complex syntax string (using only values and operators)', () =
      "condition": "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) ",
      "positiveEffects": ["revert"],
      "negativeEffects": [],
-     "functionSignature": "addValue(uint256 value)",
+     "callingFunction": "addValue(uint256 value)",
      "encodedValues": "uint256 value"
      }`
 
@@ -310,7 +310,7 @@ test('Evaluates a simple syntax string (using AND + OR operators)', () => {
   "condition": "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
 
@@ -388,7 +388,7 @@ var ruleStringA = `{
 "condition": "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
-"functionSignature": "addValue(uint256 value, string info, address addr)",
+"callingFunction": "addValue(uint256 value, string info, address addr)",
 "encodedValues": "uint256 value, string info, address addr"
 }`
 
@@ -567,7 +567,7 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
   "condition": "FC:leaderboard(to) > 100 AND value == 100 ",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "transfer(address to, uint256 value)",
+  "callingFunction": "transfer(address to, uint256 value)",
   "encodedValues": "address to, uint256 value"
   }`
 
@@ -606,7 +606,7 @@ test('Evaluates a simple syntax string with a Foreign Call and !=', () => {
     "condition": "FC:leaderboard(to) > 100 AND value != 100 ",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "transfer(address to, uint256 value)",
+    "callingFunction": "transfer(address to, uint256 value)",
     "encodedValues": "address to, uint256 value"
     }`
   
@@ -687,7 +687,7 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
    "condition": "( FC:isAllowed(to) == 1 AND to == 0xdeadbeefdeadbeef ) OR ( (FC:isSuperCoolGuy(to) AND FC:isRich(to) == 1) AND FC:creditRisk(amount) < 500 )",
    "positiveEffects": ["revert"],
    "negativeEffects": [],
-   "functionSignature": "transfer(address to, uint256 value)",
+   "callingFunction": "transfer(address to, uint256 value)",
    "encodedValues": "address to, uint256 value" }`
   let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [],  [{id: 1, name: "isAllowed", type: 0}, {id: 2, name: "isSuperCoolGuy", type: 0}, {id: 3, name: "isRich", type: 0}, {id: 4, name: "creditRisk", type: 0}])
   console.log(retVal.placeHolders)
@@ -779,7 +779,7 @@ test('Evaluate complex expression with placeholders', () => {
   "condition": "( to == 1 AND to == 0xdeadbeefdeadbeef ) OR (( value == 1 AND to == 1) AND value < 500 )",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "transfer(address to, uint256 value)",
+  "callingFunction": "transfer(address to, uint256 value)",
   "encodedValues": "address to, uint256 value"
   }`
   let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -858,7 +858,7 @@ var ruleStringA = `{
 "condition": "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
-"functionSignature": "addValue(uint256 value, string info, address addr)",
+"callingFunction": "addValue(uint256 value, string info, address addr)",
 "encodedValues": "uint256 value, string info, address addr"
 }`
 
@@ -893,7 +893,7 @@ test('Evaluate a simple syntax string for a revert effect', () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -906,7 +906,7 @@ test('Evaluate a simple syntax string for a revert effect with message', () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["revert(\\"Didn\'t pass the sniff test\\")"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert("Didn't pass the sniff test") --> addValue(uint256 value) --> uint256 value`
@@ -921,7 +921,7 @@ test('Evaluate a simple syntax string for a event effect', () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Something wrong"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -935,7 +935,7 @@ test('Evaluate a simple syntax string for a event effect without text', () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -949,7 +949,7 @@ test('Evaluate a simple syntax string that contains a positive and negative effe
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes"],
   "negativeEffects": [ "revert" ],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -966,7 +966,7 @@ test('Evaluate a simple syntax string that contains multiple positive effects an
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes", "emit OtherGoodvibes"],
   "negativeEffects": [ "revert" ],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -986,7 +986,7 @@ test('Evaluate a simple syntax string that contains multiple positive and negati
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes", "emit OtherGoodvibes"],
   "negativeEffects": [ "emit badVibes", "FC:updateOracle(value) AND FC:alert(value)" ],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id: 1, name:"simpleTrackler", type:0}], [{id: 2, name:"updateOracle", type:0}, {id: 3, name:"alert", type:0}])
@@ -1016,7 +1016,7 @@ test('Evaluate a simple syntax string for an event effect with an instruction se
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["FC:updateOracle(value) AND FC:alert(value)"],
   "negativeEffects": ["FC:alert(value)"],
-  "functionSignature": "addValue(uint256 value)",
+  "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"simpleTrackler", type: 0}], [{id:1, name:"updateOracle", type: 0}, {id:2, name:"alert", type: 0}])
@@ -1048,7 +1048,7 @@ var ruleStringA = `{
 "condition": " value > 5 ",
 "positiveEffects": [" TRU:testOne -= 1 "],
 "negativeEffects": [],
-"functionSignature": "addValue(uint256 value, string info)",
+"callingFunction": "addValue(uint256 value, string info)",
 "encodedValues": "uint256 value, string info, address addr"
 }`
 
@@ -1074,7 +1074,7 @@ var ruleStringA = `{
 "condition": "(value + 4 > 5 OR value == 5) OR value == TR:testTwo",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
-"functionSignature": "addValue(uint256 value, string info, address addr)",
+"callingFunction": "addValue(uint256 value, string info, address addr)",
 "encodedValues": "uint256 value, string info, address addr"
 }`
 
@@ -1097,7 +1097,7 @@ test('Extraneous paraenthesis', () => {
   "condition": "(((value + 4 > 5) OR value == 5)) OR ((value == TR:testTwo))",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "functionSignature": "addValue(uint256 value, string info, address addr)",
+  "callingFunction": "addValue(uint256 value, string info, address addr)",
   "encodedValues": "uint256 value, string info, address addr"
   }`
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"testTwo", type: 0}], [])
@@ -1152,7 +1152,7 @@ test('Extraneous paraenthesis', () => {
     "condition": "value + sAND > 5 AND (lORe == 1 AND bORe test == lORe)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(uint256 value, uint256 sAND, address lORe)",
+    "callingFunction": "addValue(uint256 value, uint256 sAND, address lORe)",
     "encodedValues": "uint256 value, uint256 sAND, address lORe"
     }`
 
@@ -1172,7 +1172,7 @@ test('Extraneous paraenthesis', () => {
     "condition": "(FC:updateOracle(value) == FCalert)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(uint256 value, string info, address addr)",
+    "callingFunction": "addValue(uint256 value, string info, address addr)",
     "encodedValues": ""
     }`
     
@@ -1218,7 +1218,7 @@ test('Extraneous paraenthesis', () => {
     "condition": "3 == 3 AND ( NOT (1 == 1 OR (2 == 2 AND 3 == 3)))",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(uint256 value, uint256 sAND)",
+    "callingFunction": "addValue(uint256 value, uint256 sAND)",
     "encodedValues": "uint256 value, uint256 sAND"
     }`
     var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [])
@@ -1262,7 +1262,7 @@ test('Extraneous paraenthesis', () => {
     "condition": "NOT (TR:trackerOne == 1 AND TR:trackerTwo == 2)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(uint256 value, uint256 sAND)",
+    "callingFunction": "addValue(uint256 value, uint256 sAND)",
     "encodedValues": "uint256 value, uint256 sAND"
     }`
     var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"trackerOne", type: 0}, {id:2, name:"trackerTwo", type: 0}], [])
@@ -1306,7 +1306,7 @@ test('Extraneous paraenthesis', () => {
     "condition": "TR:trackerOne == 1 OR (TR:trackerTwo == 2 AND ( NOT (1 == 1)))",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(uint256 value, uint256 sAND)",
+    "callingFunction": "addValue(uint256 value, uint256 sAND)",
     "encodedValues": "uint256 value, uint256 sAND"
     }`
     var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [{id:1, name:"trackerOne", type: 0}, {id:2, name:"trackerTwo", type: 0}, {id:2, name:"trackerThree", type: 2}], [])

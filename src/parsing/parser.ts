@@ -59,9 +59,9 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
 
     condition = removeExtraParenthesis(condition)
 
-    var functionSignature = syntax.encodedValues
+    var encodedValues = syntax.encodedValues
 
-    var names = parseFunctionArguments(functionSignature, condition)
+    var names = parseFunctionArguments(encodedValues, condition)
     var effectNames: any[] = []
     condition = parseForeignCalls(condition, names, foreignCallNameToID)
     parseTrackers(condition,  names, indexMap)

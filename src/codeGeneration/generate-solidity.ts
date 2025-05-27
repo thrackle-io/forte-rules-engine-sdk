@@ -58,10 +58,10 @@ export function generateModifier(policyS: string, outputFileName: string) {
     var iter = 0
     var count = 0
     var countArray: string[] = []
-    for(var rule of policySyntax.RulesJSON) {
-        if(!countArray.includes(rule.functionSignature)) {
+    for(var rule of policySyntax.Rules) {
+        if(!countArray.includes(rule.callingFunction)) {
             count += 1
-            countArray.push(rule.functionSignature)
+            countArray.push(rule.callingFunction)
         }
     }
     var absPath = path.join(__dirname, "Template.sol")
@@ -71,10 +71,10 @@ export function generateModifier(policyS: string, outputFileName: string) {
         fs.mkdirSync(path.dirname(outputFileName), { recursive: true });
     }
     const filePathOutput = outputFileName
-    for(var syntax of policySyntax.RulesJSON) {
+    for(var syntax of policySyntax.Rules) {
 
         var argList = syntax.encodedValues
-        var signatureName = syntax.functionSignature.split('(')[0]
+        var signatureName = syntax.callingFunction.split('(')[0]
         if(functionNames.includes(signatureName)) {
             continue
         } else {

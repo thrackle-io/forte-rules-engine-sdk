@@ -16,15 +16,15 @@ import {
     RulesEngineComponentContract, 
     FCNameToID, TrackerDefinition, 
     PolicyJSON, 
-    hexToFunctionSignature, 
     ForeignCallOnChain,
-    TrackerOnChain
+    TrackerOnChain,
+    hexToFunctionString
 } from "./types";
 import { createForeignCall,getAllForeignCalls, getForeignCallMetadata} from "./foreign-calls"
 import {createRule } from "./rules"
 import { getAllTrackers, getTrackerMetadata } from "./trackers";
 import { sleep } from "./contract-interaction-utils";
-import { createFunctionSignature, getFunctionSignatureMetadata } from "./function-signatures";
+import { createCallingFunction, getCallingFunctionMetadata } from "./calling-functions";
 import { getRule } from "./rules";
 import { createTracker } from "./trackers";
 import { convertRuleStructToString, convertForeignCallStructsToStrings, convertTrackerStructsToStrings } from "../parsing/reverse-parsing-logic";
@@ -59,17 +59,17 @@ import { convertRuleStructToString, convertForeignCallStructsToStrings, convertT
  * @returns The ID of the newly created policy.
  */
 export const createPolicy = async (config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract,  rulesEngineComponentContract: RulesEngineComponentContract,
-    policySyntax?: string): Promise<{policyId: number, functionSignatureMappings: hexToFunctionSignature[]}> => {
+    policySyntax?: string): Promise<{policyId: number}> => {
     var fcIds: FCNameToID[] = []
     var trackerIds: FCNameToID[] = []
     let trackers: TrackerDefinition[] = []
     let ruleIds = []
-    let ruleToFunctionSignature = new Map<string, number[]>();
-    let functionSignatures: string[] = []
-    let functionSignatureIds: number[] = []
+    let ruleToCallingFunction = new Map<string, number[]>();
+    let callingFunctions: string[] = []
+    let callingFunctionIds: number[] = []
     let rulesDoubleMapping = []
-    let functionSignatureSelectors = []
-    let functionSignatureMappings: hexToFunctionSignature[] = []
+    let callingFunctionSelectors = []
+    let callingFunctionMappings: hexToFunctionString[] = []
 
     const addPolicy = await simulateContract(config, {
         address: rulesEnginePolicyContract.address,
@@ -106,38 +106,38 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
                 trackers.push(trackerStruct)
             }
         }
-        for(var rule of policyJSON.RulesJSON) {
-            var functionSignature = rule.functionSignature.trim()
-            if(!functionSignatures.includes(functionSignature)) {
-                functionSignatures.push(functionSignature)
-                const fsId = await createFunctionSignature(config, rulesEngineComponentContract, policyId, functionSignature, rule.encodedValues)
-                functionSignatureIds.push(fsId)
-                functionSignatureMappings.push({hex: toFunctionSelector(functionSignature), functionSignature: functionSignature, encodedValues: rule.encodedValues, index: -1})
+        for(var rule of policyJSON.Rules) {
+            var callingFunction = rule.callingFunction.trim()
+            if(!callingFunctions.includes(callingFunction)) {
+                callingFunctions.push(callingFunction)
+                const fsId = await createCallingFunction(config, rulesEngineComponentContract, policyId, callingFunction, rule.encodedValues)
+                callingFunctionIds.push(fsId)
+                callingFunctionMappings.push({hex: toFunctionSelector(callingFunction), functionString: callingFunction, encodedValues: rule.encodedValues, index: -1})
             }
             
             const ruleId = await createRule(config, rulesEnginePolicyContract, policyId, JSON.stringify(rule), fcIds, trackerIds)
             if (ruleId == -1) {
-                return {policyId: -1, functionSignatureMappings: []}
+                return {policyId: -1}
             }
             ruleIds.push(ruleId)
-            if(ruleToFunctionSignature.has(functionSignature)) {
-                ruleToFunctionSignature.get(functionSignature)?.push(ruleId)
+            if(ruleToCallingFunction.has(callingFunction)) {
+                ruleToCallingFunction.get(callingFunction)?.push(ruleId)
             } else {
-                ruleToFunctionSignature.set(functionSignature, [ruleId])
+                ruleToCallingFunction.set(callingFunction, [ruleId])
             }
         }
         
-        for(var fs of functionSignatures) {
-            if(ruleToFunctionSignature.has(fs)) {
-                rulesDoubleMapping.push(ruleToFunctionSignature.get(fs))
+        for(var cf of callingFunctions) {
+            if(ruleToCallingFunction.has(cf)) {
+                rulesDoubleMapping.push(ruleToCallingFunction.get(cf))
             } else {
                 rulesDoubleMapping.push([])
             }
-            functionSignatureSelectors.push(toFunctionSelector(fs))
+            callingFunctionSelectors.push(toFunctionSelector(cf))
         }
-        policyId = await updatePolicy(config, rulesEnginePolicyContract, policyId, functionSignatureSelectors, functionSignatureIds, rulesDoubleMapping)
+        policyId = await updatePolicy(config, rulesEnginePolicyContract, policyId, callingFunctionSelectors, callingFunctionIds, rulesDoubleMapping)
     }
-    return {policyId, functionSignatureMappings: functionSignatureMappings}
+    return {policyId}
 } 
 
 /**
@@ -145,13 +145,13 @@ export const createPolicy = async (config: Config, rulesEnginePolicyContract: Ru
  * 
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to update.
- * @param signatures - The function signatures associated with the policy.
+ * @param callingFunctions - The calling functions associated with the policy.
  * @param ids - The IDs of the rules associated with the policy.
- * @param ruleIds - The mapping of rules to function signatures.
+ * @param ruleIds - The mapping of rules to calling functions.
  * @returns The result of the policy update.
  */
 export const updatePolicy = async (config: Config,
-    rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, signatures: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
+    rulesEnginePolicyContract: RulesEnginePolicyContract, policyId: number, callingFunctions: any[], ids: number[], ruleIds: any[]): Promise<number>  => {
         var updatePolicy
         while(true) {
             try {
@@ -159,7 +159,7 @@ export const updatePolicy = async (config: Config,
                 address: rulesEnginePolicyContract.address,
                 abi: rulesEnginePolicyContract.abi,
                 functionName: "updatePolicy",
-                args: [ policyId, signatures, ids, ruleIds, 1 ],
+                args: [ policyId, callingFunctions, ids, ruleIds, 1 ],
                 });
                 break
             } catch (error) {
@@ -283,13 +283,12 @@ export const deletePolicy = async(config: Config, rulesEnginePolicyContract: Rul
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
  * @param policyId - The ID of the policy to retrieve.
- * @param functionSignatureMappings - A mapping of function signatures to their hex representations.
  * @returns A JSON string representing the full policy.
  */
 export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesEnginePolicyContract, rulesEngineComponentContract: RulesEngineComponentContract, 
     policyId: number): Promise<string> => {
 
-        var functionSignatureMappings: hexToFunctionSignature[] = []
+        var callingFunctionMappings: hexToFunctionString[] = []
         try {
         const retrievePolicy = await simulateContract(config, {
             address: rulesEnginePolicyContract.address,
@@ -299,19 +298,19 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
         });
 
         let policyResult = retrievePolicy.result
-        let functionSignatures: any = policyResult[0]
+        let callingFunctions: any = policyResult[0]
         let ruleIds2DArray: any = policyResult[2]
 
         var iter = 1
-        for(var fsId in functionSignatures) {
-            var mapp = await getFunctionSignatureMetadata(config, rulesEngineComponentContract, policyId, iter)
-            var newMapping: hexToFunctionSignature = {
+        for(var cfId in callingFunctions) {
+            var mapp = await getCallingFunctionMetadata(config, rulesEngineComponentContract, policyId, iter)
+            var newMapping: hexToFunctionString = {
                 hex: mapp.signature,
-                functionSignature: mapp.functionSignature,
+                functionString: mapp.functionSignature,
                 encodedValues: mapp.encodedValues,
                 index: -1
             }
-            functionSignatureMappings.push(newMapping)
+            callingFunctionMappings.push(newMapping)
             iter++
         }
 
@@ -320,30 +319,30 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
         for(var fc of foreignCalls) {
             var name = await getForeignCallMetadata(config, rulesEngineComponentContract, policyId, fc.foreignCallIndex)
             foreignCallNames.push(name)
-            var newMapping: hexToFunctionSignature = {
+            var newMapping: hexToFunctionString = {
                 hex: fc.signature,
-                functionSignature: name,
+                functionString: name,
                 encodedValues: "",
                 index: -1
             }
-            functionSignatureMappings.push(newMapping)
+            callingFunctionMappings.push(newMapping)
         }
 
         var callStrings: string[] = []
-        convertForeignCallStructsToStrings(callStrings, foreignCalls, functionSignatureMappings, foreignCallNames)
+        convertForeignCallStructsToStrings(callStrings, foreignCalls, callingFunctionMappings, foreignCallNames)
 
         var trackers: TrackerOnChain[] = await getAllTrackers(config, rulesEngineComponentContract, policyId)
         var trackerNames: string[] = []
         for(var tracker of trackers) {
             var name = await getTrackerMetadata(config, rulesEngineComponentContract, policyId, tracker.trackerIndex)
             trackerNames.push(name)
-            var newMapping: hexToFunctionSignature = {
+            var newMapping: hexToFunctionString = {
                 hex: "",
-                functionSignature: name,
+                functionString: name,
                 encodedValues: "",
                 index: tracker.trackerIndex
             }
-            functionSignatureMappings.push(newMapping)
+            callingFunctionMappings.push(newMapping)
         }
 
         var trackerStrings: string[] = []
@@ -354,19 +353,22 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
         for(var innerArray of ruleIds2DArray) {
             var functionString = ""
             var encodedValues: string = ""
-            var fs = functionSignatures[iter]
-            for(var mapping of functionSignatureMappings) {
+            var fs = callingFunctions[iter]
+            console.log("calling functions", callingFunctions)
+            console.log("callingFunctionMappings", callingFunctionMappings)
+            for(var mapping of callingFunctionMappings) {
                 if(mapping.hex == fs) {
-                    functionString = mapping.functionSignature
+                    functionString = mapping.functionString
                     encodedValues = mapping.encodedValues
                     break
                 }
             }
+            console.log("FUNCTION STRING", functionString)
             for (var ruleId of innerArray) {
                 var ruleS = await getRule(config, rulesEnginePolicyContract, policyId, ruleId)
                 var plhArray: string[] = []
                 if(ruleS != null) {
-                    ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray, foreignCalls, trackers, functionSignatureMappings))
+                    ruleJSONObjs.push(convertRuleStructToString(functionString, encodedValues, ruleS, plhArray, foreignCalls, trackers, callingFunctionMappings))
                 }
                 
             }
@@ -376,7 +378,7 @@ export const getPolicy = async(config: Config, rulesEnginePolicyContract: RulesE
         var jsonObj = {
             Trackers: trackerStrings,
             ForeignCalls: callStrings,
-            RulesJSON: ruleJSONObjs
+            Rules: ruleJSONObjs
         }
         return JSON.stringify(jsonObj)
 

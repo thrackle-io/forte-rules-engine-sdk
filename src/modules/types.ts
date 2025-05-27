@@ -43,15 +43,16 @@ export type RuleStorageSet = {
     rule: any
 }
 
-export type hexToFunctionSignature = {
+export type hexToFunctionString = {
     hex: string,
-    functionSignature: string,
+    functionString: string,
     encodedValues: string,
     index: number
 }
 
 
-export type FunctionSignatureHashMapping = {
+export type CallingFunctionHashMapping = {
+    // TODO: Rename this to callingFunction once the rename has taken place on the rules engine side
     functionSignature: string,
     signature: string,
     encodedValues: string
@@ -62,7 +63,7 @@ export interface PolicyJSON {
     PolicyType: string;
     ForeignCalls: foreignCallJSON[];
     Trackers: trackerJSON[];
-    RulesJSON: ruleJSON[];
+    Rules: ruleJSON[];
 }
 
 export interface foreignCallJSON {
@@ -84,7 +85,7 @@ export interface ruleJSON {
     condition: string,
     positiveEffects: string[],
     negativeEffects: string[],
-    functionSignature: string,
+    callingFunction: string,
     encodedValues: string
 }
 
@@ -147,7 +148,7 @@ export type PlaceholderStruct = {
 
 export type IndividualArugmentMapping = {
     functionCallArgumentType: number;
-    functionSignatureArg: PlaceholderStruct;
+    callingFunctionArg: PlaceholderStruct;
 }
 
 export type ForeignCallArgumentMappings = {

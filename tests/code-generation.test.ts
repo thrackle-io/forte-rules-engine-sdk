@@ -26,12 +26,12 @@ test('Code Generation test)', () => {
             "defaultValue": "test" 
         }
         ],
-        "RulesJSON": [
+        "Rules": [
             {
                 "condition": "value > 500",
                 "positiveEffects": ["emit Success"],
                 "negativeEffects": ["revert()"],
-                "functionSignature": "transfer(address to, uint256 value)",
+                "callingFunction": "transfer(address to, uint256 value)",
                 "encodedValues": "address to, uint256 value"
             }
         ]
