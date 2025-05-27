@@ -174,20 +174,25 @@ export type FunctionArgument = {
 }
 
 export type stringReplacement = {
-    instructionSetIndex: number
-    originalData: string
+    instructionSetIndex: number;
+    originalData: string;
 }
 
 export type trackerIndexNameMapping = {
-    id: number
-    name: string
-    type: number
+    id: number;
+    name: string;
+    type: number;
 }
 
 export type TrackerDefinition = {
-    name: string
-    type: number
-    defaultValue: any
+    name: string;
+    type: number;
+    defaultValue: any;
+}
+
+export type InstructionSet = {
+    instructionSet: any[];
+    placeHolders: PlaceholderStruct[];
 }
 
 export type RawData = {
