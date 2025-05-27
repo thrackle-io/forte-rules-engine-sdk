@@ -333,12 +333,7 @@ export function buildRawData(instructionSet: any[], excludeArray: string[]): Raw
                     // Determine if the current instruction is a bytes type (hex string starting with "0x")
                     const isBytes = currentInstruction.startsWith('0x');
 
-                    // Create the raw data entry
-                    rawDataArray.push({
-                        rawData: currentInstruction,
-                        iSetIndex: iter,
-                        dataType: isBytes ? "bytes" : "string"
-                    });
+
                     instructionSetArray.push(iter);
                     argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
                     dataValues.push(isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction));
@@ -353,14 +348,15 @@ export function buildRawData(instructionSet: any[], excludeArray: string[]): Raw
                 }
             }
         }
+        iter++
     }
-    iter++
-}
-return {
-    instructionSetIndex: instructionSetArray,
-    argumentTypes: argumentTypes,
-    dataValues: dataValues
-}
+
+
+    return {
+        instructionSetIndex: instructionSetArray,
+        argumentTypes: argumentTypes,
+        dataValues: dataValues
+    }
 }
 
 
