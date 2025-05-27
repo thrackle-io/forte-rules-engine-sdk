@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "declarationMap": true,
     "target": "es2020",
     "module": "commonjs",
     "esModuleInterop": true,
