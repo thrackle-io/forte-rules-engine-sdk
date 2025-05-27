@@ -3,7 +3,8 @@
 import {
     Address,
     ByteArray,
-    GetContractReturnType
+    GetContractReturnType,
+    Hex
 } from "viem";
 
 import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
@@ -106,6 +107,22 @@ export type EffectDefinition = {
     instructionSet: any[];
     pType: number;
     parameterValue: any;
+}
+
+export type EffectStruct = {
+    valid: boolean;
+    dynamicParam: boolean;
+    effectType: EffectType;
+    text: Hex;
+    pType: number;
+    param: any;
+    errorMessage: string;
+    instructionSet: any[];
+}
+
+export type EffectStructs = {
+    positiveEffects: EffectStruct[];
+    negativeEffects: EffectStruct[];
 }
 
 export type RuleDefinition = {

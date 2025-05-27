@@ -51,38 +51,38 @@ import { PolicyJSON, ruleJSON } from '../modules/types';
  * 
  * @throws Will throw an error if the input JSON string is invalid or if file operations fail.
  */
-export function generateModifier(policyS: string, outputFileName: string) { 
+export function generateModifier(policyS: string, outputFileName: string): void {
     var functionNames: String[] = []
     let policySyntax: PolicyJSON = JSON.parse(policyS);
-    
+
     var iter = 0
     var count = 0
     var countArray: string[] = []
-    for(var rule of policySyntax.RulesJSON) {
-        if(!countArray.includes(rule.functionSignature)) {
+    for (var rule of policySyntax.RulesJSON) {
+        if (!countArray.includes(rule.functionSignature)) {
             count += 1
             countArray.push(rule.functionSignature)
         }
     }
     var absPath = path.join(__dirname, "Template.sol")
     var overallModifiedData = fs.readFileSync(absPath, 'utf-8')
-    
+
     if (!fs.existsSync(path.dirname(outputFileName))) {
         fs.mkdirSync(path.dirname(outputFileName), { recursive: true });
     }
     const filePathOutput = outputFileName
-    for(var syntax of policySyntax.RulesJSON) {
+    for (var syntax of policySyntax.RulesJSON) {
 
         var argList = syntax.encodedValues
         var signatureName = syntax.functionSignature.split('(')[0]
-        if(functionNames.includes(signatureName)) {
+        if (functionNames.includes(signatureName)) {
             continue
         } else {
             functionNames.push(signatureName)
             var modifierNameStr = 'modifier checkRulesBefore' + signatureName + '([]) {\n'
             var modifierNameAfterStr = '\tmodifier checkRulesAfter' + signatureName + '([]) {\n'
 
-            var argListUpdate = argList.replace(/address /g , '')
+            var argListUpdate = argList.replace(/address /g, '')
             argListUpdate = argListUpdate.replace(/uint256 /g, '')
             argListUpdate = argListUpdate.replace(/string /g, '')
             argListUpdate = argListUpdate.replace(/bool /g, '')
@@ -98,19 +98,19 @@ export function generateModifier(policyS: string, outputFileName: string) {
             var outputString = modifierNameStr + encodeStr + thirdLine + fourthLine + finalLine
             var outputStringTwo = modifierNameAfterStr + encodeStr + fourthLine + thirdLine + finalLine
             var replaceStr = outputString + '\n\n' + outputStringTwo
-            
-            
+
+
             iter += 1
-            if(iter < count) {
-                replaceStr += '\n\n' 
+            if (iter < count) {
+                replaceStr += '\n\n'
                 replaceStr += '\t// Modifier Here'
                 replaceStr += '\n'
             }
-             var modifiedData = overallModifiedData.replace('// Modifier Here', replaceStr);
-             overallModifiedData = modifiedData
+            var modifiedData = overallModifiedData.replace('// Modifier Here', replaceStr);
+            overallModifiedData = modifiedData
         }
-        }
-        // Write the modified data back to the file
-        fs.writeFileSync(filePathOutput, overallModifiedData, 'utf-8');
-    
+    }
+    // Write the modified data back to the file
+    fs.writeFileSync(filePathOutput, overallModifiedData, 'utf-8');
+
 }

@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { 
-    getContract, 
+import {
+    getContract,
     Address,
     toHex,
     encodeAbiParameters,
@@ -18,7 +18,7 @@ import {
 } from "../parsing/parser"
 
 
-import { FCNameToID, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract } from "./types";
+import { EffectStruct, EffectStructs, FCNameToID, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract } from "./types";
 
 /**
  * @file ContractInteractionUtils.ts
@@ -53,13 +53,13 @@ export const getRulesEnginePolicyContract = (address: Address, client: any): Rul
     address,
     abi: RulesEnginePolicyABI,
     client
-  });
+});
 
-  export const getRulesEngineComponentContract = (address: Address, client: any): RulesEngineComponentContract => getContract({
+export const getRulesEngineComponentContract = (address: Address, client: any): RulesEngineComponentContract => getContract({
     address,
     abi: RulesEngineComponentABI,
     client
-  });
+});
 
 /**
  * Pauses the execution of an asynchronous function for a specified duration.
@@ -94,41 +94,41 @@ export async function sleep(ms: number): Promise<void> {
  */
 export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
     var fcList = buildForeignCallList(ruleSyntax.condition)
-    if(ruleSyntax.positiveEffects != null) {
-        for(var eff of ruleSyntax.positiveEffects) {
+    if (ruleSyntax.positiveEffects != null) {
+        for (var eff of ruleSyntax.positiveEffects) {
             fcList.push(...buildForeignCallList(eff))
         }
     }
-    if(ruleSyntax.negativeEffects != null) {
-        for(var eff of ruleSyntax.negativeEffects) {
+    if (ruleSyntax.negativeEffects != null) {
+        for (var eff of ruleSyntax.negativeEffects) {
             fcList.push(...buildForeignCallList(eff))
         }
     }
-    
+
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID, foreignCallNameToID)
     var trList = buildTrackerList(ruleSyntax.condition)
-    if(ruleSyntax.positiveEffects != null) {
-        for(var eff of ruleSyntax.positiveEffects) {
+    if (ruleSyntax.positiveEffects != null) {
+        for (var eff of ruleSyntax.positiveEffects) {
             trList.push(...buildTrackerList(eff))
         }
     }
-    if(ruleSyntax.negativeEffects != null) {
-        for(var eff of ruleSyntax.negativeEffects) {
+    if (ruleSyntax.negativeEffects != null) {
+        for (var eff of ruleSyntax.negativeEffects) {
             trList.push(...buildTrackerList(eff))
         }
     }
     var fcIDs = []
     var trIDs = []
-    for(var name of fcList) {
-        for(var mapping of foreignCallNameToID) {
-            if(mapping.name == name) {
+    for (var name of fcList) {
+        for (var mapping of foreignCallNameToID) {
+            if (mapping.name == name) {
                 fcIDs.push(mapping.id)
             }
         }
     }
-    for(var name of trList) {
-        for(var mapping of trackerNameToID) {
-            if(mapping.name == name) {
+    for (var name of trList) {
+        for (var mapping of trackerNameToID) {
+            if (mapping.name == name) {
                 trIDs.push(mapping.id)
             }
         }
@@ -140,21 +140,21 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
     tIter = 0
 
     var fcEffectList: string[] = []
-    if(ruleSyntax.positiveEffects != null) {
-        for(var eff of ruleSyntax.positiveEffects) {
+    if (ruleSyntax.positiveEffects != null) {
+        for (var eff of ruleSyntax.positiveEffects) {
             fcEffectList.concat(buildForeignCallList(eff))
         }
     }
-    if(ruleSyntax.negativeEffects != null) {
-        for(var eff of ruleSyntax.negativeEffects) {
+    if (ruleSyntax.negativeEffects != null) {
+        for (var eff of ruleSyntax.negativeEffects) {
             fcEffectList.concat(buildForeignCallList(eff))
         }
     }
 
     var fcEffectIDs = []
-    for(var name of fcEffectList) {
-        for(var mapping of foreignCallNameToID) {
-            if(mapping.name == name) {
+    for (var name of fcEffectList) {
+        for (var mapping of foreignCallNameToID) {
+            if (mapping.name == name) {
                 fcEffectIDs.push(mapping.id)
             }
         }
@@ -166,9 +166,9 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
         dataValues: [],
     }
     cleanInstructionSet(output.instructionSet)
-    const rule =  {
+    const rule = {
         instructionSet: output.instructionSet,
-        rawData: rawData,          
+        rawData: rawData,
         placeHolders: output.placeHolders,
         effectPlaceHolders: output.effectPlaceHolders,
         posEffects: effect.positiveEffects,
@@ -200,26 +200,26 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
  * - `errorMessage`: The error message associated with the effect.
  * - `instructionSet`: The cleaned instruction set for the effect.
  */
-export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[], foreignCallNameToID: FCNameToID[]) {
+export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNameToID[], foreignCallNameToID: FCNameToID[]): EffectStructs {
     var output = parseRuleSyntax(ruleSyntax, trackerNameToID, foreignCallNameToID)
-    var pEffects = []
-    var nEffects = []
+    var pEffects: EffectStruct[] = []
+    var nEffects: EffectStruct[] = []
 
-    for(var pEffect of output.positiveEffects) {
+    for (var pEffect of output.positiveEffects) {
         cleanInstructionSet(pEffect.instructionSet)
         var param: any
 
-        if(pEffect.pType == 0) {
+        if (pEffect.pType == 0) {
             // address
             param = encodeAbiParameters(
                 parseAbiParameters('address'),
                 [getAddress(String(pEffect.parameterValue))])
-        } else if(pEffect.pType == 1) {
+        } else if (pEffect.pType == 1) {
             // string
             param = encodeAbiParameters(
                 parseAbiParameters('string'),
                 [String(pEffect.parameterValue)])
-        } else if(pEffect.pType == 5) {
+        } else if (pEffect.pType == 5) {
             // bytes
             param = encodeAbiParameters(
                 parseAbiParameters('bytes'),
@@ -238,29 +238,29 @@ export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNam
             pType: pEffect.pType,
             param: param,
             text: toHex(stringToBytes(
-                pEffect.text, 
-                { size: 32 } 
-              )),
+                pEffect.text,
+                { size: 32 }
+            )),
             errorMessage: pEffect.text,
             instructionSet: pEffect.instructionSet
-        } as const
+        }
         pEffects.push(effect)
     }
-    for(var nEffect of output.negativeEffects) {
+    for (var nEffect of output.negativeEffects) {
 
         var param: any
 
-        if(nEffect.pType == 0) {
+        if (nEffect.pType == 0) {
             // address
             param = encodeAbiParameters(
                 parseAbiParameters('address'),
                 [getAddress(String(nEffect.parameterValue))])
-        } else if(nEffect.pType == 1) {
+        } else if (nEffect.pType == 1) {
             // string
             param = encodeAbiParameters(
                 parseAbiParameters('string'),
                 [String(nEffect.parameterValue)])
-        } else if(nEffect.pType == 5) {
+        } else if (nEffect.pType == 5) {
             // bytes
             param = encodeAbiParameters(
                 parseAbiParameters('bytes'),
@@ -280,14 +280,14 @@ export function buildAnEffectStruct(ruleSyntax: ruleJSON, trackerNameToID: FCNam
             pType: nEffect.pType,
             param: param,
             text: toHex(stringToBytes(
-                nEffect.text, 
-                { size: 32 } 
-              )),
+                nEffect.text,
+                { size: 32 }
+            )),
             errorMessage: nEffect.text,
             instructionSet: nEffect.instructionSet
-        } as const
+        }
         nEffects.push(effect)
     }
 
-    return {positiveEffects: pEffects, negativeEffects: nEffects }
+    return { positiveEffects: pEffects, negativeEffects: nEffects }
 }

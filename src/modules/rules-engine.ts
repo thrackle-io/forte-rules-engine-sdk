@@ -137,7 +137,7 @@ export class RulesEngine {
      * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
      * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
      */
-    setPolicies(policyIds: [number], contractAddressForPolicy: Address) {
+    setPolicies(policyIds: [number], contractAddressForPolicy: Address): void {
         setPoliciesInternal(config, this.rulesEnginePolicyContract, policyIds, contractAddressForPolicy)
     }
 
@@ -147,7 +147,7 @@ export class RulesEngine {
      * @param policyId - The ID of the policy to apply.
      * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
      */
-    appendPolicy(policyId: number, contractAddressForPolicy: Address) {
+    appendPolicy(policyId: number, contractAddressForPolicy: Address): void {
         appendPolicyInternal(config, this.rulesEnginePolicyContract, policyId, contractAddressForPolicy)
     }
 
