@@ -188,7 +188,7 @@ export type RawData = {
 export const matchArray: string[] = ['OR', 'AND', 'NOT', '==', '>=', '>', '<', '<=', '+', '-', '/', '*', '+=', '-=', '*=', '/=', '=', '!=']
 export const truMatchArray: string[] = ['+=', '-=', '*=', '/=', '=']
 export const operandArray: string[] = ['PLH', 'N']
-export const supportedTrackerTypes: string[] = ['uint256', 'string', 'address', 'bytes']
+export const supportedTrackerTypes: string[] = ['uint256', 'string', 'address', 'bytes', 'bool']
 export enum pTypeEnum {
     ADDRESS = 0,
     STRING = 1,

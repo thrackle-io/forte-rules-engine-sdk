@@ -31,25 +31,19 @@ export function parseFunctionArguments(functionSignature: string, condition?: st
     var params = functionSignature.split(", ");
     var names = []
     var typeIndex = 0
-    var addressIndex = 0
-    var uint256Index = 0
-    var stringIndex = 0
-    var bytesIndex = 0
 
     for(var param of params) {
         var typeName = param.split(" ");
         if(typeName[0].trim() == "uint256" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            uint256Index++
         } else if(typeName[0].trim() == "string" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            stringIndex++
         } else if(typeName[0].trim() == "address" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            addressIndex++
         } else if(typeName[0].trim() == "bytes" && (condition == null || condition.includes(typeName[1]))) {
             names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-            bytesIndex++
+        } else if(typeName[0].trim() == "bool" && (condition == null || condition.includes(typeName[1]))) {
+            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
         }
         typeIndex++
     }
@@ -82,6 +76,8 @@ export function parseTrackers(condition: string, names: any[], indexMap: tracker
                         type = "address"
                     } else if(ind.type == 1) {
                         type = "string"
+                    } else if(ind.type == 3) {
+                        type = "bool"
                     } else if(ind.type == 5) {
                         type = "bytes"
                     } else {
@@ -210,13 +206,17 @@ export function buildPlaceholderList(names: any[]) {
             placeHolderEnum = 1
         } else if(name.rawType == "uint256") {
             placeHolderEnum = 2
+        } else if(name.rawType == "bool") {
+            placeHolderEnum = 3
         } else if(name.rawType == "bytes") {
             placeHolderEnum = 5
-        } else if(name.rawType == "tracker") {
+        }  else if(name.rawType == "tracker") {
             if((name as any).rawTypeTwo == "address") {
                 placeHolderEnum = 0
             } else if((name as any).rawTypeTwo == "string") {
                 placeHolderEnum = 1
+            } else if((name as any).rawTypeTwo == "bool") {
+                placeHolderEnum = 3  
             } else if((name as any).rawTypeTwo == "bytes") {
                 placeHolderEnum = 5
             } else {
@@ -321,26 +321,31 @@ export function buildRawData(instructionSet: any[], excludeArray: string[], rawD
             } else {
                 if (!excludeArray.includes(instructionSet[iter].trim())) {
                     const currentInstruction = instructionSet[iter].trim();
-                
-                    // Determine if the current instruction is a bytes type (hex string starting with "0x")
-                    const isBytes = currentInstruction.startsWith('0x');
-                
-                    // Create the raw data entry
-                    rawDataArray.push({
-                        rawData: currentInstruction,
-                        iSetIndex: iter,
-                        dataType: isBytes ? "bytes" : "string"
-                    });
-                    instructionSetArray.push(iter);
-                    argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
-                    dataValues.push(isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction));
-                
-                    if (!operandArray.includes(currentInstruction)) {
-                        // Convert the string or bytes to a keccak256 hash then to a uint256
-                        instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
-                            parseAbiParameters(isBytes ? 'bytes' : 'string'),
-                            [currentInstruction]
-                        )));
+                    if(currentInstruction == "true") {
+                        instructionSet[iter] = 1n
+                    } else if(currentInstruction == "false") {
+                        instructionSet[iter] = 0n
+                    } else {
+                        // Determine if the current instruction is a bytes type (hex string starting with "0x")
+                        const isBytes = currentInstruction.startsWith('0x');
+                    
+                        // Create the raw data entry
+                        rawDataArray.push({
+                            rawData: currentInstruction,
+                            iSetIndex: iter,
+                            dataType: isBytes ? "bytes" : "string"
+                        });
+                        instructionSetArray.push(iter);
+                        argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
+                        dataValues.push(isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction));
+                    
+                        if (!operandArray.includes(currentInstruction)) {
+                            // Convert the string or bytes to a keccak256 hash then to a uint256
+                            instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
+                                parseAbiParameters(isBytes ? 'bytes' : 'string'),
+                                [currentInstruction]
+                            )));
+                        }
                     }
                 }
             } 
