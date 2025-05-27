@@ -125,18 +125,16 @@ export type EffectStructs = {
     negativeEffects: EffectStruct[];
 }
 
-export type RuleDefinition = {
-    instructionSet: number[],
-    rawData: RawData,
-    placeHolders: any[],
-    effectPlaceHolders: any[],
-    positiveEffects: EffectDefinition[],
-    negativeEffects: EffectDefinition[]
+export type RuleBase = {
+    instructionSet: number[];
+    rawData: RawData;
+    placeHolders: any[];
+    effectPlaceHolders: any[];
 }
 
-export type RuleStruct = RuleDefinition & {
-    fcArgumentMappingsConditions: any[],
-    fcArgumentMappingsEffects: any[],
+export type RuleDefinition = RuleBase & EffectStructs
+
+export type RuleStruct = RuleBase & {
     posEffects: any[],
     negEffects: any[]
 }

@@ -18,7 +18,7 @@ import {
 } from "../parsing/parser"
 
 
-import { EffectStruct, EffectStructs, FCNameToID, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract } from "./types";
+import { EffectStruct, EffectStructs, FCNameToID, RuleDefinition, ruleJSON, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct } from "./types";
 
 /**
  * @file ContractInteractionUtils.ts
@@ -92,7 +92,7 @@ export async function sleep(ms: number): Promise<void> {
  * @returns A structured representation of the rule, including its instruction set, placeholders, 
  *          effect placeholders, and associated effects.
  */
-export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: any, trackerNameToID: FCNameToID[]) {
+export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreignCallNameToID: FCNameToID[], effect: EffectStructs, trackerNameToID: FCNameToID[]): RuleStruct {
     var fcList = buildForeignCallList(ruleSyntax.condition)
     if (ruleSyntax.positiveEffects != null) {
         for (var eff of ruleSyntax.positiveEffects) {
@@ -173,7 +173,7 @@ export function buildARuleStruct(policyId: number, ruleSyntax: ruleJSON, foreign
         effectPlaceHolders: output.effectPlaceHolders,
         posEffects: effect.positiveEffects,
         negEffects: effect.negativeEffects
-    } as const
+    }
     console.log(rule)
 
     return rule
