@@ -76,10 +76,10 @@ export function parseTrackers(condition: string, names: any[], indexMap: tracker
                         type = "address"
                     } else if(ind.type == 1) {
                         type = "string"
-                    } else if(ind.type == 5) {
-                        type = "bytes"
                     } else if(ind.type == 3) {
                         type = "bool"
+                    } else if(ind.type == 5) {
+                        type = "bytes"
                     } else {
                         type = "uint256"
                     }
@@ -206,19 +206,19 @@ export function buildPlaceholderList(names: any[]) {
             placeHolderEnum = 1
         } else if(name.rawType == "uint256") {
             placeHolderEnum = 2
-        } else if(name.rawType == "bytes") {
-            placeHolderEnum = 5
         } else if(name.rawType == "bool") {
             placeHolderEnum = 3
-        } else if(name.rawType == "tracker") {
+        } else if(name.rawType == "bytes") {
+            placeHolderEnum = 5
+        }  else if(name.rawType == "tracker") {
             if((name as any).rawTypeTwo == "address") {
                 placeHolderEnum = 0
             } else if((name as any).rawTypeTwo == "string") {
                 placeHolderEnum = 1
-            } else if((name as any).rawTypeTwo == "bytes") {
-                placeHolderEnum = 5
             } else if((name as any).rawTypeTwo == "bool") {
                 placeHolderEnum = 3  
+            } else if((name as any).rawTypeTwo == "bytes") {
+                placeHolderEnum = 5
             } else {
                 placeHolderEnum = 2
             }
