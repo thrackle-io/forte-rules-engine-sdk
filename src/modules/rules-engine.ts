@@ -22,7 +22,7 @@
  */
 
 import { Address, getContract } from "viem"
-import { FCNameToID, FunctionSignatureHashMapping, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStruct, Maybe } from "./types"
+import { FCNameToID, ForeignCallOnChain, FunctionSignatureHashMapping, hexToFunctionSignature, RulesEngineComponentABI, RulesEngineComponentContract, RulesEnginePolicyABI, RulesEnginePolicyContract, RuleStorageSet, RuleStruct, TrackerOnChain, Maybe } from "./types"
 import {
     createPolicy as createPolicyInternal,
     updatePolicy as updatePolicyInternal,
@@ -249,7 +249,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the operation fails.
      */
-    getAllRules(policyId: number): Promise<Maybe<any[]>> {
+    getAllRules(policyId: number): Promise<Maybe<RuleStorageSet[]>> {
         return getAllRulesInternal(config, this.rulesEnginePolicyContract, policyId)
     }
 
@@ -316,7 +316,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the contract interaction fails.
      */
-    getForeignCall(policyId: number, foreignCallId: number): Promise<Maybe<any>> {
+    getForeignCall(policyId: number, foreignCallId: number): Promise<Maybe<ForeignCallOnChain>> {
         return getForeignCallInternal(config, this.rulesEngineComponentContract, policyId, foreignCallId)
     }
 
@@ -328,7 +328,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the operation fails.
      */
-    getAllForeignCalls(policyId: number): Promise<Maybe<any[]>> {
+    getAllForeignCalls(policyId: number): Promise<Maybe<ForeignCallOnChain[]>> {
         return getAllForeignCallsInternal(config, this.rulesEngineComponentContract, policyId)
     }
 
@@ -341,7 +341,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the contract interaction fails.
      */
-    getForeignCallMetadata(policyId: number, foreignCallId: number): Promise<Maybe<any>> {
+    getForeignCallMetadata(policyId: number, foreignCallId: number): Promise<Maybe<string>> {
         return getForeignCallMetadataInternal(config, this.rulesEngineComponentContract, policyId, foreignCallId)
     }
 
@@ -398,7 +398,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the contract interaction fails.
      */
-    getTracker(policyId: number, trackerId: number): Promise<Maybe<any>> {
+    getTracker(policyId: number, trackerId: number): Promise<Maybe<TrackerOnChain>> {
         return getTrackerInternal(config, this.rulesEngineComponentContract, policyId, trackerId)
     }
 
@@ -411,7 +411,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the operation fails.
      */
-    getAllTrackers(policyId: number): Promise<Maybe<any[]>> {
+    getAllTrackers(policyId: number): Promise<Maybe<TrackerOnChain[]>> {
         return getAllTrackersInternal(config, this.rulesEngineComponentContract, policyId)
     }
 
@@ -424,7 +424,7 @@ export class RulesEngine {
      *
      * @throws Will log an error to the console if the contract interaction fails.
      */
-    getTrackerMetadata(policyId: number, trackerId: number): Promise<Maybe<string>> {
+    getTrackerMetadata(policyId: number, trackerId: number): Promise<string> {
         return getTrackerMetadataInternal(config, this.rulesEngineComponentContract, policyId, trackerId)
     }
 

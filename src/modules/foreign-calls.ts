@@ -219,7 +219,7 @@ export const getForeignCall = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
     policyId: number,
-    foreignCallId: number): Promise<Maybe<any>> => {
+    foreignCallId: number): Promise<Maybe<ForeignCallOnChain>> => {
     try {
         const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
@@ -228,7 +228,7 @@ export const getForeignCall = async (
             args: [policyId, foreignCallId],
         });
 
-        let foreignCallResult = addFC as any;
+        let foreignCallResult = addFC as ForeignCallOnChain;
         return foreignCallResult;
     } catch (error) {
         console.error(error);

@@ -14,7 +14,7 @@ import { Config } from "@wagmi/core";
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
 var config: Config
 var client: any
- 
+
 // Take snapshot
 export const takeSnapshot = async () => {
   const snapshotId = await client.snapshot();
@@ -47,7 +47,7 @@ describe("Rules Engine Interactions", async () => {
     timeout: 999999,
   };
   test("Can create a new rule", async () => {
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
     var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
@@ -55,100 +55,100 @@ describe("Rules Engine Interactions", async () => {
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
         }`
-        var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client), 
-        result.policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
-        expect(ruleId).toBeGreaterThan(0)
-        var functionSignature = "addValue(uint256 value)"
-        const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
-        var selector = toFunctionSelector(functionSignature)        
-        await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId, 
-        [selector], [fsId], [[ruleId]])
-        var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-        expect(rules?.length).toEqual(1)
-    })
-    test("Can delete a function signature", async () => {
-        var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-        var ruleStringA = `{
+    var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0 }, { id: 2, name: "testCallTwo", type: 0 }], [])
+    expect(ruleId).toBeGreaterThan(0)
+    var functionSignature = "addValue(uint256 value)"
+    const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
+    var selector = toFunctionSelector(functionSignature)
+    await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId,
+      [selector], [fsId], [[ruleId]])
+    var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
+    expect(rules?.length).toEqual(1)
+  })
+  test("Can delete a function signature", async () => {
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
+    var ruleStringA = `{
             "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
             "positiveEffects": ["revert"],
             "negativeEffects": [],
             "functionSignature": "addValue(uint256 value)",
             "encodedValues": "uint256 value"
             }`
-            var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client), 
-            result.policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
-            expect(ruleId).toBeGreaterThan(0)
-            var functionSignature = "addValue(uint256 value)"
-            const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
-            var selector = toFunctionSelector(functionSignature)        
-            await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId, 
-            [selector], [fsId], [[ruleId]])
-            var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-            expect(rules?.length).toEqual(1)
-            await deleteFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, fsId)
-            var newRules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-            expect(newRules?.length).toEqual(0)
-            
-        })
-    test('Can update an existing rule', async () => {
-        var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-        var ruleStringA = `{
+    var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0 }, { id: 2, name: "testCallTwo", type: 0 }], [])
+    expect(ruleId).toBeGreaterThan(0)
+    var functionSignature = "addValue(uint256 value)"
+    const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
+    var selector = toFunctionSelector(functionSignature)
+    await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId,
+      [selector], [fsId], [[ruleId]])
+    var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
+    expect(rules?.length).toEqual(1)
+    await deleteFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, fsId)
+    var newRules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
+    expect(newRules?.length).toEqual(0)
+
+  })
+  test('Can update an existing rule', async () => {
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
+    var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
         }`
-        var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client), 
-        result.policyId, ruleStringA, [],  [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}])
-        expect(ruleId).toBeGreaterThan(0)
-        var functionSignature = "addValue(uint256 value)"
-        const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
-        var selector = toFunctionSelector(functionSignature)        
-        await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId, 
-        [selector], [fsId], [[ruleId]])
-        var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-        expect(rules?.length).toEqual(1)
-        var ruleStringB = `{
+    var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId, ruleStringA, [], [{ id: 1, name: "testCall", type: 0 }, { id: 2, name: "testCallTwo", type: 0 }])
+    expect(ruleId).toBeGreaterThan(0)
+    var functionSignature = "addValue(uint256 value)"
+    const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
+    var selector = toFunctionSelector(functionSignature)
+    await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId,
+      [selector], [fsId], [[ruleId]])
+    var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
+    expect(rules?.length).toEqual(1)
+    var ruleStringB = `{
         "condition": "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2)",
         "positiveEffects": ["FC:testCallTwo(value)"],
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
         }`
-        var updatedRuleId = await updateRule(config, getRulesEnginePolicyContract(rulesEngineContract, client),
-        result.policyId, ruleId, ruleStringB, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
-        expect(updatedRuleId).toEqual(ruleId)
-    })
-    test('Can delete a rule', async () => {
-        var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-        var ruleStringA = `{
+    var updatedRuleId = await updateRule(config, getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId, ruleId, ruleStringB, [{ id: 1, name: "testCall", type: 0 }, { id: 2, name: "testCallTwo", type: 0 }], [])
+    expect(updatedRuleId).toEqual(ruleId)
+  })
+  test('Can delete a rule', async () => {
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
+    var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
         "negativeEffects": [],
         "functionSignature": "addValue(uint256 value)",
         "encodedValues": "uint256 value"
         }`
-        var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client), 
-        result.policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0}, {id: 2, name: "testCallTwo", type: 0}], [])
-        expect(ruleId).toBeGreaterThan(0)
-        var functionSignature = "addValue(uint256 value)"
-        const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
-        var selector = toFunctionSelector(functionSignature)        
-        await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId, 
-        [selector], [fsId], [[ruleId]])
-        
-        var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-        expect(rules?.length).toEqual(1)
-        await deleteRule(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId, ruleId)
-        var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-        expect(rules?.length).toEqual(1)
-        expect(rules![0][0].instructionSet.length).toEqual(0)
-    })
-    test('Can create a new foreign call', async() => {
-        var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
-        var fcSyntax =  
-        `{
+    var ruleId = await createRule(config, getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId, ruleStringA, [{ id: 1, name: "testCall", type: 0 }, { id: 2, name: "testCallTwo", type: 0 }], [])
+    expect(ruleId).toBeGreaterThan(0)
+    var functionSignature = "addValue(uint256 value)"
+    const fsId = await createFunctionSignature(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, functionSignature, "uint256")
+    var selector = toFunctionSelector(functionSignature)
+    await updatePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId,
+      [selector], [fsId], [[ruleId]])
+
+    var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId) as any
+    expect(rules?.length).toEqual(1)
+    await deleteRule(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId, ruleId)
+    rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId) as any
+    expect(rules?.length).toEqual(1)
+    expect(rules![0][0].instructionSet.length).toEqual(0)
+  })
+  test('Can create a new foreign call', async () => {
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
+    var fcSyntax =
+      `{
         "name": "Simple Foreign Call",
         "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "signature": "testSig(address,string,uint256)",
@@ -157,7 +157,7 @@ describe("Rules Engine Interactions", async () => {
         "encodedIndices": "0, 1, 2"
         }`;
     var fcId = await createForeignCall(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       fcSyntax,
@@ -165,14 +165,14 @@ describe("Rules Engine Interactions", async () => {
     var fcRetrieve = await getForeignCall(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, fcId);
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
   });
   test("Can delete a foreign call", async () => {
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
     var fcSyntax = `{
                 "name": "Simple Foreign Call",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
@@ -182,7 +182,7 @@ describe("Rules Engine Interactions", async () => {
                 "encodedIndices": "0"
             }`;
     var fcId = await createForeignCall(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       fcSyntax,
@@ -190,7 +190,7 @@ describe("Rules Engine Interactions", async () => {
     var fcRetrieve = await getForeignCall(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, fcId);
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
@@ -202,7 +202,7 @@ describe("Rules Engine Interactions", async () => {
     expect(fcAllRetrieve![0].set).toEqual(false);
   });
   test("Can update an existing foreign call", async () => {
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
     var fcSyntax = `{
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
@@ -212,7 +212,7 @@ describe("Rules Engine Interactions", async () => {
             "encodedIndices": "0"
         }`;
     var fcId = await createForeignCall(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       fcSyntax
@@ -220,7 +220,7 @@ describe("Rules Engine Interactions", async () => {
     var fcRetrieve = await getForeignCall(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, fcId);
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
@@ -234,7 +234,7 @@ describe("Rules Engine Interactions", async () => {
             "encodedIndices": "0, 1, 2"
         }`;
     var updatedId = await updateForeignCall(
-      config, 
+      config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       fcId,
@@ -248,7 +248,7 @@ describe("Rules Engine Interactions", async () => {
             "type": "uint256",
             "defaultValue": "4"
         }`;
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
     expect(result.policyId).toBeGreaterThan(0);
     var trId = await createTracker(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, trSyntax);
     var trAllRetrieve = await getAllTrackers(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId);
@@ -270,7 +270,7 @@ describe("Rules Engine Interactions", async () => {
         "type": "uint256",
         "defaultValue": "4"
         }`;
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
     expect(result.policyId).toBeGreaterThan(0);
     var trId = await createTracker(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, trSyntax);
     var trAllRetrieve = await getAllTrackers(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId);
@@ -303,7 +303,7 @@ describe("Rules Engine Interactions", async () => {
         "type": "uint256",
         "defaultValue": "4"
         }`;
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client))
     expect(result.policyId).toBeGreaterThan(0);
     var trId = await createTracker(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, trSyntax);
     var trAllRetrieve = await getAllTrackers(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId);
@@ -324,7 +324,7 @@ describe("Rules Engine Interactions", async () => {
         "defaultValue": "5"
         }`;
     await updateTracker(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, trId, updatedSyntax);
-    var updatedTRRetrieve = await getTracker(config, 
+    var updatedTRRetrieve = await getTracker(config,
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       trId
@@ -365,8 +365,8 @@ describe("Rules Engine Interactions", async () => {
             }
         ]
         }`;
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), 
-        getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
     expect(result.policyId).toBeGreaterThanOrEqual(0);
     var resultFC = await getAllForeignCalls(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId);
 
@@ -383,10 +383,10 @@ describe("Rules Engine Interactions", async () => {
     var resultTR = await getAllTrackers(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId);
     expect(resultTR?.length).toEqual(1);
     var retVal = await getPolicy(
-      config, 
-      getRulesEnginePolicyContract(rulesEngineContract, client), 
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client),
-       result.policyId
+      result.policyId
     )
     console.log(retVal)
     expect(retVal).toEqual(
@@ -428,9 +428,9 @@ describe("Rules Engine Interactions", async () => {
         }`;
 
     let expectedOutput =
-    `{"Trackers":["Simple String Tracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"RulesJSON":[{"condition":"value > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"functionSignature":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}`
-    
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
+      `{"Trackers":["Simple String Tracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"RulesJSON":[{"condition":"value > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"functionSignature":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}`
+
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
     var policy = await getPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client), result.policyId)
     expect(policy).toEqual(expectedOutput)
   });
@@ -467,11 +467,11 @@ describe("Rules Engine Interactions", async () => {
         }
         ]
         }`;
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
     var exists = await policyExists(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client), result.policyId)
     expect(exists).toEqual(true)
   })
-  
+
   test("Can retrieve applied policy ids", async () => {
     var policyJSON = `
     {
@@ -504,7 +504,7 @@ describe("Rules Engine Interactions", async () => {
         }
         ]
         }`;
-    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
+    var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
     await setPolicies(config, getRulesEnginePolicyContract(rulesEngineContract, client), [result.policyId], getAddress("0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef"))
     var ids = await getAppliedPolicyIds(config, getRulesEnginePolicyContract(rulesEngineContract, client), "0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef")
     expect(ids.length).toEqual(1)
@@ -545,22 +545,22 @@ describe("Rules Engine Interactions", async () => {
             }
         ]
         }`;
-      var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), 
+      var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),
         getRulesEngineComponentContract(rulesEngineContract, client), policyJSON)
-        expect(result.policyId).toBeGreaterThan(0)
-        await sleep(4000)
-        
+      expect(result.policyId).toBeGreaterThan(0)
+      await sleep(4000)
 
-        await deletePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-        await sleep(4000)
-        var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
-        expect(rules?.length).toEqual(1)
-        expect(rules![0].length).toEqual(0)
-        var trAllRetrieve = await getAllTrackers(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId)
-        expect(trAllRetrieve?.length).toEqual(1)
-        expect(trAllRetrieve![0].set).toEqual(false)
-        var fcAllRetrieve = await getAllForeignCalls(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId)
-        expect(fcAllRetrieve?.length).toEqual(1)
-        expect(fcAllRetrieve![0].set).toEqual(false)
-    }, {timeout: 15000})
+
+      await deletePolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
+      await sleep(4000)
+      var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId) as any
+      expect(rules?.length).toEqual(1)
+      expect(rules![0].length).toEqual(0)
+      var trAllRetrieve = await getAllTrackers(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId)
+      expect(trAllRetrieve?.length).toEqual(1)
+      expect(trAllRetrieve![0].set).toEqual(false)
+      var fcAllRetrieve = await getAllForeignCalls(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId)
+      expect(fcAllRetrieve?.length).toEqual(1)
+      expect(fcAllRetrieve![0].set).toEqual(false)
+    }, { timeout: 15000 })
 })

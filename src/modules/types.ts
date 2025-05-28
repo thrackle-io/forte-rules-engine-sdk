@@ -1,6 +1,7 @@
 
 /// SPDX-License-Identifier: BUSL-1.1
 import {
+    Abi,
     Address,
     ByteArray,
     GetContractReturnType,

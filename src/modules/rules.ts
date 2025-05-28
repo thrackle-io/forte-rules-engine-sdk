@@ -236,8 +236,7 @@ export const getAllRules = async (config: Config, rulesEnginePolicyContract: Rul
             args: [policyId],
         });
 
-        let trackerResult = result as RuleStorageSet[];
-        return trackerResult;
+        return result as RuleStorageSet[];
     } catch (error) {
         console.error(error);
         return null;
