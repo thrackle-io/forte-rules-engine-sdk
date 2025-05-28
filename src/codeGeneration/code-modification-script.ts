@@ -15,7 +15,7 @@ interface ForeignCall {
 interface Tracker {
     name: string;
     type: string;
-    defaultValue: any;
+    initialValue: any;
 }
 
 interface Rule {

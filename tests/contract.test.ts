@@ -242,7 +242,7 @@ describe("Rules Engine Interactions", async () => {
     var trSyntax = `{
             "name": "Simple String Tracker",
             "type": "uint256",
-            "defaultValue": "4"
+            "initialValue": "4"
         }`;
     var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     expect(result.policyId).toBeGreaterThan(0);
@@ -264,7 +264,7 @@ describe("Rules Engine Interactions", async () => {
     var trSyntax = `{
         "name": "Simple String Tracker",
         "type": "uint256",
-        "defaultValue": "4"
+        "initialValue": "4"
         }`;
     var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     expect(result.policyId).toBeGreaterThan(0);
@@ -297,7 +297,7 @@ describe("Rules Engine Interactions", async () => {
     var trSyntax = `{
         "name": "Simple String Tracker",
         "type": "uint256",
-        "defaultValue": "4"
+        "initialValue": "4"
         }`;
     var result = await createPolicy(config, getRulesEnginePolicyContract(rulesEngineContract, client),getRulesEngineComponentContract(rulesEngineContract, client))
     expect(result.policyId).toBeGreaterThan(0);
@@ -317,7 +317,7 @@ describe("Rules Engine Interactions", async () => {
     var updatedSyntax = `{
         "name": "Simple String Tracker",
         "type": "uint256",
-        "defaultValue": "5"
+        "initialValue": "5"
         }`;
     await updateTracker(config, getRulesEngineComponentContract(rulesEngineContract, client), result.policyId, trId, updatedSyntax);
     var updatedTRRetrieve = await getTracker(config, 
@@ -347,7 +347,7 @@ describe("Rules Engine Interactions", async () => {
         {
             "name": "testTracker",
             "type": "string",
-            "defaultValue": "test" 
+            "initialValue": "test" 
         }
         ],
         "Rules": [
@@ -407,7 +407,7 @@ describe("Rules Engine Interactions", async () => {
     {
         "name": "Simple String Tracker",
         "type": "string",
-        "defaultValue": "test" 
+        "initialValue": "test" 
     }
     ],
     "Rules": [
@@ -443,7 +443,7 @@ describe("Rules Engine Interactions", async () => {
     {
         "name": "Simple String Tracker",
         "type": "string",
-        "defaultValue": "test" 
+        "initialValue": "test" 
     }
     ],
     "Rules": [
@@ -483,7 +483,7 @@ describe("Rules Engine Interactions", async () => {
         {
             "name": "Simple String Tracker",
             "type": "string",
-            "defaultValue": "test" 
+            "initialValue": "test" 
         }
         ],
         "Rules": [

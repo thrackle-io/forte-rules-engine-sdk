@@ -77,7 +77,7 @@ export interface foreignCallJSON {
 export interface trackerJSON {
     name: string,
     type: string,
-    defaultValue: string
+    initialValue: string
 }
 
 export interface ruleJSON {
@@ -175,7 +175,7 @@ export type trackerIndexNameMapping = {
 export type TrackerDefinition = {
     name: string
     type: number
-    defaultValue: any
+    initialValue: any
 }
 
 export type RawData = {
