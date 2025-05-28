@@ -768,7 +768,7 @@ test("Creates a simple bool tracker", () => {
   var str = `{
         "name": "Simple bool Tracker",
         "type": "bool",
-        "defaultValue": "true"
+        "initialValue": "true"
         }`;
   var retVal = parseTrackerSyntax(JSON.parse(str));
   expect(retVal.name).toEqual("Simple bool Tracker");
@@ -866,7 +866,7 @@ test("Creates a simple string tracker", () => {
 test("Tests unsupported type", () => {
   var str = `{
   "name": "Simple String Tracker",
-  "type": "bool",
+  "type": "book",
   "initialValue": "test"
   }`;
   expect(() => parseTrackerSyntax(JSON.parse(str))).toThrowError(
@@ -2293,10 +2293,9 @@ test("Creates a simple foreign call with a boolean return", () => {
   var str = `{
   "name": "Simple Foreign Call",
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-  "signature": "testSig(address,string,uint256)",
+  "function": "testSig(address,string,uint256)",
   "returnType": "bool",
-  "parameterTypes": "address, string, uint256",
-  "encodedIndices": "0, 1, 2"
+  "valuesToPass": "0, 1, 2"
   }`;
 
   var retVal = parseForeignCallDefinition(JSON.parse(str));
@@ -2304,7 +2303,6 @@ test("Creates a simple foreign call with a boolean return", () => {
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
   );
-  expect(retVal.signature).toEqual("testSig(address,string,uint256)");
+  expect(retVal.function).toEqual("testSig(address,string,uint256)");
   expect(retVal.returnType).toEqual(3);
-  expect(retVal.parameterTypes).toEqual([0, 1, 2]);
 });
