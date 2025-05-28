@@ -110,8 +110,8 @@ describe("Rules Engine Interactions", async () => {
         var rules = await getAllRules(config, getRulesEnginePolicyContract(rulesEngineContract, client), result.policyId)
         expect(rules?.length).toEqual(1)
         var ruleStringB = `{
-        "condition": "3 + 4 > 5 AND (FC:testCall(value) == 1 AND 2 == 2)",
-        "positiveEffects": ["FC:testCallTwo(value)"],
+        "condition": "3 + 4 > 5 AND (FC:testCall == 1 AND 2 == 2)",
+        "positiveEffects": ["FC:testCallTwo"],
         "negativeEffects": [],
         "callingFunction": "addValue(uint256 value)",
         "encodedValues": "uint256 value"

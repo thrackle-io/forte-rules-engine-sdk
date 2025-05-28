@@ -534,7 +534,7 @@ expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError('Unsuppor
 test('Evaluates a simple syntax string with a Foreign Call', () => {
 /*
  * Original Syntax:
- * FC:leaderboard(to) > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value
+ * FC:leaderboard > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value
  * 
  * Abstract Tree Syntax:
  *  [AND,
@@ -553,13 +553,13 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
  *   'AND', 2, 5, 
  */
   let expectedArray = [
-    'PLH', 2n, 'N', 100n,
+    'PLH', 1n, 'N', 100n,
     '>', 0n, 1n,
-    'PLH', 1n, 'N', 100n, '==',
+    'PLH', 0n, 'N', 100n, '==',
     3n, 4n, 'AND', 2n, 5n
   ]
   var ruleStringA = `{
-  "condition": "FC:leaderboard(to) > 100 AND value == 100 ",
+  "condition": "FC:leaderboard > 100 AND value == 100 ",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
   "callingFunction": "transfer(address to, uint256 value)",
@@ -567,13 +567,14 @@ test('Evaluates a simple syntax string with a Foreign Call', () => {
   }`
 
   let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [{id:1, name:"leaderboard", type: 0}])
+  console.log(retVal.placeHolders)
   expect(retVal.instructionSet).toEqual(expectedArray)
 })
 
 test('Evaluates a simple syntax string with a Foreign Call and !=', () => {
   /*
    * Original Syntax:
-   * FC:leaderboard(to) > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value
+   * FC:leaderboard > 100 AND value == 100 --> revert --> transfer(address to, uint256 value) --> address to, uint256 value
    * 
    * Abstract Tree Syntax:
    *  [AND,
@@ -592,13 +593,13 @@ test('Evaluates a simple syntax string with a Foreign Call and !=', () => {
    *   'AND', 2, 5, 
    */
     let expectedArray = [
-      'PLH', 2n, 'N', 100n,
+      'PLH', 1n, 'N', 100n,
       '>', 0n, 1n,
-      'PLH', 1n, 'N', 100n, '!=',
+      'PLH', 0n, 'N', 100n, '!=',
       3n, 4n, 'AND', 2n, 5n
     ]
     var ruleStringA = `{
-    "condition": "FC:leaderboard(to) > 100 AND value != 100 ",
+    "condition": "FC:leaderboard > 100 AND value != 100 ",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
     "callingFunction": "transfer(address to, uint256 value)",
@@ -616,9 +617,9 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
     'PLH', 1, 'N', 100, '==',
     3, 4, 'AND', 2, 5
   ] 
-  var expectedString = "FC:leaderboard(to) > 100 AND value == 100"
+  var expectedString = "FC:leaderboard > 100 AND value == 100"
   cleanInstructionSet(instructionSet)
-  var placeholderArray = ["FC:leaderboard(to)", "value"]
+  var placeholderArray = ["FC:leaderboard", "value"]
   var retVal = reverseParseRule(instructionSet as number[], placeholderArray, [])
   expect(retVal).toEqual(expectedString)
 });
@@ -626,18 +627,18 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
 test('Evaluate a complex syntax string with multiple foreign calls', () => {
   /*
   * Original Syntax:
-  * (FC:isAllowed(to) == 1 AND sender == 0xdeadbeefdeadbeef) OR (FC:isSuperCoolGuy(to) AND (FC:isRich(to) == 1) AND (FC:creditRisk(amount) < 500 )) -> revert --> “transfer(address to, uint256 value)” --> address to, uint256 value
+  * (FC:isAllowed == 1 AND sender == 0xdeadbeefdeadbeef) OR (FC:isSuperCoolGuy AND (FC:isRich == 1) AND (FC:creditRisk < 500 )) -> revert --> “transfer(address to, uint256 value)” --> address to, uint256 value
   * 
   * Abstract Tree Syntax:
   *  [OR,
   *    [AND,
-  *      [==, "FC:isAllowed(to)", 1],
+  *      [==, "FC:isAllowed", 1],
   *      [==, "to", 0xdeadbeefdeadbeef]],
   *    [AND,
-  *      [==, "FC:isSuperCoolGuy(to)", 1],
+  *      [==, "FC:isSuperCoolGuy", 1],
   *      [AND,
-  *        [==, "FC:isRich(to)", 1],
-  *        [<, "FC:creditRisk(amount)", 500]]]
+  *        [==, "FC:isRich", 1],
+  *        [<, "FC:creditRisk", 500]]]
   * ]
   * 
   * Instruction Set Syntax:
@@ -679,7 +680,7 @@ test('Evaluate a complex syntax string with multiple foreign calls', () => {
   ]
  
    var ruleStringA = `{
-   "condition": "( FC:isAllowed(to) == 1 AND to == 0xdeadbeefdeadbeef ) OR ( (FC:isSuperCoolGuy(to) AND FC:isRich(to) == 1) AND FC:creditRisk(amount) < 500 )",
+   "condition": "( FC:isAllowed == 1 AND to == 0xdeadbeefdeadbeef ) OR ( (FC:isSuperCoolGuy AND FC:isRich == 1) AND FC:creditRisk < 500 )",
    "positiveEffects": ["revert"],
    "negativeEffects": [],
    "callingFunction": "transfer(address to, uint256 value)",
@@ -708,9 +709,9 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
     'AND', 11, 14,
     'OR', 6, 15
   ] 
-  var expectedString = "( FC:isAllowed(to) == 1 AND to == 16045690984833335000 ) OR ( ( FC:isSuperCoolGuy(to) AND FC:isRich(to) == 1 ) AND FC:creditRisk(amount) < 500 )"
+  var expectedString = "( FC:isAllowed == 1 AND to == 16045690984833335000 ) OR ( ( FC:isSuperCoolGuy AND FC:isRich == 1 ) AND FC:creditRisk < 500 )"
   cleanInstructionSet(instructionSet)
-  var placeholderArray = ["FC:isAllowed(to)", "to", "FC:isSuperCoolGuy(to)", "FC:isRich(to)", "FC:creditRisk(amount)" ]
+  var placeholderArray = ["FC:isAllowed", "to", "FC:isSuperCoolGuy", "FC:isRich", "FC:creditRisk" ]
   var retVal = reverseParseRule(instructionSet as number[], placeholderArray, [])
   expect(retVal).toEqual(expectedString)
 });
@@ -810,13 +811,13 @@ test('Reverse Interpretation for the: "Evaluate complex expression with placehol
 test('Evaluates a simple syntax string (using AND + OR operators, trackers and function parameters)', () => {
   /*
  * Original Syntax:
- * (FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)
+ * (FC:isAllowed + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)  --> revert --> addValue(uint256 value, string info, address addr)
  * 
  * Abstract Tree Syntax:
  * [OR,
  *  [AND,
  *    [>,
- *      [+, "FC:isAllowed(to)", 4], 5],
+ *      [+, "FC:isAllowed", 4], 5],
  *    [==, TR:testOne, 5]],
  *  [OR,
  *    [==, "info", TR:testTwo],
@@ -850,7 +851,7 @@ var expectedArray = [
 ]
 
 var ruleStringA = `{
-"condition": "(FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
+"condition": "(FC:isAllowed + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
 "callingFunction": "addValue(uint256 value, string info, address addr)",
@@ -876,9 +877,9 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
     13, 'OR', 11, 14,
     'OR', 8, 15
   ]
-  var expectedString = "( FC:isAllowed(to) + 4 > 5 AND TR:testOne == 5 ) OR ( info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )"
+  var expectedString = "( FC:isAllowed + 4 > 5 AND TR:testOne == 5 ) OR ( info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )"
   cleanInstructionSet(instructionSet)
-  var placeholderArray = ["FC:isAllowed(to)", "TR:testOne", "info", "TR:testTwo", "TR:testOne"]
+  var placeholderArray = ["FC:isAllowed", "TR:testOne", "info", "TR:testTwo", "TR:testOne"]
   var retVal = reverseParseRule(instructionSet as number[], placeholderArray, [])
   expect(retVal).toEqual(expectedString)
 })
@@ -980,7 +981,7 @@ test('Evaluate a simple syntax string that contains multiple positive and negati
   var ruleStringA = `{
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes", "emit OtherGoodvibes"],
-  "negativeEffects": [ "emit badVibes", "FC:updateOracle(value) AND FC:alert(value)" ],
+  "negativeEffects": [ "emit badVibes", "FC:updateOracle AND FC:alert" ],
   "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
@@ -1009,8 +1010,8 @@ test('Evaluate a simple syntax string that contains multiple positive and negati
 test('Evaluate a simple syntax string for an event effect with an instruction set', () => {
   var ruleStringA = `{
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
-  "positiveEffects": ["FC:updateOracle(value) AND FC:alert(value)"],
-  "negativeEffects": ["FC:alert(value)"],
+  "positiveEffects": ["FC:updateOracle AND FC:alert"],
+  "negativeEffects": ["FC:alert"],
   "callingFunction": "addValue(uint256 value)",
   "encodedValues": "uint256 value"
   }`
@@ -1164,7 +1165,7 @@ test('Extraneous paraenthesis', () => {
     ]
 
     var ruleStringA = `{
-    "condition": "(FC:updateOracle(value) == FCalert)",
+    "condition": "(FC:updateOracle == FCalert)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
     "callingFunction": "addValue(uint256 value, string info, address addr)",

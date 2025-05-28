@@ -127,7 +127,7 @@ export function parseTrackers(condition: string, names: any[], indexMap: tracker
  * @returns The updated condition string with FC expressions replaced by placeholders.
  *
  * @remarks
- * - FC expressions are identified using the regular expression `/FC:[a-zA-Z]+\([^)]+\)/g`.
+ * - FC expressions are identified using the regular expression `/FC:[a-zA-Z]+[^\s]+/g`.
  * - If an FC expression is already present in the `names` array, its existing placeholder
  *   is reused.
  * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
@@ -142,13 +142,15 @@ export function parseForeignCalls(condition: string, names: any[], foreignCallNa
     }
 
     // Use a regular expression to find all FC expressions
-    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+    const fcRegex = /FC:[a-zA-Z]+[^\s]+/g
     const matches = condition.matchAll(fcRegex);
     let processedCondition = condition
+    
     // Convert matches iterator to array to process all at once
     for (const match of matches) {
-        const fullFcExpr = match[0];
         
+        const fullFcExpr = match[0];
+        console.log("found one", fullFcExpr)
         if (names.indexOf(match) !== -1) {
             let ph = names[names.indexOf(match)].fcPlaceholder
             processedCondition = processedCondition.replace(fullFcExpr, ph)
@@ -174,7 +176,7 @@ export function parseForeignCalls(condition: string, names: any[], foreignCallNa
 
             var index = 0
             for(var fcMap of foreignCallNameToID) {
-                if(("FC:" + fcMap.name.split('(')[0]) == fullFcExpr.split('(')[0]) {
+                if(("FC:" + fcMap.name.trim()) == fullFcExpr.trim()) {
 
                     index = fcMap.id
                 }
@@ -374,7 +376,7 @@ export function cleanString(str: string) {
 /**
  * Cleans up a given string by removing unnecessary parentheses and replacing specific patterns
  * with placeholders for later restoration. The function processes two types of patterns:
- * 1. Substrings starting with "FC:" and ending with a closing parenthesis.
+ * 1. Substrings starting with "FC:".
  * 2. Parentheses containing logical operators ("AND" or "OR").
  *
  * The function performs the following steps:
@@ -392,7 +394,7 @@ export function removeExtraParenthesis(strToClean: string) {
 
     while(strToClean.includes('FC:')) {
         var initialIndex = strToClean.lastIndexOf('FC:')
-        var closingIndex = strToClean.indexOf(')', initialIndex)
+        var closingIndex = strToClean.indexOf(' ', initialIndex)
         var sub = strToClean.substring(initialIndex, closingIndex + 1)
         fcHolder.push(sub)
         var replacement = "fcRep:" + iter

@@ -64,6 +64,7 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var names = parseFunctionArguments(encodedValues, condition)
     var effectNames: any[] = []
     condition = parseForeignCalls(condition, names, foreignCallNameToID)
+    console.log(condition)
     parseTrackers(condition,  names, indexMap)
     var placeHolders: PlaceholderStruct[] = []
     placeHolders = buildPlaceholderList(names)
@@ -217,15 +218,14 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
  */
 export function buildForeignCallList(condition: string) {
         // Use a regular expression to find all FC expressions
-        const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+        const fcRegex = /FC:[a-zA-Z]+[^\s]+/g
         const matches = condition.matchAll(fcRegex);
         let processedCondition = condition
         var names: string[] = []
         // Convert matches iterator to array to process all at once
         for (const match of matches) {
             const fullFcExpr = match[0];
-            var nameAndArgs = fullFcExpr.split(':')[1]
-            var name = nameAndArgs.split('(')[0]
+            var name = fullFcExpr.split(':')[1]
             names.push(name)
         }
         return names
