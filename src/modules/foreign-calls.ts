@@ -4,14 +4,14 @@ import { toFunctionSelector } from "viem"
 import {
     simulateContract,
     waitForTransactionReceipt,
-    writeContract, 
+    writeContract,
     readContract,
     Config
 } from "@wagmi/core";
 import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseForeignCallDefinition } from "../parsing/parser"
-import { ForeignCallOnChain, RulesEngineComponentContract } from "./types"
+import { ForeignCallOnChain, RulesEngineComponentContract, Maybe } from "./types"
 
 /**
  * @file ForeignCalls.ts
@@ -50,12 +50,12 @@ import { ForeignCallOnChain, RulesEngineComponentContract } from "./types"
  *
  * @throws Will throw an error if the JSON parsing of `fcSyntax` fails.
  */
-export const createForeignCall = async(
+export const createForeignCall = async (
     config: Config,
-    rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, 
-    fcSyntax: string, 
-    ): Promise<number> => {
+    rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number,
+    fcSyntax: string,
+): Promise<number> => {
     var json = JSON.parse(fcSyntax)
     var foreignCall = parseForeignCallDefinition(json)
     var fc = {
@@ -69,13 +69,13 @@ export const createForeignCall = async(
 
     }
     var addFC
-    while(true) {
+    while (true) {
         try {
             addFC = await simulateContract(config, {
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "createForeignCall",
-                args: [ policyId, fc, foreignCall.name ],
+                args: [policyId, fc, foreignCall.name],
             });
             break
         } catch (err) {
@@ -83,7 +83,7 @@ export const createForeignCall = async(
             await sleep(1000)
         }
     }
-    if(addFC != null) {
+    if (addFC != null) {
         const returnHash = await writeContract(config, {
             ...addFC.request,
             account
@@ -92,8 +92,8 @@ export const createForeignCall = async(
             hash: returnHash,
         })
         return addFC.result
-        
-    } 
+
+    }
     return -1
 }
 /**
@@ -113,13 +113,13 @@ export const createForeignCall = async(
  *
  * @throws Will throw an error if the JSON parsing of `fcSyntax` fails.
  */
-export const updateForeignCall = async(
+export const updateForeignCall = async (
     config: Config,
-    rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, 
-    foreignCallId: number, 
-    fcSyntax: string, 
-    ): Promise<number> => {
+    rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number,
+    foreignCallId: number,
+    fcSyntax: string,
+): Promise<number> => {
     var json = JSON.parse(fcSyntax)
     var foreignCall = parseForeignCallDefinition(json)
     var fc = {
@@ -133,13 +133,13 @@ export const updateForeignCall = async(
 
     }
     var addFC
-    while(true) {
+    while (true) {
         try {
             addFC = await simulateContract(config, {
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "updateForeignCall",
-                args: [ policyId, foreignCallId, fc ],
+                args: [policyId, foreignCallId, fc],
             });
             break
         } catch (err) {
@@ -147,7 +147,7 @@ export const updateForeignCall = async(
             await sleep(1000)
         }
     }
-    if(addFC != null) {
+    if (addFC != null) {
         const returnHash = await writeContract(config, {
             ...addFC.request,
             account
@@ -157,7 +157,7 @@ export const updateForeignCall = async(
         })
         let foreignCallResult = addFC.result as any
         return foreignCallResult.foreignCallIndex
-    } 
+    }
     return -1
 }
 
@@ -173,12 +173,12 @@ export const updateForeignCall = async(
  *
  * @throws This function does not explicitly throw errors but will return `-1` if an error occurs during the simulation phase.
  */
-export const deleteForeignCall = async(
+export const deleteForeignCall = async (
     config: Config,
-    rulesEngineComponentContract: RulesEngineComponentContract, 
-    policyId: number, 
-    foreignCallId: number,  
-    ): Promise<number> => {
+    rulesEngineComponentContract: RulesEngineComponentContract,
+    policyId: number,
+    foreignCallId: number,
+): Promise<number> => {
 
     var addFC
     try {
@@ -186,13 +186,13 @@ export const deleteForeignCall = async(
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "deleteForeignCall",
-            args: [ policyId, foreignCallId ],
+            args: [policyId, foreignCallId],
         })
     } catch (err) {
         return -1
     }
 
-    if(addFC != null) {
+    if (addFC != null) {
         const returnHash = await writeContract(config, {
             ...addFC.request,
             account
@@ -201,7 +201,7 @@ export const deleteForeignCall = async(
             hash: returnHash,
         })
     }
-    
+
     return 0
 }
 
@@ -215,17 +215,17 @@ export const deleteForeignCall = async(
  *
  * @throws Will log an error to the console if the contract interaction fails.
  */
-export const getForeignCall = async(
+export const getForeignCall = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
-    policyId: number, 
-    foreignCallId: number): Promise<any | null> => {
+    policyId: number,
+    foreignCallId: number): Promise<Maybe<any>> => {
     try {
         const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "getForeignCall",
-            args: [ policyId, foreignCallId ],
+            args: [policyId, foreignCallId],
         });
 
         let foreignCallResult = addFC as any;
@@ -246,26 +246,26 @@ export const getForeignCall = async(
  *
  * @throws Will log an error to the console if the contract interaction fails.
  */
-export const getForeignCallMetadata = async(
+export const getForeignCallMetadata = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
-    policyId: number, 
+    policyId: number,
     foreignCallId: number): Promise<string> => {
-        try {
-            const getMeta = await readContract(config, {
-                address: rulesEngineComponentContract.address,
-                abi: rulesEngineComponentContract.abi,
-                functionName: "getForeignCallMetadata",
-                args: [ policyId, foreignCallId ],
-            });
-    
-            let foreignCallResult = getMeta as string;
-            return foreignCallResult;
-        } catch (error) {
-            console.error(error);
-            return "";
-        }
+    try {
+        const getMeta = await readContract(config, {
+            address: rulesEngineComponentContract.address,
+            abi: rulesEngineComponentContract.abi,
+            functionName: "getForeignCallMetadata",
+            args: [policyId, foreignCallId],
+        });
+
+        let foreignCallResult = getMeta as string;
+        return foreignCallResult;
+    } catch (error) {
+        console.error(error);
+        return "";
     }
+}
 
 /**
  * Retrieves all foreign calls associated with a specific policy ID from the Rules Engine Component Contract.
@@ -277,16 +277,16 @@ export const getForeignCallMetadata = async(
  *
  * @throws Will log an error to the console if the operation fails.
  */
-export const getAllForeignCalls = async(
+export const getAllForeignCalls = async (
     config: Config,
-    rulesEngineComponentContract: RulesEngineComponentContract, 
+    rulesEngineComponentContract: RulesEngineComponentContract,
     policyId: number): Promise<ForeignCallOnChain[]> => {
     try {
         const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "getAllForeignCalls",
-            args: [ policyId ],
+            args: [policyId],
         });
         let foreignCallResult = addFC as ForeignCallOnChain[];
         return foreignCallResult;
