@@ -13,10 +13,9 @@ test('Code Generation test)', () => {
             {
                 "name": "Simple Foreign Call",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-                "signature": "testSig(address)",
+                "function": "testSig(address)",
                 "returnType": "uint256",
-                "parameterTypes": "address",
-                "encodedIndices": "0"
+                "valuesToPass": "0"
             }
         ], 
         "Trackers": [
@@ -26,12 +25,12 @@ test('Code Generation test)', () => {
             "defaultValue": "test" 
         }
         ],
-        "RulesJSON": [
+        "Rules": [
             {
                 "condition": "value > 500",
                 "positiveEffects": ["emit Success"],
                 "negativeEffects": ["revert()"],
-                "functionSignature": "transfer(address to, uint256 value)",
+                "callingFunction": "transfer(address to, uint256 value)",
                 "encodedValues": "address to, uint256 value"
             }
         ]

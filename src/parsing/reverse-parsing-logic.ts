@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 
-import { stringReplacement, RuleStruct, ruleJSON, PT, ForeignCallOnChain, hexToFunctionSignature, TrackerOnChain } from "../modules/types"
+import { stringReplacement, RuleStruct, ruleJSON, PT, ForeignCallOnChain, TrackerOnChain, hexToFunctionString } from "../modules/types"
 import { parseFunctionArguments } from "./parsing-utilities"
 
 /**
@@ -235,11 +235,11 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
 /**
  * Converts a `RuleStruct` object into a JSON-like string representation.
  *
- * @param functionString - The function signature as a string.
+ * @param functionString - The calling function signature as a string.
  * @param encodedValues - A string containing encoded values for the rule.
  * @param ruleS - The `RuleStruct` object containing rule details such as placeholders, positive effects, and negative effects.
  * @param plhArray - An array to store the names of placeholders extracted from the rule.
- * @returns An object of type `ruleJSON` containing the condition, positive effects, negative effects, function signature, and encoded values.
+ * @returns An object of type `ruleJSON` containing the condition, positive effects, negative effects, calling function, and encoded values.
  *
  * The function processes the `RuleStruct` object to:
  * - Extract placeholder names and append them to `plhArray`.
@@ -247,13 +247,13 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
  * - Reverse parse the rule's instruction set to generate a condition string.
  * - Populate the `ruleJSON` object with the processed data.
  */
-export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[], foreignCalls: ForeignCallOnChain[], trackers: TrackerOnChain[],  mappings: hexToFunctionSignature[]) {
+export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[], foreignCalls: ForeignCallOnChain[], trackers: TrackerOnChain[],  mappings: hexToFunctionString[]) {
     
     var rJSON: ruleJSON = {
         condition: "",
         positiveEffects: [],
         negativeEffects: [],
-        functionSignature: "",
+        callingFunction: "",
         encodedValues: ""
     }
 
@@ -265,7 +265,7 @@ export function convertRuleStructToString(functionString: string, encodedValues:
                 if(call.foreignCallIndex == plh.typeSpecificIndex) {
                     for(var map of mappings) {
                         if(map.hex == call.signature) {
-                            plhArray.push("FC:" + map.functionSignature)
+                            plhArray.push("FC:" + map.functionString)
                         }
                     }
                 }
@@ -275,7 +275,7 @@ export function convertRuleStructToString(functionString: string, encodedValues:
                 if(tracker.trackerIndex == plh.typeSpecificIndex) {
                     for(var map of mappings) {
                         if(map.index == plh.typeSpecificIndex) {
-                            plhArray.push("TR:" + map.functionSignature)
+                            plhArray.push("TR:" + map.functionString)
                         } 
                     }
                 }
@@ -312,7 +312,7 @@ export function convertRuleStructToString(functionString: string, encodedValues:
         }
     }
     rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, [])
-    rJSON.functionSignature = functionString
+    rJSON.callingFunction = functionString
     rJSON.encodedValues = encodedValues
     return rJSON
     
@@ -324,8 +324,8 @@ export function convertRuleStructToString(functionString: string, encodedValues:
  *
  * @param callStrings - An array to which the formatted foreign call strings will be appended.
  * @param foreignCalls - An array of foreign call objects or `null`. Each object should contain
- *                       details such as `signature`, `returnType`, `parameterTypes`, and `foreignCallAddress`.
- * @param functionSignatureMappings - An array of mappings that associate a `hex` signature with
+ *                       details such as `function`, `returnType`, `parameterTypes`, and `foreignCallAddress`.
+ * @param functionMappings - An array of mappings that associate a `hex` signature with
  *                                    a human-readable `functionSignature`.
  *
  * The function processes each foreign call by:
@@ -342,31 +342,22 @@ export function convertRuleStructToString(functionString: string, encodedValues:
  * Foreign Call 1 --> 0x1234567890abcdef --> myFunction(uint256) --> uint256 --> uint256, string
  * ```
  */
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallOnChain[], functionSignatureMappings: any[], names: string[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallOnChain[], functionMappings: hexToFunctionString[], names: string[]) {
     var fcIter = 1
     var iter = 0
     if(foreignCalls != null) {
         for(var call of foreignCalls) {
-            var signatureString = ""
-            for(var mapping of functionSignatureMappings) {
+            var functionString = ""
+            for(var mapping of functionMappings) {
                 if(mapping.hex == call.signature) {
-                    signatureString = mapping.functionSignature
+                    functionString = mapping.functionString
                 }
             }
             var returnTypeString = ""
-            var parameterStrings = []
 
             for(var parameterType of PT) {
                 if(call.returnType == parameterType.enumeration) {
                     returnTypeString = parameterType.name
-                }
-            }
-
-            for(var param of call.parameterTypes) {
-                for(var parameterType of PT) {
-                    if(param == parameterType.enumeration) {
-                        parameterStrings.push(parameterType.name)
-                    }
                 }
             }
 
@@ -375,18 +366,9 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
             outputString += " --> "
             outputString += call.foreignCallAddress
             outputString += " --> "
-            outputString += signatureString
+            outputString += functionString
             outputString += " --> "
             outputString += returnTypeString
-            outputString += " --> "
-            var innerIter = 0
-            for(var str of parameterStrings) {
-                if(innerIter > 0) {
-                    outputString += ", "
-                }
-                outputString += str
-                innerIter++
-            }
 
             callStrings.push(outputString)
             fcIter += 1

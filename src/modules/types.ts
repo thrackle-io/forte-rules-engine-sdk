@@ -43,15 +43,16 @@ export type RuleStorageSet = {
     rule: any
 }
 
-export type hexToFunctionSignature = {
+export type hexToFunctionString = {
     hex: string,
-    functionSignature: string,
+    functionString: string,
     encodedValues: string,
     index: number
 }
 
 
-export type FunctionSignatureHashMapping = {
+export type CallingFunctionHashMapping = {
+    // TODO: Rename this to callingFunction once the rename has taken place on the rules engine side
     functionSignature: string,
     signature: string,
     encodedValues: string
@@ -62,29 +63,28 @@ export interface PolicyJSON {
     PolicyType: string;
     ForeignCalls: foreignCallJSON[];
     Trackers: trackerJSON[];
-    RulesJSON: ruleJSON[];
+    Rules: ruleJSON[];
 }
 
 export interface foreignCallJSON {
     name: string,
-    signature: string,
+    function: string,
     address: string,
     returnType: string,
-    parameterTypes: string,
-    encodedIndices: string
+    valuesToPass: string
 }
 
 export interface trackerJSON {
     name: string,
     type: string,
-    defaultValue: string
+    initialValue: string
 }
 
 export interface ruleJSON {
     condition: string,
     positiveEffects: string[],
     negativeEffects: string[],
-    functionSignature: string,
+    callingFunction: string,
     encodedValues: string
 }
 
@@ -114,6 +114,7 @@ export type RuleStruct = {
 export type ForeignCallOnChain = {
     set: boolean,
     foreignCallAddress: string,
+    // TODO: Rename this to function once the rename has taken place on the rules engine side
     signature: string,
     returnType: number,
     foreignCallIndex: number,
@@ -129,13 +130,12 @@ export type TrackerOnChain = {
 }
 
 export type ForeignCallDefinition = {
-
     name: string;
     address: Address;
-    signature: string;
+    function: string;
     returnType: number;
     parameterTypes: number[];
-    encodedIndices: number[];
+    valuesToPass: number[];
 }
 
 export type PlaceholderStruct = {
@@ -147,7 +147,7 @@ export type PlaceholderStruct = {
 
 export type IndividualArugmentMapping = {
     functionCallArgumentType: number;
-    functionSignatureArg: PlaceholderStruct;
+    callingFunctionArg: PlaceholderStruct;
 }
 
 export type ForeignCallArgumentMappings = {
@@ -175,7 +175,7 @@ export type trackerIndexNameMapping = {
 export type TrackerDefinition = {
     name: string
     type: number
-    defaultValue: any
+    initialValue: any
 }
 
 export type RawData = {

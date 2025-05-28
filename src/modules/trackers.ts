@@ -44,7 +44,7 @@ export const createTracker = async (
 ): Promise<number> => {
   var json: trackerJSON = JSON.parse(trSyntax);
   var tracker: TrackerDefinition = parseTrackerSyntax(json);
-  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: 0 };
+  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.initialValue, trackerIndex: 0 };
   var addTR;
   while (true) {
     try {
@@ -95,7 +95,7 @@ export const updateTracker = async (
 ): Promise<number> => {
   var json: trackerJSON = JSON.parse(trSyntax);
   var tracker: TrackerDefinition = parseTrackerSyntax(json);
-  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: trackerId };
+  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.initialValue, trackerIndex: trackerId };
   var addTR;
   while (true) {
     try {
