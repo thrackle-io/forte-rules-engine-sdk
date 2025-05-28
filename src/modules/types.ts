@@ -120,9 +120,10 @@ export type EffectStruct = {
     instructionSet: any[];
 }
 
+// TODO: Add more specific types for positiveEffects and negativeEffects
 export type EffectStructs = {
-    positiveEffects: EffectStruct[];
-    negativeEffects: EffectStruct[];
+    positiveEffects: any[];
+    negativeEffects: any[];
 }
 
 export type RuleBase = {
