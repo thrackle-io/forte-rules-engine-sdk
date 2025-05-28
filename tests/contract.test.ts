@@ -153,7 +153,7 @@ describe("Rules Engine Interactions", async () => {
         "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "function": "testSig(address,string,uint256)",
         "returnType": "uint256",
-        "encodedIndices": "0, 1, 2"
+        "valuesToPass": "0, 1, 2"
         }`;
     var fcId = await createForeignCall(
       config, 
@@ -177,7 +177,7 @@ describe("Rules Engine Interactions", async () => {
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                 "function": "testSig(address)",
                 "returnType": "uint256",
-                "encodedIndices": "0"
+                "valuesToPass": "0"
             }`;
     var fcId = await createForeignCall(
       config, 
@@ -206,7 +206,7 @@ describe("Rules Engine Interactions", async () => {
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address)",
             "returnType": "uint256",
-            "encodedIndices": "0"
+            "valuesToPass": "0"
         }`;
     var fcId = await createForeignCall(
       config, 
@@ -227,7 +227,7 @@ describe("Rules Engine Interactions", async () => {
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address,string,uint256)",
             "returnType": "uint256",
-            "encodedIndices": "0, 1, 2"
+            "valuesToPass": "0, 1, 2"
         }`;
     var updatedId = await updateForeignCall(
       config, 
@@ -340,7 +340,7 @@ describe("Rules Engine Interactions", async () => {
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                 "function": "testSig(address)",
                 "returnType": "uint256",
-                "encodedIndices": "0"
+                "valuesToPass": "0"
             }
         ], 
         "Trackers": [
@@ -400,7 +400,7 @@ describe("Rules Engine Interactions", async () => {
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address)",
             "returnType": "uint256",
-            "encodedIndices": "0"
+            "valuesToPass": "0"
         }
     ], 
     "Trackers": [
@@ -436,7 +436,7 @@ describe("Rules Engine Interactions", async () => {
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address)",
             "returnType": "uint256",
-            "encodedIndices": "0"
+            "valuesToPass": "0"
         }
     ], 
     "Trackers": [
@@ -476,7 +476,7 @@ describe("Rules Engine Interactions", async () => {
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                 "function": "testSig(address)",
                 "returnType": "uint256",
-                "encodedIndices": "0"
+                "valuesToPass": "0"
             }
         ], 
         "Trackers": [

@@ -485,7 +485,7 @@ test('Creates a simple foreign call', () => {
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "encodedIndices": "0, 1, 2"
+  "valuesToPass": "0, 1, 2"
   }`
 
 var retVal = parseForeignCallDefinition(JSON.parse(str))
@@ -502,7 +502,7 @@ test('Tests incorrect format for address', () => {
   "address": "test",
   "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "encodedIndices": "0, 1, 2"
+  "valuesToPass": "0, 1, 2"
   }`
 
 expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError('Address "test" is invalid')
@@ -514,7 +514,7 @@ test('Tests unsupported return type', () => {
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
   "returnType": "notAnInt",
-  "encodedIndices": "0, 1, 2"
+  "valuesToPass": "0, 1, 2"
   }`
 expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError('Unsupported return type')
 });
@@ -525,7 +525,7 @@ test('Tests unsupported argument type', () => {
     "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
     "function": "testSig(address,notAnInt,uint256)",
     "returnType": "uint256",
-    "encodedIndices": "0, 1, 2"
+    "valuesToPass": "0, 1, 2"
     }`
 
 expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError('Unsupported argument type')

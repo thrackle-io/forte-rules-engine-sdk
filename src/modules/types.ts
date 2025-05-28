@@ -71,7 +71,7 @@ export interface foreignCallJSON {
     function: string,
     address: string,
     returnType: string,
-    encodedIndices: string
+    valuesToPass: string
 }
 
 export interface trackerJSON {
@@ -135,7 +135,7 @@ export type ForeignCallDefinition = {
     function: string;
     returnType: number;
     parameterTypes: number[];
-    encodedIndices: number[];
+    valuesToPass: number[];
 }
 
 export type PlaceholderStruct = {

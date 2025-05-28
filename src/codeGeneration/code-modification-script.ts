@@ -9,7 +9,7 @@ interface ForeignCall {
     address: string;
     function: string;
     returnType: string;
-    encodedIndices: string;
+    valuesToPass: string;
 }
 
 interface Tracker {

@@ -15,7 +15,7 @@ test('Code Generation test)', () => {
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                 "function": "testSig(address)",
                 "returnType": "uint256",
-                "encodedIndices": "0"
+                "valuesToPass": "0"
             }
         ], 
         "Trackers": [

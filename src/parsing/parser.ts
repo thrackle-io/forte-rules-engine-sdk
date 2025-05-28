@@ -197,16 +197,16 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
         }
     }
 
-    var encodedIndices: number[] = []
-    var encodedIndecesSplit = syntax.encodedIndices.trim().split(',')
+    var valuesToPass: number[] = []
+    var encodedIndecesSplit = syntax.valuesToPass.trim().split(',')
     for(var encodedIndex of encodedIndecesSplit) {
         if(!isNaN(Number(encodedIndex))) {
-            encodedIndices.push(Number(encodedIndex))
+            valuesToPass.push(Number(encodedIndex))
         }
     }
 
     return {name: syntax.name.trim(), address: address, function: func, 
-        returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices} as ForeignCallDefinition
+        returnType: returnType, parameterTypes: parameterTypes, valuesToPass: valuesToPass} as ForeignCallDefinition
 }
 
 /**
