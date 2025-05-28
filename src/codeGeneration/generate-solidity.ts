@@ -74,13 +74,13 @@ export function generateModifier(policyS: string, outputFileName: string) {
     for(var syntax of policySyntax.Rules) {
 
         var argList = syntax.encodedValues
-        var signatureName = syntax.callingFunction.split('(')[0]
-        if(functionNames.includes(signatureName)) {
+        var callingFunction = syntax.callingFunction.split('(')[0]
+        if(functionNames.includes(callingFunction)) {
             continue
         } else {
-            functionNames.push(signatureName)
-            var modifierNameStr = 'modifier checkRulesBefore' + signatureName + '([]) {\n'
-            var modifierNameAfterStr = '\tmodifier checkRulesAfter' + signatureName + '([]) {\n'
+            functionNames.push(callingFunction)
+            var modifierNameStr = 'modifier checkRulesBefore' + callingFunction + '([]) {\n'
+            var modifierNameAfterStr = '\tmodifier checkRulesAfter' + callingFunction + '([]) {\n'
 
             var argListUpdate = argList.replace(/address /g , '')
             argListUpdate = argListUpdate.replace(/uint256 /g, '')

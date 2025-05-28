@@ -483,18 +483,16 @@ test('Creates a simple foreign call', () => {
  var str = `{
   "name": "Simple Foreign Call",
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-  "signature": "testSig(address,string,uint256)",
+  "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "parameterTypes": "address, string, uint256",
   "encodedIndices": "0, 1, 2"
   }`
 
 var retVal = parseForeignCallDefinition(JSON.parse(str))
 expect(retVal.name).toEqual("Simple Foreign Call")
 expect(retVal.address).toEqual(getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"))
-expect(retVal.signature).toEqual("testSig(address,string,uint256)")
+expect(retVal.function).toEqual("testSig(address,string,uint256)")
 expect(retVal.returnType).toEqual(2)
-expect(retVal.parameterTypes).toEqual([0,1,2])
 });
 
 
@@ -502,9 +500,8 @@ test('Tests incorrect format for address', () => {
   var str = `{
   "name": "Simple Foreign Call",
   "address": "test",
-  "signature": "testSig(address,string,uint256)",
+  "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "parameterTypes": "address, string, uint256",
   "encodedIndices": "0, 1, 2"
   }`
 
@@ -515,9 +512,8 @@ test('Tests unsupported return type', () => {
   var str = `{
   "name": "Simple Foreign Call",
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-  "signature": "testSig(address,string,uint256)",
+  "function": "testSig(address,string,uint256)",
   "returnType": "notAnInt",
-  "parameterTypes": "address, string, uint256",
   "encodedIndices": "0, 1, 2"
   }`
 expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError('Unsupported return type')
@@ -527,9 +523,8 @@ test('Tests unsupported argument type', () => {
     var str = `{
     "name": "Simple Foreign Call",
     "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-    "signature": "testSig(address,string,uint256)",
+    "function": "testSig(address,notAnInt,uint256)",
     "returnType": "uint256",
-    "parameterTypes": "address, notAnInt, uint256",
     "encodedIndices": "0, 1, 2"
     }`
 

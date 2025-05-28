@@ -168,12 +168,12 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
  * Parses the foreign call definition and validates its structure.
  * 
  * @param syntax - The JSON representation of the foreign call definition.
- * @returns An object containing the foreign call's name, address, signature, return type, parameter types, and encoded indices.
+ * @returns An object containing the foreign call's name, address, function, return type, parameter types, and encoded indices.
  * @throws An error if the return type or parameter types are unsupported.
  */
 export function parseForeignCallDefinition(syntax: foreignCallJSON) {
     var address: Address = getAddress(syntax.address.trim())
-    var signature = syntax.signature.trim()
+    var func = syntax.function.trim()
     var returnType = pTypeEnum.VOID // default to void
     if(!PT.some(parameter => parameter.name === syntax.returnType)) {
         throw new Error("Unsupported return type")
@@ -184,7 +184,7 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
         }
     }
     var parameterTypes: number[] = []
-    var parameterSplit = syntax.parameterTypes.trim().split(',')
+    var parameterSplit = syntax.function.trim().split("(")[1].split(")")[0].split(',')
     for(var fcParameter of parameterSplit) {
         if(!PT.some(parameter => parameter.name === fcParameter.trim())) {
             throw new Error("Unsupported argument type")
@@ -205,7 +205,7 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
         }
     }
 
-    return {name: syntax.name.trim(), address: address, signature: signature, 
+    return {name: syntax.name.trim(), address: address, function: func, 
         returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices} as ForeignCallDefinition
 }
 

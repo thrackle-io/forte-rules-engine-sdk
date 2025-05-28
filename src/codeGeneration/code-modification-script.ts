@@ -7,9 +7,8 @@ import { injectModifier } from './inject-modifier';
 interface ForeignCall {
     name: string;
     address: string;
-    signature: string;
+    function: string;
     returnType: string;
-    parameterTypes: string;
     encodedIndices: string;
 }
 

@@ -68,10 +68,9 @@ export interface PolicyJSON {
 
 export interface foreignCallJSON {
     name: string,
-    signature: string,
+    function: string,
     address: string,
     returnType: string,
-    parameterTypes: string,
     encodedIndices: string
 }
 
@@ -115,6 +114,7 @@ export type RuleStruct = {
 export type ForeignCallOnChain = {
     set: boolean,
     foreignCallAddress: string,
+    // TODO: Rename this to function once the rename has taken place on the rules engine side
     signature: string,
     returnType: number,
     foreignCallIndex: number,
@@ -130,10 +130,9 @@ export type TrackerOnChain = {
 }
 
 export type ForeignCallDefinition = {
-
     name: string;
     address: Address;
-    signature: string;
+    function: string;
     returnType: number;
     parameterTypes: number[];
     encodedIndices: number[];

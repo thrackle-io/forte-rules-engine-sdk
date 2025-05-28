@@ -324,7 +324,7 @@ export function convertRuleStructToString(functionString: string, encodedValues:
  *
  * @param callStrings - An array to which the formatted foreign call strings will be appended.
  * @param foreignCalls - An array of foreign call objects or `null`. Each object should contain
- *                       details such as `signature`, `returnType`, `parameterTypes`, and `foreignCallAddress`.
+ *                       details such as `function`, `returnType`, `parameterTypes`, and `foreignCallAddress`.
  * @param functionMappings - An array of mappings that associate a `hex` signature with
  *                                    a human-readable `functionSignature`.
  *
@@ -347,26 +347,17 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
     var iter = 0
     if(foreignCalls != null) {
         for(var call of foreignCalls) {
-            var signatureString = ""
+            var functionString = ""
             for(var mapping of functionMappings) {
                 if(mapping.hex == call.signature) {
-                    signatureString = mapping.functionString
+                    functionString = mapping.functionString
                 }
             }
             var returnTypeString = ""
-            var parameterStrings = []
 
             for(var parameterType of PT) {
                 if(call.returnType == parameterType.enumeration) {
                     returnTypeString = parameterType.name
-                }
-            }
-
-            for(var param of call.parameterTypes) {
-                for(var parameterType of PT) {
-                    if(param == parameterType.enumeration) {
-                        parameterStrings.push(parameterType.name)
-                    }
                 }
             }
 
@@ -375,18 +366,9 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
             outputString += " --> "
             outputString += call.foreignCallAddress
             outputString += " --> "
-            outputString += signatureString
+            outputString += functionString
             outputString += " --> "
             outputString += returnTypeString
-            outputString += " --> "
-            var innerIter = 0
-            for(var str of parameterStrings) {
-                if(innerIter > 0) {
-                    outputString += ", "
-                }
-                outputString += str
-                innerIter++
-            }
 
             callStrings.push(outputString)
             fcIter += 1

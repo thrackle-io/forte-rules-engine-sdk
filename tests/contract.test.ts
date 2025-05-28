@@ -151,9 +151,8 @@ describe("Rules Engine Interactions", async () => {
         `{
         "name": "Simple Foreign Call",
         "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-        "signature": "testSig(address,string,uint256)",
+        "function": "testSig(address,string,uint256)",
         "returnType": "uint256",
-        "parameterTypes": "address, string, uint256",
         "encodedIndices": "0, 1, 2"
         }`;
     var fcId = await createForeignCall(
@@ -176,9 +175,8 @@ describe("Rules Engine Interactions", async () => {
     var fcSyntax = `{
                 "name": "Simple Foreign Call",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-                "signature": "testSig(address)",
+                "function": "testSig(address)",
                 "returnType": "uint256",
-                "parameterTypes": "address",
                 "encodedIndices": "0"
             }`;
     var fcId = await createForeignCall(
@@ -206,9 +204,8 @@ describe("Rules Engine Interactions", async () => {
     var fcSyntax = `{
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-            "signature": "testSig(address)",
+            "function": "testSig(address)",
             "returnType": "uint256",
-            "parameterTypes": "address",
             "encodedIndices": "0"
         }`;
     var fcId = await createForeignCall(
@@ -228,9 +225,8 @@ describe("Rules Engine Interactions", async () => {
     var updatedSyntax = `{
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-            "signature": "testSig(address,string,uint256)",
+            "function": "testSig(address,string,uint256)",
             "returnType": "uint256",
-            "parameterTypes": "address, string, uint256",
             "encodedIndices": "0, 1, 2"
         }`;
     var updatedId = await updateForeignCall(
@@ -342,9 +338,8 @@ describe("Rules Engine Interactions", async () => {
             {
                 "name": "testSig(address)",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-                "signature": "testSig(address)",
+                "function": "testSig(address)",
                 "returnType": "uint256",
-                "parameterTypes": "address",
                 "encodedIndices": "0"
             }
         ], 
@@ -390,7 +385,7 @@ describe("Rules Engine Interactions", async () => {
     )
     console.log(retVal)
     expect(retVal).toEqual(
-      '{"Trackers":["testTracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256 --> address"],"Rules":[{"condition":"TR:testTracker > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"callingFunction":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}'
+      '{"Trackers":["testTracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256"],"Rules":[{"condition":"TR:testTracker > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"callingFunction":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}'
     );
   });
 
@@ -403,9 +398,8 @@ describe("Rules Engine Interactions", async () => {
         {
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-            "signature": "testSig(address)",
+            "function": "testSig(address)",
             "returnType": "uint256",
-            "parameterTypes": "address",
             "encodedIndices": "0"
         }
     ], 
@@ -440,9 +434,8 @@ describe("Rules Engine Interactions", async () => {
         {
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-            "signature": "testSig(address)",
+            "function": "testSig(address)",
             "returnType": "uint256",
-            "parameterTypes": "address",
             "encodedIndices": "0"
         }
     ], 
@@ -481,9 +474,8 @@ describe("Rules Engine Interactions", async () => {
             {
                 "name": "Simple Foreign Call",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-                "signature": "testSig(address)",
+                "function": "testSig(address)",
                 "returnType": "uint256",
-                "parameterTypes": "address",
                 "encodedIndices": "0"
             }
         ], 

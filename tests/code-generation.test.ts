@@ -13,9 +13,8 @@ test('Code Generation test)', () => {
             {
                 "name": "Simple Foreign Call",
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-                "signature": "testSig(address)",
+                "function": "testSig(address)",
                 "returnType": "uint256",
-                "parameterTypes": "address",
                 "encodedIndices": "0"
             }
         ], 

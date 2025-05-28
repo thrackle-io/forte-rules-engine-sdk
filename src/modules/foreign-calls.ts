@@ -61,7 +61,7 @@ export const createForeignCall = async (
     var fc = {
         set: true,
         foreignCallAddress: foreignCall.address,
-        signature: toFunctionSelector(foreignCall.signature),
+        signature: toFunctionSelector(foreignCall.function),
         foreignCallIndex: 0,
         returnType: foreignCall.returnType,
         parameterTypes: foreignCall.parameterTypes,
@@ -125,7 +125,7 @@ export const updateForeignCall = async (
     var fc = {
         set: true,
         foreignCallAddress: foreignCall.address,
-        signature: toFunctionSelector(foreignCall.signature),
+        signature: toFunctionSelector(foreignCall.function),
         foreignCallIndex: 0,
         returnType: foreignCall.returnType,
         parameterTypes: foreignCall.parameterTypes,
