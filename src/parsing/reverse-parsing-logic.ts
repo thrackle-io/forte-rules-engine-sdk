@@ -29,7 +29,7 @@ import { parseFunctionArguments } from "./parsing-utilities"
  * @param stringReplacements - An array of string replacements for specific instructions.
  * @returns A human-readable rule condition string.
  */
-export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]) {
+export function reverseParseRule(instructionSet: number[], placeHolderArray: string[], stringReplacements: stringReplacement[]): string {
     var currentAction = -1
     var currentActionIndex = 0
     var currentMemAddress = 0
@@ -38,10 +38,10 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
     var retVal = ""
     var instructionNumber = 0
     for (var instruction of instructionSet) {
-        if(currentAction == -1) {
+        if (currentAction == -1) {
             currentAction = Number(instruction);
-            switch(currentAction) {
-                case 0: 
+            switch (currentAction) {
+                case 0:
                     currentActionIndex = 1;
                     break;
                 case 1:
@@ -68,10 +68,10 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
                 case 8:
                     currentActionIndex = 2;
                     break;
-                case 9: 
+                case 9:
                     currentActionIndex = 2;
                     break;
-                case 10: 
+                case 10:
                     currentActionIndex = 1;
                     break;
                 case 11:
@@ -82,134 +82,134 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
                     break;
             }
         } else {
-            switch(currentAction) {
+            switch (currentAction) {
                 case 0:
                     var found = false
-                    for(var raw of stringReplacements) {
-                        if(raw.instructionSetIndex == instructionNumber) {
-                            memAddressesMap.push({memAddr: currentMemAddress, value: raw.originalData})
+                    for (var raw of stringReplacements) {
+                        if (raw.instructionSetIndex == instructionNumber) {
+                            memAddressesMap.push({ memAddr: currentMemAddress, value: raw.originalData })
                             found = true
                             break;
                         }
                     }
-                    if(!found) {
-                        memAddressesMap.push({memAddr: currentMemAddress, value: instruction})
+                    if (!found) {
+                        memAddressesMap.push({ memAddr: currentMemAddress, value: instruction })
                     }
                     currentMemAddress += 1
                     break;
-                case 1: 
-                        retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
-                            memAddressesMap, currentActionIndex, currentInstructionValues, " + ")
-                        if(currentActionIndex == 1) {
-                            currentMemAddress += 1
-                            currentInstructionValues = []
-                        }
+                case 1:
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
+                        memAddressesMap, currentActionIndex, currentInstructionValues, " + ")
+                    if (currentActionIndex == 1) {
+                        currentMemAddress += 1
+                        currentInstructionValues = []
+                    }
                     break;
                 case 2:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " - ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 3:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " * ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 4:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " / ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 5:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " < ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 6:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " > ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 7:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " == ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 8:
-                    retVal = logicalOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = logicalOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " AND ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 9:
-                    retVal = logicalOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = logicalOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " OR ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 10:
-                    for(var memValue of memAddressesMap) {
-                        if(memValue.memAddr == instruction) {
+                    for (var memValue of memAddressesMap) {
+                        if (memValue.memAddr == instruction) {
                             currentInstructionValues.push(memValue.value)
                         }
                     }
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         var currentString = "NOT " + currentInstructionValues[0]
-                        memAddressesMap.push({memAddr: currentMemAddress, value: currentString})
+                        memAddressesMap.push({ memAddr: currentMemAddress, value: currentString })
                         retVal = currentString
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 11:
-                    memAddressesMap.push({memAddr: currentMemAddress, value: placeHolderArray[instruction]})
+                    memAddressesMap.push({ memAddr: currentMemAddress, value: placeHolderArray[instruction] })
                     currentMemAddress += 1
                     break;
                 case 12:
                     break
                 case 13:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " = ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                     break
                 case 14:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " >= ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
                     break;
                 case 15:
-                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress, 
+                    retVal = arithmeticOperatorReverseInterpretation(instruction, currentMemAddress,
                         memAddressesMap, currentActionIndex, currentInstructionValues, " <= ")
-                    if(currentActionIndex == 1) {
+                    if (currentActionIndex == 1) {
                         currentMemAddress += 1
                         currentInstructionValues = []
                     }
@@ -220,13 +220,13 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
 
             }
             currentActionIndex -= 1;
-            if(currentActionIndex == 0) {
+            if (currentActionIndex == 0) {
                 currentAction = -1;
             }
-        } 
+        }
         instructionNumber += 1
     }
-    if(retVal.at(0) == '(') {
+    if (retVal.at(0) == '(') {
         retVal = retVal.substring(2, retVal.length - 2)
     }
     return retVal
@@ -247,8 +247,8 @@ export function reverseParseRule(instructionSet: number[], placeHolderArray: str
  * - Reverse parse the rule's instruction set to generate a condition string.
  * - Populate the `ruleJSON` object with the processed data.
  */
-export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[], foreignCalls: ForeignCallOnChain[], trackers: TrackerOnChain[],  mappings: hexToFunctionSignature[]) {
-    
+export function convertRuleStructToString(functionString: string, encodedValues: string, ruleS: RuleStruct, plhArray: string[], foreignCalls: ForeignCallOnChain[], trackers: TrackerOnChain[], mappings: hexToFunctionSignature[]): ruleJSON {
+
     var rJSON: ruleJSON = {
         condition: "",
         positiveEffects: [],
@@ -259,24 +259,24 @@ export function convertRuleStructToString(functionString: string, encodedValues:
 
     var names = parseFunctionArguments(encodedValues)
 
-    for(var plh of ruleS!.placeHolders) {
-        if(plh.foreignCall) {
-            for(var call of foreignCalls) {
-                if(call.foreignCallIndex == plh.typeSpecificIndex) {
-                    for(var map of mappings) {
-                        if(map.hex == call.signature) {
+    for (var plh of ruleS!.placeHolders) {
+        if (plh.foreignCall) {
+            for (var call of foreignCalls) {
+                if (call.foreignCallIndex == plh.typeSpecificIndex) {
+                    for (var map of mappings) {
+                        if (map.hex == call.signature) {
                             plhArray.push("FC:" + map.functionSignature)
                         }
                     }
                 }
             }
-        } else if(plh.trackerValue) {
-            for(var tracker of trackers) {
-                if(tracker.trackerIndex == plh.typeSpecificIndex) {
-                    for(var map of mappings) {
-                        if(map.index == plh.typeSpecificIndex) {
+        } else if (plh.trackerValue) {
+            for (var tracker of trackers) {
+                if (tracker.trackerIndex == plh.typeSpecificIndex) {
+                    for (var map of mappings) {
+                        if (map.index == plh.typeSpecificIndex) {
                             plhArray.push("TR:" + map.functionSignature)
-                        } 
+                        }
                     }
                 }
             }
@@ -286,28 +286,28 @@ export function convertRuleStructToString(functionString: string, encodedValues:
     }
 
     var posIter = 0
-    for(var pos of ruleS.posEffects) {
+    for (var pos of ruleS.posEffects) {
         var effectString = ""
-        if(pos.effectType == 0) {
+        if (pos.effectType == 0) {
             effectString += "revert(" + pos.text + ")"
-        } else if(pos.effectType == 1) {
-            effectString += "emit " + pos.text 
+        } else if (pos.effectType == 1) {
+            effectString += "emit " + pos.text
         }
         posIter += 1
 
         rJSON.positiveEffects.push(effectString)
     }
 
-    if(ruleS.negEffects.length > 0) {
+    if (ruleS.negEffects.length > 0) {
         var negIter = 0
-        for(var neg of ruleS.negEffects) {
+        for (var neg of ruleS.negEffects) {
             var effectString = ""
-            if(neg.effectType == 0) {
+            if (neg.effectType == 0) {
                 effectString += "revert(" + neg.text + ")"
-            } else if(neg.effectType == 1) {
-                effectString += "emit " + neg.text 
+            } else if (neg.effectType == 1) {
+                effectString += "emit " + neg.text
             }
-            negIter+= 1
+            negIter += 1
             rJSON.negativeEffects.push(effectString)
         }
     }
@@ -315,7 +315,7 @@ export function convertRuleStructToString(functionString: string, encodedValues:
     rJSON.functionSignature = functionString
     rJSON.encodedValues = encodedValues
     return rJSON
-    
+
 }
 
 /**
@@ -342,29 +342,29 @@ export function convertRuleStructToString(functionString: string, encodedValues:
  * Foreign Call 1 --> 0x1234567890abcdef --> myFunction(uint256) --> uint256 --> uint256, string
  * ```
  */
-export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallOnChain[], functionSignatureMappings: any[], names: string[]) {
+export function convertForeignCallStructsToStrings(callStrings: string[], foreignCalls: ForeignCallOnChain[], functionSignatureMappings: any[], names: string[]): void {
     var fcIter = 1
     var iter = 0
-    if(foreignCalls != null) {
-        for(var call of foreignCalls) {
+    if (foreignCalls != null) {
+        for (var call of foreignCalls) {
             var signatureString = ""
-            for(var mapping of functionSignatureMappings) {
-                if(mapping.hex == call.signature) {
+            for (var mapping of functionSignatureMappings) {
+                if (mapping.hex == call.signature) {
                     signatureString = mapping.functionSignature
                 }
             }
             var returnTypeString = ""
             var parameterStrings = []
 
-            for(var parameterType of PT) {
-                if(call.returnType == parameterType.enumeration) {
+            for (var parameterType of PT) {
+                if (call.returnType == parameterType.enumeration) {
                     returnTypeString = parameterType.name
                 }
             }
 
-            for(var param of call.parameterTypes) {
-                for(var parameterType of PT) {
-                    if(param == parameterType.enumeration) {
+            for (var param of call.parameterTypes) {
+                for (var parameterType of PT) {
+                    if (param == parameterType.enumeration) {
                         parameterStrings.push(parameterType.name)
                     }
                 }
@@ -380,8 +380,8 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
             outputString += returnTypeString
             outputString += " --> "
             var innerIter = 0
-            for(var str of parameterStrings) {
-                if(innerIter > 0) {
+            for (var str of parameterStrings) {
+                if (innerIter > 0) {
                     outputString += ", "
                 }
                 outputString += str
@@ -401,14 +401,14 @@ export function convertForeignCallStructsToStrings(callStrings: string[], foreig
  * @param trackers - An array of tracker structures.
  * @param trackerStrings - An array to store the resulting strings.
  */
-export function convertTrackerStructsToStrings(trackers: TrackerOnChain[], trackerStrings: string[], trackerNames: string[]) {
-    if(trackers != null) {
+export function convertTrackerStructsToStrings(trackers: TrackerOnChain[], trackerStrings: string[], trackerNames: string[]): void {
+    if (trackers != null) {
         var iter = 0
-        for(var tracker of trackers) {
+        for (var tracker of trackers) {
 
             var trackerType = ""
-            for(var parameterType of PT) {
-                if(tracker.pType == parameterType.enumeration) {
+            for (var parameterType of PT) {
+                if (tracker.pType == parameterType.enumeration) {
                     trackerType = parameterType.name
                 }
             }
@@ -437,16 +437,16 @@ export function convertTrackerStructsToStrings(trackers: TrackerOnChain[], track
  * @param symbol - The arithmetic operator symbol (e.g., "+", "-", "*", "/") to use in the operation.
  * @returns The string representation of the arithmetic operation if `currentActionIndex` is 1, otherwise an empty string.
  */
-function arithmeticOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[], 
-    currentActionIndex: number, currentInstructionValues: any[], symbol: string) {
-    for(var memValue of memAddressesMap) {
-        if(memValue.memAddr == instruction) {
+function arithmeticOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[],
+    currentActionIndex: number, currentInstructionValues: any[], symbol: string): string {
+    for (var memValue of memAddressesMap) {
+        if (memValue.memAddr == instruction) {
             currentInstructionValues.push(memValue.value)
         }
     }
-    if(currentActionIndex == 1) {
+    if (currentActionIndex == 1) {
         var currentString = currentInstructionValues[0] + symbol + currentInstructionValues[1]
-        memAddressesMap.push({memAddr: currentMemAddress, value: currentString})
+        memAddressesMap.push({ memAddr: currentMemAddress, value: currentString })
         return currentString
     }
     return ""
@@ -465,16 +465,16 @@ function arithmeticOperatorReverseInterpretation(instruction: number, currentMem
  * @returns The string representation of the logical operation if `currentActionIndex` is 1,
  *          otherwise an empty string.
  */
-function logicalOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[], 
-    currentActionIndex: number, currentInstructionValues: any[], symbol: string) {
-    for(var memValue of memAddressesMap) {
-        if(memValue.memAddr == instruction) {
+function logicalOperatorReverseInterpretation(instruction: number, currentMemAddress: number, memAddressesMap: any[],
+    currentActionIndex: number, currentInstructionValues: any[], symbol: string): string {
+    for (var memValue of memAddressesMap) {
+        if (memValue.memAddr == instruction) {
             currentInstructionValues.push(memValue.value)
         }
     }
-    if(currentActionIndex == 1) {
+    if (currentActionIndex == 1) {
         var currentString = "( " + currentInstructionValues[0] + symbol + currentInstructionValues[1] + " )"
-        memAddressesMap.push({memAddr: currentMemAddress, value: currentString})
+        memAddressesMap.push({ memAddr: currentMemAddress, value: currentString })
         return currentString
     }
     return ""

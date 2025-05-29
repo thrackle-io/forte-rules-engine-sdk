@@ -60,7 +60,7 @@ import { cleanString } from '../parsing/parsing-utilities';
  * @throws Will throw an error if the file at `userFilePath` cannot be read or written.
  * @throws Will throw an error if the provided function name or variables are invalid.
  */
-export function injectModifier(funcName: string, variables: string, userFilePath: string, diffPath: string, modifierFile: string) {
+export function injectModifier(funcName: string, variables: string, userFilePath: string, diffPath: string, modifierFile: string): void {
     funcName = cleanString(funcName)
 
     //find pragma line and inject import statement after 
@@ -75,20 +75,20 @@ export function injectModifier(funcName: string, variables: string, userFilePath
             modifiedData = modifiedData.replace(fullFcExpr, fullFcExpr + ';\nimport "' + modifierFile + '"');
         }
         break
-    }  
+    }
 
     // Find and replace Contract Name Line with proper inheritance
     // Improved regex that specifically targets contract declarations
     var regNew = /contract\s+([a-zA-Z0-9_]+)(\s+is\s+[^{]+|\s*)(?={)/g;
     const contractMatches = modifiedData.matchAll(regNew);
-    
+
     for (const match of contractMatches) {
         const fullMatch = match[0];
         const contractName = match[1];
         const existingInheritance = match[2] || '';
-        
+
         let newInheritance;
-        
+
         // Check if there's already an inheritance clause
         if (existingInheritance.includes(' is ')) {
             // Contract already has inheritance, add our interface to the list
@@ -106,11 +106,11 @@ export function injectModifier(funcName: string, variables: string, userFilePath
 
     // Find Function and place modifier
     var functionName = "function ";
-    var argListUpdate = variables.replace(/address /g , '')
-                                .replace(/uint256 /g, '')
-                                .replace(/string /g, '')
-                                .replace(/bool /g, '')
-                                .replace(/bytes /g, '');
+    var argListUpdate = variables.replace(/address /g, '')
+        .replace(/uint256 /g, '')
+        .replace(/string /g, '')
+        .replace(/bool /g, '')
+        .replace(/bytes /g, '');
 
     const modifierToAdd = `checkRulesBefore${funcName}(${argListUpdate})`;
     const regex = new RegExp(`${functionName}\\s*${funcName}\\s*\\([^)]*\\)\\s*(public|private|internal|external)[^{]*`, 'g');
@@ -118,19 +118,19 @@ export function injectModifier(funcName: string, variables: string, userFilePath
 
     for (const match of funcMatches) {
         const fullFuncDecl = match[0];
-        
+
         // Only add modifier if it's not already present in the full function declaration
         if (!fullFuncDecl.includes(modifierToAdd)) {
             const visibilityKeywordRegex = /(public|private|internal|external)\s*/;
             const newDecl = fullFuncDecl.replace(
-                visibilityKeywordRegex, 
+                visibilityKeywordRegex,
                 `$1 ${modifierToAdd} `
             );
             modifiedData = modifiedData.replace(fullFuncDecl, newDecl);
         }
         break;
     }
-    
+
     // Write the modified data back to the file
     fs.writeFileSync(userFilePath, modifiedData, 'utf-8')
 

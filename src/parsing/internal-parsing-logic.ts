@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { isAddress } from "viem"
-import { trackerIndexNameMapping, PlaceholderStruct, matchArray, truMatchArray, Tuple } from "../modules/types"
+import { trackerIndexNameMapping, PlaceholderStruct, matchArray, truMatchArray, Tuple, InstructionSet } from "../modules/types"
 
 /**
  * @file internal-parsing-logic.ts
@@ -50,72 +50,72 @@ var originalDelimiters: string[] = []
  * - `instructionSet`: The generated instruction set based on the input syntax.
  * - `placeHolders`: The placeholders used in the instruction set.
  */
-export function convertHumanReadableToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[], existingPlaceHolders: PlaceholderStruct[]) {
-        
-        //Replace AND, OR and NOT with a placeholder value (PLA) so we can parse them simultaneously 
-        originalDelimiters = []
-        var whiteSpaceSplit = syntax.split(" ")
-        var delimiterIterator = 0
-        var first = true
-        for(var str of whiteSpaceSplit) {
-            if(str == "AND" || str == "OR" || str == "NOT") {
-                originalDelimiters.push(str)
-                if(first) {
-                    syntax = syntax.replace(str, " PLA" + String(delimiterIterator))
-                } else {
-                    syntax = syntax.replace(" " + str, " PLA" + String(delimiterIterator))
-                }
-                
-                delimiterIterator += 1
-            } 
-            first = false
-        }
-        
-        // Create the initial Abstract Syntax Tree (AST) splitting on PLA (placeholder)
-        var array = convertToTree(syntax, "PLA")
-        
-        if(array.length == 1) {
-            array = array[0]
-        } else if(array.length == 0) {
-            // If the array is still empty than a single top level statement without an AND or OR was used.
-            array.push(syntax)
-        }
-        if(array.length > 0) {
-            // Recursively iterate over the tree splitting on the available operators
-            for(var matchCase of matchArray) {
-                
-                //AND, OR and NOT have been relaced with placeholders, just iterate over the placeholder itself
-                if(matchCase == 'OR') { 
-                    continue
-                } else if(matchCase == 'AND') {
-                    matchCase = "PLA"
-                } else if(matchCase == 'NOT') {
-                    continue
-                }
+export function convertHumanReadableToInstructionSet(syntax: string, names: any[], indexMap: trackerIndexNameMapping[], existingPlaceHolders: PlaceholderStruct[]): InstructionSet {
 
-                iterate(array, matchCase)
+    //Replace AND, OR and NOT with a placeholder value (PLA) so we can parse them simultaneously 
+    originalDelimiters = []
+    var whiteSpaceSplit = syntax.split(" ")
+    var delimiterIterator = 0
+    var first = true
+    for (var str of whiteSpaceSplit) {
+        if (str == "AND" || str == "OR" || str == "NOT") {
+            originalDelimiters.push(str)
+            if (first) {
+                syntax = syntax.replace(str, " PLA" + String(delimiterIterator))
+            } else {
+                syntax = syntax.replace(" " + str, " PLA" + String(delimiterIterator))
             }
-            
-            removeArrayWrappers(array)
-            intify(array)
-        }
-        var instructionSet: any[] = []
-        var mem: any[] = []
-        var placeHolders: PlaceholderStruct[] = []
-        const iter = { value: 0 };
-        
-        // Convert the AST into the Instruction Set Syntax 
-        convertASTToInstructionSet(instructionSet, mem, array, iter, names, existingPlaceHolders, indexMap)
 
-        for(var instructionIter in instructionSet) {
-            if(typeof instructionSet[instructionIter] == "string") {
-            if(instructionSet[instructionIter].includes("PLA")) {
+            delimiterIterator += 1
+        }
+        first = false
+    }
+
+    // Create the initial Abstract Syntax Tree (AST) splitting on PLA (placeholder)
+    var array = convertToTree(syntax, "PLA")
+
+    if (array.length == 1) {
+        array = array[0]
+    } else if (array.length == 0) {
+        // If the array is still empty than a single top level statement without an AND or OR was used.
+        array.push(syntax)
+    }
+    if (array.length > 0) {
+        // Recursively iterate over the tree splitting on the available operators
+        for (var matchCase of matchArray) {
+
+            //AND, OR and NOT have been relaced with placeholders, just iterate over the placeholder itself
+            if (matchCase == 'OR') {
+                continue
+            } else if (matchCase == 'AND') {
+                matchCase = "PLA"
+            } else if (matchCase == 'NOT') {
+                continue
+            }
+
+            iterate(array, matchCase)
+        }
+
+        removeArrayWrappers(array)
+        intify(array)
+    }
+    var instructionSet: any[] = []
+    var mem: any[] = []
+    var placeHolders: PlaceholderStruct[] = []
+    const iter = { value: 0 };
+
+    // Convert the AST into the Instruction Set Syntax 
+    convertASTToInstructionSet(instructionSet, mem, array, iter, names, existingPlaceHolders, indexMap)
+
+    for (var instructionIter in instructionSet) {
+        if (typeof instructionSet[instructionIter] == "string") {
+            if (instructionSet[instructionIter].includes("PLA")) {
                 var index = parseInt(instructionSet[instructionIter].replace("PLA", "").trim())
                 instructionSet[instructionIter] = originalDelimiters[index]
-            } 
+            }
         }
-        }
-        return {instructionSet: instructionSet, placeHolders: placeHolders}
+    }
+    return { instructionSet: instructionSet, placeHolders: placeHolders }
 }
 
 /**
@@ -129,40 +129,40 @@ export function convertHumanReadableToInstructionSet(syntax: string, names: any[
  * @param placeHolders - An array to store placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
  */
-function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) { 
+function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]): void {
     if (!expression || expression.length === 0) {
         return;
     }
 
     // If it's a number add it directly to the instruction set and store its memory location in mem
-    if(typeof expression == "number" || typeof expression == "bigint") {
+    if (typeof expression == "number" || typeof expression == "bigint") {
         retVal.push("N")
         retVal.push(BigInt(expression))
         mem.push(iterator.value)
         iterator.value += 1
-    // If it's an array with a string as the first index, recursively run starting at the next index
-    // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
-    } else if(typeof expression[0] == "string") {
+        // If it's an array with a string as the first index, recursively run starting at the next index
+        // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
+    } else if (typeof expression[0] == "string") {
         var foundMatch = false
         var plhIndex = 0
-        for(var parameter of parameterNames) {
-            if(parameter.name == expression[0].trim()) {
+        for (var parameter of parameterNames) {
+            if (parameter.name == expression[0].trim()) {
                 foundMatch = true
                 var plhIter = 0
                 var copyFound = false
-                for(var place of placeHolders) {
+                for (var place of placeHolders) {
                     // Check if the expression is an exact match for one of our placeholders
                     // This will cover all placeholders except foreign calls and tracker updates
                     // these two get their own cases (found below)
-                    if(expression[0].trim().includes("TR:")) {
-                        if(place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && place.trackerValue) {
+                    if (expression[0].trim().includes("TR:")) {
+                        if (place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && place.trackerValue) {
                             retVal.push("PLH")
                             retVal.push(plhIter)
                             copyFound = true
                             break
                         }
                     } else {
-                        if(place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && !place.trackerValue) {
+                        if (place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && !place.trackerValue) {
                             retVal.push("PLH")
                             retVal.push(plhIter)
                             copyFound = true
@@ -170,9 +170,9 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                         }
                     }
                     plhIter += 1
-                    
+
                 }
-                if(!copyFound) { 
+                if (!copyFound) {
                     retVal.push("PLH")
                     retVal.push(plhIndex)
                 }
@@ -181,15 +181,15 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 iterator.value += 1
                 convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
 
-            // Check if the expression is a foreign call
-            } else if(parameter.fcPlaceholder) {
-                if(parameter.fcPlaceholder == expression[0].trim()) {
+                // Check if the expression is a foreign call
+            } else if (parameter.fcPlaceholder) {
+                if (parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
                     retVal.push("PLH")
                     retVal.push(plhIndex)
                     var found = false
-                    for(var pHold of placeHolders) {
-                        if(pHold.foreignCall && pHold.typeSpecificIndex == parameter.tIndex) {
+                    for (var pHold of placeHolders) {
+                        if (pHold.foreignCall && pHold.typeSpecificIndex == parameter.tIndex) {
                             found = true
                         }
                     }
@@ -201,25 +201,25 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     plhIndex += 1
                 }
 
-            // Check if the expression is a tracker update
-            } else if(expression[0].trim().includes('TRU:')) {
+                // Check if the expression is a tracker update
+            } else if (expression[0].trim().includes('TRU:')) {
                 foundMatch = true
                 var trackerName = expression[0].replace('TRU:', 'TR:')
                 var values = trackerName.split(' ')
                 var comparison = values[0]
-                if(values.length > 1) {
+                if (values.length > 1) {
                     comparison = values[1]
                 }
-                if(comparison == parameter.name) {
+                if (comparison == parameter.name) {
                     retVal.push("PLH")
                     retVal.push(plhIndex)
 
-                    for(var ind of indexMap) {
-                        if(parameter.name == "TR:"+ind.name) {
-                            truIndex = ind.id 
+                    for (var ind of indexMap) {
+                        if (parameter.name == "TR:" + ind.name) {
+                            truIndex = ind.id
                         }
                     }
-                    
+
                     var sliced = expression.slice(1)
                     mem.push(iterator.value)
                     iterator.value += 1
@@ -228,18 +228,18 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 } else {
                     plhIndex += 1
                 }
-            // The current parameter does not match the expression
+                // The current parameter does not match the expression
             } else {
                 plhIndex += 1
             }
         }
-        if(!foundMatch) {
-            if(matchArray.includes(expression[0].trim()) || expression[0].includes("PLA")){
+        if (!foundMatch) {
+            if (matchArray.includes(expression[0].trim()) || expression[0].includes("PLA")) {
                 foundMatch = true
                 var sliced = expression.slice(1)
                 convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
-                if(truMatchArray.includes(expression[0].trim())) {
-                    switch(expression[0].trim()) {
+                if (truMatchArray.includes(expression[0].trim())) {
+                    switch (expression[0].trim()) {
                         case '+=':
                             retVal.push('+')
                             break
@@ -260,18 +260,18 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     retVal.push(expression[0])
                 }
                 var not = false
-                if( expression[0].includes("PLA")) {
+                if (expression[0].includes("PLA")) {
                     var it = parseInt(expression[0].replace("PLA", "").trim())
-                    if(originalDelimiters[it] == 'NOT') {
+                    if (originalDelimiters[it] == 'NOT') {
                         not = true
                     }
                 }
-                if(not) {
+                if (not) {
                     retVal.push(mem.pop())
                 } else {
                     retVal.push(...mem.splice(mem.length - 2, 2))
                 }
-                if(truMatchArray.includes(expression[0].trim())) {
+                if (truMatchArray.includes(expression[0].trim())) {
                     retVal.push('TRU')
                     retVal.push(truIndex)
                     retVal.push(iterator.value)
@@ -283,7 +283,7 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                 iterator.value += 1
             }
         }
-        if(!foundMatch) {
+        if (!foundMatch) {
             retVal.push("N")
             retVal.push(expression[0].trim())
             var sliced = expression.slice(1)
@@ -292,8 +292,8 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
             convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
         }
 
-    // If it's an array with a number as the first index, add the number to the instruction set, add its memory
-    // location to the memory map and recursively run starting at the next index
+        // If it's an array with a number as the first index, add the number to the instruction set, add its memory
+        // location to the memory map and recursively run starting at the next index
     } else if (typeof expression[0] == "number" || typeof expression[0] == "bigint") {
         retVal.push("N")
         retVal.push(BigInt(expression[0]))
@@ -301,9 +301,9 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
         mem.push(iterator.value)
         iterator.value += 1
         convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
-    // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
-    // and recursively run starting at the next index
-    } else if(Array.isArray(expression[0])) {
+        // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
+        // and recursively run starting at the next index
+    } else if (Array.isArray(expression[0])) {
         convertASTToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, placeHolders, indexMap)
         expression = expression.slice(1)
         convertASTToInstructionSet(retVal, mem, expression, iterator, parameterNames, placeHolders, indexMap)
@@ -323,7 +323,7 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
  * @returns A nested array representing the tree structure of the logical condition.
  *          Example: ["OR", ["AND", ["A"], ["B"]], ["C"]].
  */
-function convertToTree(condition : string, splitOn : string) {
+function convertToTree(condition: string, splitOn: string): any[] {
     // Recursive Function steps:
     // 1. Replace anything in parenthesis with i:n
     var substrs = new Array()
@@ -332,7 +332,7 @@ function convertToTree(condition : string, splitOn : string) {
     let iter = 0
     let leng = condition.split('(').length
 
-    while(iter <= (leng - 2)) {
+    while (iter <= (leng - 2)) {
 
         // Start with the final instance of "(" in the string, create a substring
         // to the next instance of ")" and replace that with i:n
@@ -349,7 +349,7 @@ function convertToTree(condition : string, splitOn : string) {
     // 2. Split based on the passed in delimiter (splitOn)
     var delimiterSplit: string[] = []
     var uniq: string[] = []
-    if(splitOn == "PLA") {
+    if (splitOn == "PLA") {
         var reg: RegExp = / PLA\d{1,6} /
         var matches = condition.match(reg)
         uniq = [...new Set(matches)]
@@ -364,17 +364,17 @@ function convertToTree(condition : string, splitOn : string) {
     var overAllArray = new Array()
     var addOnIter = 0
     while (endIndex > 0) {
-        if(endIndex >= 1) {
+        if (endIndex >= 1) {
             var innerArray = new Array()
             // Retrieve the contents of the parenthesis for the last two i:n values
-            var actualValue = retrieveParenthesisContent(delimiterSplit[endIndex - 1], substrs) 
-            var actualValueTwo = retrieveParenthesisContent(delimiterSplit[endIndex], substrs) 
-        
-            if(actualValue.startsWith('(')) {
+            var actualValue = retrieveParenthesisContent(delimiterSplit[endIndex - 1], substrs)
+            var actualValueTwo = retrieveParenthesisContent(delimiterSplit[endIndex], substrs)
+
+            if (actualValue.startsWith('(')) {
                 actualValue = actualValue.substring(1, actualValue.length - 1)
             }
 
-            if(actualValueTwo.startsWith('(')) {
+            if (actualValueTwo.startsWith('(')) {
                 actualValueTwo = actualValueTwo.substring(1, actualValueTwo.length - 1)
             }
             // Add the contents to an inner array
@@ -383,11 +383,11 @@ function convertToTree(condition : string, splitOn : string) {
             innerArrayTwo.push(actualValueTwo)
             // If this is the first entry in the overall array, add the values in an array wrapper
             // otherwise add them directly
-            if(overAllArray.length == 0) {
+            if (overAllArray.length == 0) {
 
 
                 var outerArray = new Array()
-                if(splitOn == "PLA") {
+                if (splitOn == "PLA") {
 
                     outerArray.push(uniq[addOnIter].trim())
                     addOnIter += 1
@@ -395,14 +395,14 @@ function convertToTree(condition : string, splitOn : string) {
                     outerArray.push(splitOn)
                 }
                 var pushArray = true
-                
-                if(splitOn == 'PLA') {
+
+                if (splitOn == 'PLA') {
                     var it = parseInt(uniq[addOnIter - 1].replace("PLA", "").trim())
-                     if(originalDelimiters[it] == 'NOT') {
+                    if (originalDelimiters[it] == 'NOT') {
                         pushArray = false
-                     }
+                    }
                 }
-                if(pushArray) {
+                if (pushArray) {
                     outerArray.push(innerArray)
                 }
                 outerArray.push(innerArrayTwo)
@@ -415,10 +415,10 @@ function convertToTree(condition : string, splitOn : string) {
             endIndex -= 2
         }
         // Slightly modified process for the final index in the array
-        if(endIndex == 0) {
+        if (endIndex == 0) {
             var innerArray = new Array()
             var actualValue = retrieveParenthesisContent(delimiterSplit[endIndex], substrs)
-            if(actualValue.includes('(')) {
+            if (actualValue.includes('(')) {
                 actualValue = actualValue.substring(1, actualValue.length - 1)
             }
             innerArray.push(actualValue)
@@ -440,34 +440,34 @@ function convertToTree(condition : string, splitOn : string) {
  * @param array - The array to iterate over and process. Can contain nested arrays.
  * @param splitOn - The delimiter string used to split and process elements in the array.
  */
-function iterate(array: any[], splitOn: string) {
+function iterate(array: any[], splitOn: string): void {
     var iter = 0
-    
-    while(iter < array.length) {
-        if(!Array.isArray(array[iter])) {
+
+    while (iter < array.length) {
+        if (!Array.isArray(array[iter])) {
             var checkVal = " " + splitOn + " "
-            if(splitOn == "PLA") {
+            if (splitOn == "PLA") {
                 checkVal = " PLA"
             }
-            if(array[iter].includes(checkVal)) {
+            if (array[iter].includes(checkVal)) {
                 var output = convertToTree(array[iter], splitOn)
-                if(output.length > 0) {
-                    if(output.length == 1) {
+                if (output.length > 0) {
+                    if (output.length == 1) {
                         output = output[0]
                     }
                     array.splice(iter, 1, output[0])
                 }
-                if(output.length > 1) {
+                if (output.length > 1) {
                     var iterTwo = 1
-                    while(iterTwo < output.length) {
-                        array.splice(iter+iterTwo, 0, output[iterTwo])
+                    while (iterTwo < output.length) {
+                        array.splice(iter + iterTwo, 0, output[iterTwo])
                         iterTwo++
                     }
                 }
                 iter -= 1
             }
         } else {
-            if(array[iter].length > 0) {
+            if (array[iter].length > 0) {
                 iterate(array[iter], splitOn)
             }
         }
@@ -486,14 +486,14 @@ function iterate(array: any[], splitOn: string) {
  *                 a key (`i`) and a substitution value (`s`).
  * @returns The processed string with resolved content from the tuples.
  */
-function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
+function retrieveParenthesisContent(str: string, tuples: Tuple[]): string {
     var actualValue = str
     var iter = 0
-    while(iter < tuples.length) {
+    while (iter < tuples.length) {
         let tuple: Tuple = tuples[iter]
-        if(str.includes(tuple.i)) {
+        if (str.includes(tuple.i)) {
             actualValue = tuple.s
-            if(actualValue.includes('i:')) {
+            if (actualValue.includes('i:')) {
                 var substr = actualValue.substring(actualValue.indexOf("i:"), actualValue.indexOf('i:') + 3)
                 actualValue = actualValue.replace(substr, retrieveParenthesisContent(substr, tuples))
             }
@@ -512,11 +512,11 @@ function retrieveParenthesisContent(str: string, tuples: Tuple[]) {
  *
  * @param array - The array to process, which may contain nested arrays.
  */
-function removeArrayWrappers(array: any[]) {
+function removeArrayWrappers(array: any[]): void {
     var iter = 0
-    while(iter < array.length) {
-        if(Array.isArray(array[iter])) {
-            if(array[iter].length == 1) {
+    while (iter < array.length) {
+        if (Array.isArray(array[iter])) {
+            if (array[iter].length == 1) {
                 array[iter] = array[iter][0]
             } else {
                 removeArrayWrappers(array[iter])
@@ -538,20 +538,20 @@ function removeArrayWrappers(array: any[]) {
  * @param array - The array to process. Can contain nested arrays and elements
  *                of any type.
  */
-function intify(array: any[]) {
+function intify(array: any[]): void {
     var iter = 0
-    while(iter < array.length) {
-        if(Array.isArray(array[iter])) {
+    while (iter < array.length) {
+        if (Array.isArray(array[iter])) {
             intify(array[iter])
-         } else {
-            if(isAddress(array[iter])) {
+        } else {
+            if (isAddress(array[iter])) {
                 array[iter] = BigInt(array[iter])
             } else {
-                if(!isNaN(Number(array[iter]))) {
+                if (!isNaN(Number(array[iter]))) {
                     array[iter] = BigInt(array[iter])
-                } 
-        }
-                
+                }
+            }
+
         }
         iter++
     }

@@ -56,8 +56,8 @@ export const createForeignCall = async (
     policyId: number,
     fcSyntax: string,
 ): Promise<number> => {
-    var json = JSON.parse(fcSyntax)
-    var foreignCall = parseForeignCallDefinition(json)
+    const json = JSON.parse(fcSyntax)
+    const foreignCall = parseForeignCallDefinition(json)
     var fc = {
         set: true,
         foreignCallAddress: foreignCall.address,
@@ -120,8 +120,8 @@ export const updateForeignCall = async (
     foreignCallId: number,
     fcSyntax: string,
 ): Promise<number> => {
-    var json = JSON.parse(fcSyntax)
-    var foreignCall = parseForeignCallDefinition(json)
+    const json = JSON.parse(fcSyntax)
+    const foreignCall = parseForeignCallDefinition(json)
     var fc = {
         set: true,
         foreignCallAddress: foreignCall.address,
@@ -219,7 +219,7 @@ export const getForeignCall = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
     policyId: number,
-    foreignCallId: number): Promise<Maybe<any>> => {
+    foreignCallId: number): Promise<Maybe<ForeignCallOnChain>> => {
     try {
         const addFC = await readContract(config, {
             address: rulesEngineComponentContract.address,
@@ -228,7 +228,7 @@ export const getForeignCall = async (
             args: [policyId, foreignCallId],
         });
 
-        let foreignCallResult = addFC as any;
+        let foreignCallResult = addFC as ForeignCallOnChain;
         return foreignCallResult;
     } catch (error) {
         console.error(error);

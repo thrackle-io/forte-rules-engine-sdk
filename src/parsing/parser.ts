@@ -1,29 +1,31 @@
 
 /// SPDX-License-Identifier: BUSL-1.1
 import { encodePacked, Address, getAddress, toHex, encodeAbiParameters, parseAbiParameters, stringToBytes } from 'viem';
-import { 
-    FCNameToID, 
-    ForeignCallDefinition, 
-    foreignCallJSON, 
-    matchArray, 
-    operandArray, 
-    PlaceholderStruct, 
-    PT, 
-    pTypeEnum, 
-    ruleJSON, 
-    supportedTrackerTypes, 
-    trackerIndexNameMapping, 
+import {
+    FCNameToID,
+    ForeignCallDefinition,
+    foreignCallJSON,
+    matchArray,
+    operandArray,
+    PlaceholderStruct,
+    PT,
+    pTypeEnum,
+    ruleJSON,
+    RuleDefinition,
+    supportedTrackerTypes,
+    TrackerDefinition,
+    trackerIndexNameMapping,
     trackerJSON
 } from '../modules/types';
 import { convertHumanReadableToInstructionSet } from './internal-parsing-logic';
-import { 
-    removeExtraParenthesis, 
-    parseFunctionArguments, 
-    parseTrackers, 
-    buildRawData, 
-    parseForeignCalls, 
-    buildPlaceholderList, 
-    parseEffect 
+import {
+    removeExtraParenthesis,
+    parseFunctionArguments,
+    parseTrackers,
+    buildRawData,
+    parseForeignCalls,
+    buildPlaceholderList,
+    parseEffect
 } from './parsing-utilities';
 
 /**
@@ -53,7 +55,7 @@ import {
  * @param indexMap - A mapping of tracker IDs to their names and types.
  * @returns An object containing the instruction set, raw data, positive effects, negative effects, placeholders, and effect placeholders.
  */
-export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapping[], foreignCallNameToID: FCNameToID[]) {
+export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapping[], foreignCallNameToID: FCNameToID[]): RuleDefinition {
 
     var condition = syntax.condition
 
@@ -64,25 +66,24 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     var names = parseFunctionArguments(functionSignature, condition)
     var effectNames: any[] = []
     condition = parseForeignCalls(condition, names, foreignCallNameToID)
-    parseTrackers(condition,  names, indexMap)
-    var placeHolders: PlaceholderStruct[] = []
-    placeHolders = buildPlaceholderList(names)
+    parseTrackers(condition, names, indexMap)
+    const placeHolders = buildPlaceholderList(names)
 
-    for(var effectP in syntax.positiveEffects) {
+    for (var effectP in syntax.positiveEffects) {
         syntax.positiveEffects[effectP] = parseForeignCalls(syntax.positiveEffects[effectP], effectNames, foreignCallNameToID)
-        parseTrackers(syntax.positiveEffects[effectP],  effectNames, indexMap)
+        parseTrackers(syntax.positiveEffects[effectP], effectNames, indexMap)
     }
-    for(var effectN in syntax.negativeEffects) {
+    for (var effectN in syntax.negativeEffects) {
         syntax.negativeEffects[effectN] = parseForeignCalls(syntax.negativeEffects[effectN], effectNames, foreignCallNameToID)
-        parseTrackers(syntax.negativeEffects[effectN],  effectNames, indexMap)
+        parseTrackers(syntax.negativeEffects[effectN], effectNames, indexMap)
     }
-    var effectPlaceHolders: PlaceholderStruct[] = []
-    effectPlaceHolders = buildPlaceholderList(effectNames)
+
+    const effectPlaceHolders = buildPlaceholderList(effectNames)
 
     var positiveEffectsFinal = []
     var negativeEffectsFinal = []
     if (syntax.positiveEffects != null) {
-        for(var effectP of syntax.positiveEffects) {
+        for (var effectP of syntax.positiveEffects) {
             let effect = parseEffect(effectP, effectNames, effectPlaceHolders, indexMap)
             positiveEffectsFinal.push(effect)
 
@@ -90,7 +91,7 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
     }
 
     if (syntax.negativeEffects != null) {
-        for(var effectN of syntax.negativeEffects) {
+        for (var effectN of syntax.negativeEffects) {
             let effect = parseEffect(effectN, effectNames, effectPlaceHolders, indexMap)
             negativeEffectsFinal.push(effect)
         }
@@ -98,16 +99,21 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
 
     var retVal = convertHumanReadableToInstructionSet(condition, names, indexMap, placeHolders)
     var excludeArray = []
-    for(var name of names) {
+    for (var name of names) {
         excludeArray.push(name.name)
     }
 
     excludeArray.push(...matchArray)
     excludeArray.push(...operandArray)
-    var rawData: any[] = []
-    var raw = buildRawData(retVal.instructionSet, excludeArray, rawData)
-    return {instructionSet: retVal.instructionSet, rawData: raw, positiveEffects: positiveEffectsFinal, negativeEffects: negativeEffectsFinal,
-         placeHolders: placeHolders, effectPlaceHolders: effectPlaceHolders}
+    const rawData = buildRawData(retVal.instructionSet, excludeArray)
+    return {
+        instructionSet: retVal.instructionSet,
+        rawData,
+        positiveEffects: positiveEffectsFinal,
+        negativeEffects: negativeEffectsFinal,
+        placeHolders,
+        effectPlaceHolders: effectPlaceHolders
+    }
 }
 
 /**
@@ -117,31 +123,31 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
  * @returns An object containing the tracker's name, type, and encoded default value.
  * @throws An error if the tracker type or default value is invalid.
  */
-export function parseTrackerSyntax(syntax: trackerJSON) {
+export function parseTrackerSyntax(syntax: trackerJSON): TrackerDefinition {
     let trackerType = syntax.type.trim()
-    if(!supportedTrackerTypes.includes(trackerType)) {
+    if (!supportedTrackerTypes.includes(trackerType)) {
         throw new Error("Unsupported type")
     }
     var trackerDefaultValue: any
-    if(trackerType == "uint256") {
-        if(!isNaN(Number(syntax.defaultValue))) {
+    if (trackerType == "uint256") {
+        if (!isNaN(Number(syntax.defaultValue))) {
 
             trackerDefaultValue = encodePacked(['uint256'], [BigInt(syntax.defaultValue)])
         } else {
             throw new Error("Default Value doesn't match type")
         }
-    } else if(trackerType == "address") {
+    } else if (trackerType == "address") {
         var address = encodeAbiParameters(
             parseAbiParameters('address'),
             [getAddress(syntax.defaultValue.trim())]
-          )
+        )
 
         trackerDefaultValue = address
-    } else if(trackerType == "bytes") {
+    } else if (trackerType == "bytes") {
         var bytes = encodeAbiParameters(
             parseAbiParameters('bytes'),
             [toHex(stringToBytes(String(syntax.defaultValue.trim())))]
-          )
+        )
 
         trackerDefaultValue = bytes
     } else if(trackerType == "bool") {
@@ -152,16 +158,16 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
         }
     } else {
         trackerDefaultValue = encodeAbiParameters(
-                            parseAbiParameters('string'),
-                            [syntax.defaultValue.trim()])
+            parseAbiParameters('string'),
+            [syntax.defaultValue.trim()])
     }
     var trackerTypeEnum = 0
-    for(var parameterType of PT) {
-        if(parameterType.name == trackerType) {
+    for (var parameterType of PT) {
+        if (parameterType.name == trackerType) {
             trackerTypeEnum = parameterType.enumeration
         }
     }
-    return {name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue}
+    return { name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue }
 }
 
 /**
@@ -171,27 +177,27 @@ export function parseTrackerSyntax(syntax: trackerJSON) {
  * @returns An object containing the foreign call's name, address, signature, return type, parameter types, and encoded indices.
  * @throws An error if the return type or parameter types are unsupported.
  */
-export function parseForeignCallDefinition(syntax: foreignCallJSON) {
+export function parseForeignCallDefinition(syntax: foreignCallJSON): ForeignCallDefinition {
     var address: Address = getAddress(syntax.address.trim())
     var signature = syntax.signature.trim()
     var returnType = pTypeEnum.VOID // default to void
-    if(!PT.some(parameter => parameter.name === syntax.returnType)) {
+    if (!PT.some(parameter => parameter.name === syntax.returnType)) {
         throw new Error("Unsupported return type")
     }
-    for(var parameterType of PT) {
-        if(parameterType.name ==syntax.returnType) {
+    for (var parameterType of PT) {
+        if (parameterType.name == syntax.returnType) {
             returnType = parameterType.enumeration
         }
     }
     var parameterTypes: number[] = []
     var parameterSplit = syntax.parameterTypes.trim().split(',')
-    for(var fcParameter of parameterSplit) {
-        if(!PT.some(parameter => parameter.name === fcParameter.trim())) {
+    for (var fcParameter of parameterSplit) {
+        if (!PT.some(parameter => parameter.name === fcParameter.trim())) {
             throw new Error("Unsupported argument type")
         }
-        
-        for(var parameterType of PT) {
-            if(fcParameter.trim() == parameterType.name) {
+
+        for (var parameterType of PT) {
+            if (fcParameter.trim() == parameterType.name) {
                 parameterTypes.push(parameterType.enumeration)
             }
         }
@@ -199,14 +205,16 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
 
     var encodedIndices: number[] = []
     var encodedIndecesSplit = syntax.encodedIndices.trim().split(',')
-    for(var encodedIndex of encodedIndecesSplit) {
-        if(!isNaN(Number(encodedIndex))) {
+    for (var encodedIndex of encodedIndecesSplit) {
+        if (!isNaN(Number(encodedIndex))) {
             encodedIndices.push(Number(encodedIndex))
         }
     }
 
-    return {name: syntax.name.trim(), address: address, signature: signature, 
-        returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices} as ForeignCallDefinition
+    return {
+        name: syntax.name.trim(), address: address, signature: signature,
+        returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices
+    }
 }
 
 /**
@@ -215,20 +223,20 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON) {
  * @param condition - The rule condition string.
  * @returns An array of foreign call names.
  */
-export function buildForeignCallList(condition: string) {
-        // Use a regular expression to find all FC expressions
-        const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
-        const matches = condition.matchAll(fcRegex);
-        let processedCondition = condition
-        var names: string[] = []
-        // Convert matches iterator to array to process all at once
-        for (const match of matches) {
-            const fullFcExpr = match[0];
-            var nameAndArgs = fullFcExpr.split(':')[1]
-            var name = nameAndArgs.split('(')[0]
-            names.push(name)
-        }
-        return names
+export function buildForeignCallList(condition: string): string[] {
+    // Use a regular expression to find all FC expressions
+    const fcRegex = /FC:[a-zA-Z]+\([^)]+\)/g
+    const matches = condition.matchAll(fcRegex);
+    let processedCondition = condition
+    var names: string[] = []
+    // Convert matches iterator to array to process all at once
+    for (const match of matches) {
+        const fullFcExpr = match[0];
+        var nameAndArgs = fullFcExpr.split(':')[1]
+        var name = nameAndArgs.split('(')[0]
+        names.push(name)
+    }
+    return names
 }
 
 /**
@@ -237,13 +245,13 @@ export function buildForeignCallList(condition: string) {
  * @param condition - The rule condition string.
  * @returns An array of tracker names.
  */
-export function buildTrackerList(condition: string) {
+export function buildTrackerList(condition: string): string[] {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
 
     var names: string[] = []
-    if(matches != null) {
+    if (matches != null) {
         for (const match of matches) {
             const fullTRExpr = match;
             var name = fullTRExpr.replace("TR:", "")
@@ -251,7 +259,7 @@ export function buildTrackerList(condition: string) {
         }
     }
     matches = condition.match(truRegex)
-    if(matches != null) {
+    if (matches != null) {
         for (const match of matches) {
             const fullTRExpr = match;
             var name = fullTRExpr.replace("TRU:", "")
@@ -267,42 +275,42 @@ export function buildTrackerList(condition: string) {
  * 
  * @param instructionSet - The instruction set to clean.
  */
-export function cleanInstructionSet(instructionSet: any[]) {
+export function cleanInstructionSet(instructionSet: any[]): void {
     var iter = 0
-    for(var val of instructionSet) {
-        if(val == 'N') {
+    for (var val of instructionSet) {
+        if (val == 'N') {
             instructionSet[iter] = 0
-        } else if(val == '+') {
+        } else if (val == '+') {
             instructionSet[iter] = 1
-        } else if(val == '-') {
+        } else if (val == '-') {
             instructionSet[iter] = 2
-        } else if(val == '*') {
+        } else if (val == '*') {
             instructionSet[iter] = 3
-        } else if(val == '/') {
+        } else if (val == '/') {
             instructionSet[iter] = 4
-        } else if(val == '<') {
+        } else if (val == '<') {
             instructionSet[iter] = 5
-        } else if(val == '>') {
+        } else if (val == '>') {
             instructionSet[iter] = 6
-        } else if(val == '==') {
+        } else if (val == '==') {
             instructionSet[iter] = 7
-        } else if(val == 'AND') {
+        } else if (val == 'AND') {
             instructionSet[iter] = 8
-        } else if(val == 'OR') {
+        } else if (val == 'OR') {
             instructionSet[iter] = 9
-        } else if(val == 'NOT') {
+        } else if (val == 'NOT') {
             instructionSet[iter] = 10
-        } else if(val == 'PLH') {
+        } else if (val == 'PLH') {
             instructionSet[iter] = 11
-        } else if(val == 'TRU') {
+        } else if (val == 'TRU') {
             instructionSet[iter] = 12
-        } else if(val == "=") {
+        } else if (val == "=") {
             instructionSet[iter] = 13
-        } else if(val == ">=") {
+        } else if (val == ">=") {
             instructionSet[iter] = 14;
-        } else if(val == "<=") {
+        } else if (val == "<=") {
             instructionSet[iter] = 15;
-        } else if(val == "!=") {
+        } else if (val == "!=") {
             instructionSet[iter] = 16;
         }
 

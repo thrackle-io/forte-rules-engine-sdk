@@ -1,9 +1,11 @@
 
 /// SPDX-License-Identifier: BUSL-1.1
 import {
+    Abi,
     Address,
     ByteArray,
-    GetContractReturnType
+    GetContractReturnType,
+    Hex
 } from "viem";
 
 import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
@@ -100,13 +102,41 @@ export enum EffectType {
 
 }
 
-export type RuleStruct = {
-    instructionSet: number[],
-    rawData: RawData,
-    placeHolders: any[],
-    effectPlaceHolders: any[],
-    fcArgumentMappingsConditions: any[],
-    fcArgumentMappingsEffects: any[],
+export type EffectDefinition = {
+    type: EffectType;
+    text: string;
+    instructionSet: any[];
+    pType: number;
+    parameterValue: any;
+}
+
+export type EffectStruct = {
+    valid: boolean;
+    dynamicParam: boolean;
+    effectType: EffectType;
+    text: Hex;
+    pType: number;
+    param: any;
+    errorMessage: string;
+    instructionSet: any[];
+}
+
+// TODO: Add more specific types for positiveEffects and negativeEffects
+export type EffectStructs = {
+    positiveEffects: any[];
+    negativeEffects: any[];
+}
+
+export type RuleBase = {
+    instructionSet: number[];
+    rawData: RawData;
+    placeHolders: any[];
+    effectPlaceHolders: any[];
+}
+
+export type RuleDefinition = RuleBase & EffectStructs
+
+export type RuleStruct = RuleBase & {
     posEffects: any[],
     negEffects: any[]
 }
@@ -129,7 +159,6 @@ export type TrackerOnChain = {
 }
 
 export type ForeignCallDefinition = {
-
     name: string;
     address: Address;
     signature: string;
@@ -162,20 +191,25 @@ export type FunctionArgument = {
 }
 
 export type stringReplacement = {
-    instructionSetIndex: number
-    originalData: string
+    instructionSetIndex: number;
+    originalData: string;
 }
 
 export type trackerIndexNameMapping = {
-    id: number
-    name: string
-    type: number
+    id: number;
+    name: string;
+    type: number;
 }
 
 export type TrackerDefinition = {
-    name: string
-    type: number
-    defaultValue: any
+    name: string;
+    type: number;
+    defaultValue: any;
+}
+
+export type InstructionSet = {
+    instructionSet: any[];
+    placeHolders: PlaceholderStruct[];
 }
 
 export type RawData = {

@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { ByteArray, encodeAbiParameters, isAddress, keccak256, parseAbiParameters, toBytes } from "viem";
-import { trackerIndexNameMapping, FCNameToID, EffectType, PlaceholderStruct, operandArray, RawData } from "../modules/types";
+import { trackerIndexNameMapping, FCNameToID, EffectType, PlaceholderStruct, operandArray, RawData, EffectDefinition, FunctionArgument } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 
 /**
@@ -27,23 +27,23 @@ import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
  * @param condition - Optional parameter for the condition statement of a rule
  * @returns An array of argument placeholders.
  */
-export function parseFunctionArguments(functionSignature: string, condition?: string) {
+export function parseFunctionArguments(functionSignature: string, condition?: string): FunctionArgument[] {
     var params = functionSignature.split(", ");
-    var names = []
+    var names: FunctionArgument[] = []
     var typeIndex = 0
 
-    for(var param of params) {
+    for (var param of params) {
         var typeName = param.split(" ");
-        if(typeName[0].trim() == "uint256" && (condition == null || condition.includes(typeName[1]))) {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-        } else if(typeName[0].trim() == "string" && (condition == null || condition.includes(typeName[1]))) {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-        } else if(typeName[0].trim() == "address" && (condition == null || condition.includes(typeName[1]))) {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-        } else if(typeName[0].trim() == "bytes" && (condition == null || condition.includes(typeName[1]))) {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
-        } else if(typeName[0].trim() == "bool" && (condition == null || condition.includes(typeName[1]))) {
-            names.push({name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim()})
+        if (typeName[0].trim() == "uint256" && (condition == null || condition.includes(typeName[1]))) {
+            names.push({ name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim() })
+        } else if (typeName[0].trim() == "string" && (condition == null || condition.includes(typeName[1]))) {
+            names.push({ name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim() })
+        } else if (typeName[0].trim() == "address" && (condition == null || condition.includes(typeName[1]))) {
+            names.push({ name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim() })
+        } else if (typeName[0].trim() == "bytes" && (condition == null || condition.includes(typeName[1]))) {
+            names.push({ name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim() })
+        } else if (typeName[0].trim() == "bool" && (condition == null || condition.includes(typeName[1]))) {
+            names.push({ name: typeName[1], tIndex: typeIndex, rawType: typeName[0].trim() })
         }
         typeIndex++
     }
@@ -59,60 +59,60 @@ export function parseFunctionArguments(functionSignature: string, condition?: st
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
  */
-export function parseTrackers(condition: string, names: any[], indexMap: trackerIndexNameMapping[]) {
+export function parseTrackers(condition: string, names: any[], indexMap: trackerIndexNameMapping[]): void {
     const trRegex = /TR:[a-zA-Z]+/g
     const truRegex = /TRU:[a-zA-Z]+/g
     var matches = condition.match(trRegex)
 
-    if(matches != null) {
+    if (matches != null) {
         var uniq = [...new Set(matches)];
-        for(var match of uniq!) {
+        for (var match of uniq!) {
             var type = "address"
             var index = 0
-            for(var ind of indexMap){
-                if(("TR:"+ind.name) == match) {
+            for (var ind of indexMap) {
+                if (("TR:" + ind.name) == match) {
                     index = ind.id
-                    if(ind.type == 0) {
+                    if (ind.type == 0) {
                         type = "address"
-                    } else if(ind.type == 1) {
+                    } else if (ind.type == 1) {
                         type = "string"
-                    } else if(ind.type == 3) {
+                    } else if (ind.type == 3) {
                         type = "bool"
-                    } else if(ind.type == 5) {
+                    } else if (ind.type == 5) {
                         type = "bytes"
                     } else {
                         type = "uint256"
                     }
                 }
             }
-            names.push({name: match, tIndex: index, rawType: "tracker", rawTypeTwo: type})
+            names.push({ name: match, tIndex: index, rawType: "tracker", rawTypeTwo: type })
         }
     }
 
     var matchesUpdate = condition.match(truRegex)
 
-    if(matchesUpdate != null) {
+    if (matchesUpdate != null) {
         var uniq = [...new Set(matchesUpdate)];
-        for(var match of uniq!) {
+        for (var match of uniq!) {
             var index = 0
             match = match.replace("TRU:", "TR:")
-            for(var ind of indexMap){
-                if(("TR:"+ind.name) == match) {
+            for (var ind of indexMap) {
+                if (("TR:" + ind.name) == match) {
                     index = ind.id
                 }
             }
             var found = false
-            for(var name of names) {
-                if(name.name == match) {
+            for (var name of names) {
+                if (name.name == match) {
                     found = true
                     break
                 }
             }
-            if(!found) {
-                names.push({name: match, tIndex: index, rawType: "tracker"})
+            if (!found) {
+                names.push({ name: match, tIndex: index, rawType: "tracker" })
             }
         }
-    } 
+    }
 }
 
 /**
@@ -132,11 +132,11 @@ export function parseTrackers(condition: string, names: any[], indexMap: tracker
  *   is reused.
  * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
  */
-export function parseForeignCalls(condition: string, names: any[], foreignCallNameToID: FCNameToID[]) {
+export function parseForeignCalls(condition: string, names: any[], foreignCallNameToID: FCNameToID[]): string {
     let iter = 0
 
-    for(var name of names) {
-        if(name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
+    for (var name of names) {
+        if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
             iter += 1
         }
     }
@@ -148,7 +148,7 @@ export function parseForeignCalls(condition: string, names: any[], foreignCallNa
     // Convert matches iterator to array to process all at once
     for (const match of matches) {
         const fullFcExpr = match[0];
-        
+
         if (names.indexOf(match) !== -1) {
             let ph = names[names.indexOf(match)].fcPlaceholder
             processedCondition = processedCondition.replace(fullFcExpr, ph)
@@ -156,36 +156,35 @@ export function parseForeignCalls(condition: string, names: any[], foreignCallNa
         }
         // Create a unique placeholder for this FC expression
         var placeholder = `FC:${iter}`;
-        for(var existing of names) {
-            if(existing.name == fullFcExpr) {
+        for (var existing of names) {
+            if (existing.name == fullFcExpr) {
                 placeholder = existing.fcPlaceholder
             }
         }
-        
+
         processedCondition = processedCondition.replace(fullFcExpr, placeholder);
         var alreadyFound = false
-        for(var existing of names) {
-            if(existing.name == fullFcExpr) {
+        for (var existing of names) {
+            if (existing.name == fullFcExpr) {
                 alreadyFound = true
                 break
             }
         }
-        if(!alreadyFound) {
+        if (!alreadyFound) {
 
             var index = 0
-            for(var fcMap of foreignCallNameToID) {
-                if(("FC:" + fcMap.name.split('(')[0]) == fullFcExpr.split('(')[0]) {
+            for (var fcMap of foreignCallNameToID) {
+                if (("FC:" + fcMap.name.split('(')[0]) == fullFcExpr.split('(')[0]) {
 
                     index = fcMap.id
                 }
             }
-            names.push({name: match, tIndex: index, rawType: "foreign call", fcPlaceholder: placeholder})
+            names.push({ name: match, tIndex: index, rawType: "foreign call", fcPlaceholder: placeholder })
         }
         iter++;
     }
 
-    condition = processedCondition
-    return condition
+    return processedCondition
 }
 
 /**
@@ -194,30 +193,30 @@ export function parseForeignCalls(condition: string, names: any[], foreignCallNa
  * @param names - array in the SDK internal format for placeholders 
  * @returns Placeholder array in the chain specific format
  */
-export function buildPlaceholderList(names: any[]) {
+export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
     var placeHolders: PlaceholderStruct[] = []
-    for(var name of names) {
+    for (var name of names) {
 
         var placeHolderEnum = 0
         var tracker = false
-        if(name.rawType == "address") {
+        if (name.rawType == "address") {
             placeHolderEnum = 0
         } else if (name.rawType == "string") {
             placeHolderEnum = 1
-        } else if(name.rawType == "uint256") {
+        } else if (name.rawType == "uint256") {
             placeHolderEnum = 2
-        } else if(name.rawType == "bool") {
+        } else if (name.rawType == "bool") {
             placeHolderEnum = 3
-        } else if(name.rawType == "bytes") {
+        } else if (name.rawType == "bytes") {
             placeHolderEnum = 5
-        }  else if(name.rawType == "tracker") {
-            if((name as any).rawTypeTwo == "address") {
+        } else if (name.rawType == "tracker") {
+            if ((name as any).rawTypeTwo == "address") {
                 placeHolderEnum = 0
-            } else if((name as any).rawTypeTwo == "string") {
+            } else if ((name as any).rawTypeTwo == "string") {
                 placeHolderEnum = 1
-            } else if((name as any).rawTypeTwo == "bool") {
-                placeHolderEnum = 3  
-            } else if((name as any).rawTypeTwo == "bytes") {
+            } else if ((name as any).rawTypeTwo == "bool") {
+                placeHolderEnum = 3
+            } else if ((name as any).rawTypeTwo == "bytes") {
                 placeHolderEnum = 5
             } else {
                 placeHolderEnum = 2
@@ -225,7 +224,7 @@ export function buildPlaceholderList(names: any[]) {
             tracker = true
         }
 
-        var placeHolder : PlaceholderStruct = {
+        var placeHolder: PlaceholderStruct = {
             pType: placeHolderEnum,
             typeSpecificIndex: name.tIndex,
             trackerValue: tracker,
@@ -254,28 +253,28 @@ export function buildPlaceholderList(names: any[]) {
  * - `pType`: The parameter type (0 for address, 1 for string, 2 for numeric).
  * - `parameterValue`: The extracted parameter value (address, string, or numeric).
  */
-export function parseEffect(effect: string, names: any[], placeholders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]) {
+export function parseEffect(effect: string, names: any[], placeholders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]): EffectDefinition {
     var effectType = EffectType.REVERT
     var effectText = ""
     var effectInstructionSet: any[] = []
     const revertTextPattern = /(revert)\("([^"]*)"\)/;
     var pType = 2
     var parameterValue: any = 0
-    if(effect.includes("emit")) {
+    if (effect.includes("emit")) {
         effectType = EffectType.EVENT
         var placeHolder = effect.replace("emit ", "").trim()
         var spli = placeHolder.split(", ")
-        if(spli.length > 1) {
+        if (spli.length > 1) {
             effectText = spli[0]
-            if(isAddress(spli[1].trim())) {
+            if (isAddress(spli[1].trim())) {
                 pType = 0
                 parameterValue = spli[1].trim()
-            } else if(!isNaN(Number(spli[1].trim()))) {
+            } else if (!isNaN(Number(spli[1].trim()))) {
                 pType = 2
                 parameterValue = BigInt(spli[1].trim())
             } else {
                 pType = 1
-                parameterValue = spli[1].trim() 
+                parameterValue = spli[1].trim()
             }
         } else {
             effectText = spli[0]
@@ -292,7 +291,13 @@ export function parseEffect(effect: string, names: any[], placeholders: Placehol
 
     }
 
-    return {type: effectType, text: effectText, instructionSet: effectInstructionSet, pType: pType, parameterValue: parameterValue}
+    return {
+        type: effectType,
+        text: effectText,
+        instructionSet: effectInstructionSet,
+        pType,
+        parameterValue
+    }
 }
 
 /**
@@ -308,55 +313,50 @@ export function parseEffect(effect: string, names: any[], placeholders: Placehol
  *          - `argumentTypes`: An array of argument types (e.g., 1 for strings).
  *          - `dataValues`: An array of byte arrays representing the processed data values.
  */
-export function buildRawData(instructionSet: any[], excludeArray: string[], rawDataArray: any[]) {
-    var raw : RawData
+export function buildRawData(instructionSet: any[], excludeArray: string[]): RawData {
     var instructionSetArray: number[] = []
     var argumentTypes: number[] = [] // string: 1
     var dataValues: ByteArray[] = []
     let iter = 0
-    while(iter < instructionSet.length) {
-            // Only capture values that aren't naturally numbers
-            if(!isNaN(Number(instructionSet[iter]))) {
-                instructionSet[iter] = BigInt(instructionSet[iter])
-            } else {
-                if (!excludeArray.includes(instructionSet[iter].trim())) {
-                    const currentInstruction = instructionSet[iter].trim();
-                    if(currentInstruction == "true") {
-                        instructionSet[iter] = 1n
-                    } else if(currentInstruction == "false") {
-                        instructionSet[iter] = 0n
-                    } else {
-                        // Determine if the current instruction is a bytes type (hex string starting with "0x")
-                        const isBytes = currentInstruction.startsWith('0x');
-                    
-                        // Create the raw data entry
-                        rawDataArray.push({
-                            rawData: currentInstruction,
-                            iSetIndex: iter,
-                            dataType: isBytes ? "bytes" : "string"
-                        });
-                        instructionSetArray.push(iter);
-                        argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
-                        dataValues.push(isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction));
-                    
-                        if (!operandArray.includes(currentInstruction)) {
-                            // Convert the string or bytes to a keccak256 hash then to a uint256
-                            instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
-                                parseAbiParameters(isBytes ? 'bytes' : 'string'),
-                                [currentInstruction]
-                            )));
-                        }
+    while (iter < instructionSet.length) {
+        // Only capture values that aren't naturally numbers
+        if (!isNaN(Number(instructionSet[iter]))) {
+            instructionSet[iter] = BigInt(instructionSet[iter])
+        } else {
+            if (!excludeArray.includes(instructionSet[iter].trim())) {
+                const currentInstruction = instructionSet[iter].trim();
+                if (currentInstruction == "true") {
+                    instructionSet[iter] = 1n
+                } else if (currentInstruction == "false") {
+                    instructionSet[iter] = 0n
+                } else {
+                    // Determine if the current instruction is a bytes type (hex string starting with "0x")
+                    const isBytes = currentInstruction.startsWith('0x');
+
+
+                    instructionSetArray.push(iter);
+                    argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
+                    dataValues.push(isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction));
+
+                    if (!operandArray.includes(currentInstruction)) {
+                        // Convert the string or bytes to a keccak256 hash then to a uint256
+                        instructionSet[iter] = BigInt(keccak256(encodeAbiParameters(
+                            parseAbiParameters(isBytes ? 'bytes' : 'string'),
+                            [currentInstruction]
+                        )));
                     }
                 }
-            } 
+            }
+        }
         iter++
     }
-    raw = {
+
+
+    return {
         instructionSetIndex: instructionSetArray,
         argumentTypes: argumentTypes,
         dataValues: dataValues
     }
-    return raw
 }
 
 
@@ -367,7 +367,7 @@ export function buildRawData(instructionSet: any[], excludeArray: string[], rawD
  * @param str - The input string to be cleaned.
  * @returns The cleaned string with normalized whitespace.
  */
-export function cleanString(str: string) {
+export function cleanString(str: string): string {
     return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -385,12 +385,12 @@ export function cleanString(str: string) {
  * @param strToClean - The input string to be cleaned of extra parentheses.
  * @returns The cleaned string with unnecessary parentheses removed and original patterns restored.
  */
-export function removeExtraParenthesis(strToClean: string) {
+export function removeExtraParenthesis(strToClean: string): string {
     var holders: string[] = []
     var fcHolder: string[] = []
     var iter = 0
 
-    while(strToClean.includes('FC:')) {
+    while (strToClean.includes('FC:')) {
         var initialIndex = strToClean.lastIndexOf('FC:')
         var closingIndex = strToClean.indexOf(')', initialIndex)
         var sub = strToClean.substring(initialIndex, closingIndex + 1)
@@ -401,13 +401,13 @@ export function removeExtraParenthesis(strToClean: string) {
     }
 
     iter = 0
-    while(strToClean.includes('(')) {
+    while (strToClean.includes('(')) {
         var initialIndex = strToClean.lastIndexOf('(')
         var closingIndex = strToClean.indexOf(')', initialIndex)
         var sub = strToClean.substring(initialIndex, closingIndex + 1)
         var removed = false
 
-        if(sub.includes('AND') || sub.includes('OR') || sub.includes('NOT')) {
+        if (sub.includes('AND') || sub.includes('OR') || sub.includes('NOT')) {
             holders.push(sub)
             var replacement = "rep:" + iter
             iter += 1
@@ -418,13 +418,13 @@ export function removeExtraParenthesis(strToClean: string) {
             strToClean = strToClean.substring(0, closingIndex - 1) + '' + strToClean.substring(closingIndex);
         }
     }
-    
+
     var replaceCount = 0
-    while(replaceCount < holders.length) {
+    while (replaceCount < holders.length) {
         iter = 0
-        for(var hold of holders) {
+        for (var hold of holders) {
             var str = "rep:" + iter
-            if(strToClean.includes(str)) {
+            if (strToClean.includes(str)) {
                 strToClean = strToClean.replace(str, holders[iter])
                 replaceCount += 1
             }
@@ -432,7 +432,7 @@ export function removeExtraParenthesis(strToClean: string) {
         }
     }
     iter = 0
-    for(var hold of fcHolder) {
+    for (var hold of fcHolder) {
         var str = "fcRep:" + iter
         strToClean = strToClean.replace(str, fcHolder[iter])
         iter += 1
