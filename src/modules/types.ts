@@ -235,5 +235,27 @@ export const PT = [{ name: 'address', enumeration: pTypeEnum.ADDRESS }, { name: 
 { name: 'uint256', enumeration: pTypeEnum.UINT256 }, { name: 'bool', enumeration: pTypeEnum.BOOL },
 { name: 'void', enumeration: pTypeEnum.VOID }, { name: 'bytes', enumeration: pTypeEnum.BYTES }]
 
+export type ErrorType = "INPUT" | "CONTRACT_READ" | "CONTRACT_WRITE" | "COMPILATION";
+
+export type RulesError = {
+    errorType: ErrorType;
+    state: any;
+    message: string;
+}
+
+export type Left<T> = {
+    left: T;
+    right?: never;
+};
+
+export type Right<U> = {
+    right: U;
+    left?: never;
+};
+
+export type Either<T, U> = NonNullable<Left<T> | Right<U>>;
+
+export type UnwrapEither = <T, U>(e: Either<T, U>) => NonNullable<T | U>;
+
 export type Maybe<T> = NonNullable<T> | null;
 

@@ -15,7 +15,9 @@ import {
     supportedTrackerTypes,
     TrackerDefinition,
     trackerIndexNameMapping,
-    trackerJSON
+    trackerJSON,
+    Either,
+    RulesError
 } from '../modules/types';
 import { convertHumanReadableToInstructionSet } from './internal-parsing-logic';
 import {
@@ -27,6 +29,7 @@ import {
     buildPlaceholderList,
     parseEffect
 } from './parsing-utilities';
+import { makeLeft, makeRight } from '../modules/utils';
 
 /**
  * @file parser.ts
@@ -123,10 +126,14 @@ export function parseRuleSyntax(syntax: ruleJSON, indexMap: trackerIndexNameMapp
  * @returns An object containing the tracker's name, type, and encoded default value.
  * @throws An error if the tracker type or default value is invalid.
  */
-export function parseTrackerSyntax(syntax: trackerJSON): TrackerDefinition {
+export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, TrackerDefinition> {
     let trackerType = syntax.type.trim()
     if (!supportedTrackerTypes.includes(trackerType)) {
-        throw new Error("Unsupported type")
+        return makeLeft({
+            errorType: "INPUT",
+            state: { supportedTrackerTypes, trackerType },
+            message: "Unsupported type"
+        })
     }
     var trackerDefaultValue: any
     if (trackerType == "uint256") {
@@ -134,7 +141,11 @@ export function parseTrackerSyntax(syntax: trackerJSON): TrackerDefinition {
 
             trackerDefaultValue = encodePacked(['uint256'], [BigInt(syntax.defaultValue)])
         } else {
-            throw new Error("Default Value doesn't match type")
+            return makeLeft({
+                errorType: "INPUT",
+                state: { defaultValue: syntax.defaultValue },
+                message: "Default Value doesn't match type"
+            })
         }
     } else if (trackerType == "address") {
         var address = encodeAbiParameters(
@@ -150,8 +161,8 @@ export function parseTrackerSyntax(syntax: trackerJSON): TrackerDefinition {
         )
 
         trackerDefaultValue = bytes
-    } else if(trackerType == "bool") {
-        if(syntax.defaultValue == "true") {
+    } else if (trackerType == "bool") {
+        if (syntax.defaultValue == "true") {
             trackerDefaultValue = encodePacked(['uint256'], [1n])
         } else {
             trackerDefaultValue = encodePacked(['uint256'], [0n])
@@ -167,7 +178,7 @@ export function parseTrackerSyntax(syntax: trackerJSON): TrackerDefinition {
             trackerTypeEnum = parameterType.enumeration
         }
     }
-    return { name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue }
+    return makeRight({ name: syntax.name.trim(), type: trackerTypeEnum, defaultValue: trackerDefaultValue })
 }
 
 /**
@@ -177,12 +188,16 @@ export function parseTrackerSyntax(syntax: trackerJSON): TrackerDefinition {
  * @returns An object containing the foreign call's name, address, signature, return type, parameter types, and encoded indices.
  * @throws An error if the return type or parameter types are unsupported.
  */
-export function parseForeignCallDefinition(syntax: foreignCallJSON): ForeignCallDefinition {
+export function parseForeignCallDefinition(syntax: foreignCallJSON): Either<RulesError, ForeignCallDefinition> {
     var address: Address = getAddress(syntax.address.trim())
     var signature = syntax.signature.trim()
     var returnType = pTypeEnum.VOID // default to void
     if (!PT.some(parameter => parameter.name === syntax.returnType)) {
-        throw new Error("Unsupported return type")
+        return makeLeft({
+            errorType: "INPUT",
+            state: { PT, syntax },
+            message: "Unsupported return type"
+        })
     }
     for (var parameterType of PT) {
         if (parameterType.name == syntax.returnType) {
@@ -193,7 +208,11 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON): ForeignCall
     var parameterSplit = syntax.parameterTypes.trim().split(',')
     for (var fcParameter of parameterSplit) {
         if (!PT.some(parameter => parameter.name === fcParameter.trim())) {
-            throw new Error("Unsupported argument type")
+            return makeLeft({
+                errorType: "INPUT",
+                state: { PT, syntax },
+                message: "Unsupported argument type"
+            })
         }
 
         for (var parameterType of PT) {
@@ -211,10 +230,14 @@ export function parseForeignCallDefinition(syntax: foreignCallJSON): ForeignCall
         }
     }
 
-    return {
-        name: syntax.name.trim(), address: address, signature: signature,
-        returnType: returnType, parameterTypes: parameterTypes, encodedIndices: encodedIndices
-    }
+    return makeRight({
+        name: syntax.name.trim(),
+        address,
+        signature,
+        returnType,
+        parameterTypes,
+        encodedIndices
+    })
 }
 
 /**
