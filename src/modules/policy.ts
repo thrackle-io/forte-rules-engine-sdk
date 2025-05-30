@@ -44,6 +44,10 @@ import {
   convertForeignCallStructsToStrings,
   convertTrackerStructsToStrings,
 } from "../parsing/reverse-parsing-logic";
+import {
+  isRight,
+  unwrapEither
+} from "./utils";
 
 /**
  * @file policy.ts
@@ -113,39 +117,50 @@ export const createPolicy = async (
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
     if (policyJSON.ForeignCalls != null) {
       for (var foreignCall of policyJSON.ForeignCalls) {
-        var fcStruct = parseForeignCallDefinition(foreignCall);
-        const fcId = await createForeignCall(
-          config,
-          rulesEngineComponentContract,
-          policyId,
-          JSON.stringify(foreignCall)
-        );
-        var struc: FCNameToID = {
-          id: fcId,
-          name: fcStruct.name.split("(")[0],
-          type: 0,
-        };
-        fcIds.push(struc);
+        const parsedFC = parseForeignCallDefinition(foreignCall)
+        if (isRight(parsedFC)) {
+          const fcStruct = unwrapEither(parsedFC)
+          const fcId = await createForeignCall(
+            config,
+            rulesEngineComponentContract,
+            policyId, JSON.stringify(foreignCall)
+          )
+          var struc: FCNameToID = {
+            id: fcId,
+            name: fcStruct.name.split('(')[0],
+            type: 0
+          }
+          fcIds.push(struc)
+        } else {
+          throw new Error(unwrapEither(parsedFC).message);
+        }
       }
     }
+
     if (policyJSON.Trackers != null) {
       for (var tracker of policyJSON.Trackers) {
-        var trackerStruct: TrackerDefinition = parseTrackerSyntax(tracker);
-        const trId = await createTracker(
-          config,
-          rulesEngineComponentContract,
-          policyId,
-          JSON.stringify(tracker)
-        );
-        var struc: FCNameToID = {
-          id: trId,
-          name: trackerStruct.name,
-          type: trackerStruct.type,
-        };
-        trackerIds.push(struc);
-        trackers.push(trackerStruct);
+        const parsedTracker = parseTrackerSyntax(tracker)
+        if (isRight(parsedTracker)) {
+          const trackerStruct = unwrapEither(parsedTracker)
+          const trId = await createTracker(
+            config,
+            rulesEngineComponentContract,
+            policyId,
+            JSON.stringify(tracker)
+          )
+          var struc: FCNameToID = {
+            id: trId,
+            name: trackerStruct.name,
+            type: trackerStruct.type
+          }
+          trackerIds.push(struc)
+          trackers.push(trackerStruct);
+        } else {
+          throw new Error(unwrapEither(parsedTracker).message);
+        }
       }
     }
+
     for (var rule of policyJSON.Rules) {
       var callingFunction = rule.callingFunction.trim();
       if (!callingFunctions.includes(callingFunction)) {

@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from "vitest";
-import { EffectType, pTypeEnum } from "../src/modules/types.js";
+import { EffectType, ForeignCallDefinition, pTypeEnum, TrackerDefinition } from "../src/modules/types.js";
 import {
   keccak256,
   hexToNumber,
@@ -19,6 +19,7 @@ import {
 } from "../src/parsing/parser.js";
 import { reverseParseRule } from "../src/parsing/reverse-parsing-logic.js";
 import { removeExtraParenthesis } from "../src/parsing/parsing-utilities.js";
+import { unwrapEither } from '../src/modules/utils.js';
 
 test("Evaluates a simple syntax string (using only values and operators)", () => {
   /**
@@ -755,13 +756,13 @@ test("Creates a simple uint256 tracker", () => {
         "name": "Simple Int Tracker",
         "type": "uint256",
         "initialValue": "14"
-        }`;
-  var retVal = parseTrackerSyntax(JSON.parse(str));
-  expect(retVal.name).toEqual("Simple Int Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.UINT256);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(14)])
-  );
+        }`
+  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
+
+  expect(retVal.name).toEqual("Simple Int Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.UINT256)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('uint256'), [BigInt(14)]))
 });
 
 test("Creates a simple bool tracker", () => {
@@ -769,13 +770,12 @@ test("Creates a simple bool tracker", () => {
         "name": "Simple bool Tracker",
         "type": "bool",
         "initialValue": "true"
-        }`;
-  var retVal = parseTrackerSyntax(JSON.parse(str));
-  expect(retVal.name).toEqual("Simple bool Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.BOOL);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
-  );
+        }`
+  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
+  expect(retVal.name).toEqual("Simple bool Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.BOOL)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('uint256'), [BigInt(1)]))
 });
 
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
@@ -838,15 +838,12 @@ test("Creates a simple address tracker", () => {
   "name": "Simple Address Tracker",
   "type": "address",
   "initialValue": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"
-  }`;
-  var retVal = parseTrackerSyntax(JSON.parse(str));
-  expect(retVal.name).toEqual("Simple Address Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.ADDRESS);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("address"), [
-      "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-    ])
-  );
+  }`
+  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
+  expect(retVal.name).toEqual("Simple Address Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.ADDRESS)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('address'), ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']))
 });
 
 test("Creates a simple string tracker", () => {
@@ -854,13 +851,12 @@ test("Creates a simple string tracker", () => {
   "name": "Simple String Tracker",
   "type": "string",
   "initialValue": "test"
-  }`;
-  var retVal = parseTrackerSyntax(JSON.parse(str));
-  expect(retVal.name).toEqual("Simple String Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.STRING);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("string"), ["test"])
-  );
+  }`
+  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
+  expect(retVal.name).toEqual("Simple String Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.STRING)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('string'), ['test']))
 });
 
 test("Tests unsupported type", () => {
@@ -883,7 +879,7 @@ test("Creates a simple foreign call", () => {
   "valuesToPass": "0, 1, 2"
   }`;
 
-  var retVal = parseForeignCallDefinition(JSON.parse(str));
+  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as ForeignCallDefinition
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
@@ -1733,12 +1729,12 @@ test("Evaluates a simple effect involving a tracker update (TRU))", () => {
   var expectedArray = ["PLH", 0, "N", 1n, "-", 0, 1, "TRU", 4, 2, 0];
 
   var ruleStringA = `{
-"condition": " value > 5 ",
-"positiveEffects": [" TRU:testOne -= 1 "],
-"negativeEffects": [],
-"callingFunction": "addValue(uint256 value, string info)",
-"encodedValues": "uint256 value, string info, address addr"
-}`;
+  "condition": " value > 5 ",
+  "positiveEffects": [" TRU:testOne -= 1 "],
+  "negativeEffects": [],
+  "callingFunction": "addValue(uint256 value, string info)",
+  "encodedValues": "uint256 value, string info, address addr"
+  }`;
 
   var str =
     "value > 5  --> TRU:testOne -= value --> addValue(uint256 value, string info, address addr)";
@@ -2298,7 +2294,7 @@ test("Creates a simple foreign call with a boolean return", () => {
   "valuesToPass": "0, 1, 2"
   }`;
 
-  var retVal = parseForeignCallDefinition(JSON.parse(str));
+  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as ForeignCallDefinition
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
