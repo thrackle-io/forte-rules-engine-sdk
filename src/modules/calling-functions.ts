@@ -10,14 +10,14 @@ import {
 import { account } from "../../config"
 import { sleep } from "./contract-interaction-utils"
 import { parseFunctionArguments } from "../parsing/parser"
-import { FunctionSignatureHashMapping, RulesEngineComponentContract } from "./types"
+import { CallingFunctionHashMapping, RulesEngineComponentContract } from "./types"
 
 /**
- * @file FunctionSignatures.ts
- * @description This module provides a comprehensive set of functions for interacting with the Function Signatures within the Rules Engine smart contracts.
- *              It includes functionality for creating, updating, retrieving, and deleting function signatures.
+ * @file CallingFunctions.ts
+ * @description This module provides a comprehensive set of functions for interacting with the Calling Functions within the Rules Engine smart contracts.
+ *              It includes functionality for creating, updating, retrieving, and deleting calling functions.
  * 
- * @module FunctionSignatures
+ * @module CallingFunctions
  * 
  * @dependencies
  * - `viem`: Provides utilities for encoding/decoding data and interacting with Ethereum contracts.
@@ -34,26 +34,26 @@ import { FunctionSignatureHashMapping, RulesEngineComponentContract } from "./ty
  */
 
 /**
- * Creates a function signature in the rules engine component contract.
+ * Creates a Calling Function in the rules engine component contract.
  *
- * This function parses the provided function signature, maps its arguments to their respective
- * types, and interacts with the smart contract to create the function signature. If the contract
+ * This function parses the provided calling function, maps its arguments to their respective
+ * types, and interacts with the smart contract to create the calling function. If the contract
  * interaction fails, it retries with a delay until successful.
  *
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI
- * @param policyId - The ID of the policy for which the function signature is being created.
- * @param functionSignature - The function signature string to be parsed and added to the contract.
+ * @param policyId - The ID of the policy for which the calling function is being created.
+ * @param callingFunction - The calling function string to be parsed and added to the contract.
  *                                        of the rules engine component.
  * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
-export const createFunctionSignature = async (
+export const createCallingFunction = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
-    policyId: number, functionSignature: string, encodedValues: string
+    policyId: number, callingFunction: string, encodedValues: string
     ): Promise<number> => {
-        var argsRaw = parseFunctionArguments(functionSignature)
+        var argsRaw = parseFunctionArguments(callingFunction)
         var args = []
         for(var arg of argsRaw) {
             if(arg.rawType == "uint256") {
@@ -72,7 +72,7 @@ export const createFunctionSignature = async (
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "createFunctionSignature",
-                args: [ policyId, toFunctionSelector(functionSignature), args, functionSignature, encodedValues ],
+                args: [ policyId, toFunctionSelector(callingFunction), args, callingFunction, encodedValues ],
             });
             break
         } catch (err) {
@@ -95,19 +95,19 @@ export const createFunctionSignature = async (
     }   
 
 /**
- * Delete a function signature from the rules engine component contract.
+ * Delete a calling function from the rules engine component contract.
  *
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI
- * @param policyId - The ID of the policy for which the function signature is being created.
- * @param functionSignatureId - The function signature ID to be deleted.
+ * @param policyId - The ID of the policy for which the calling function is being deleted.
+ * @param callingFunctionId - The calling function ID to be deleted.
  * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
-export const deleteFunctionSignature = async (
+export const deleteCallingFunction = async (
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
-    policyId: number, functionSignatureId: number
+    policyId: number, callingFunctionId: number
     ): Promise<number> => {
     var addRule
     try {
@@ -115,7 +115,7 @@ export const deleteFunctionSignature = async (
             address: rulesEngineComponentContract.address,
             abi: rulesEngineComponentContract.abi,
             functionName: "deleteFunctionSignature",
-            args: [ policyId, functionSignatureId ],
+            args: [ policyId, callingFunctionId ],
         });
     } catch (err) {
         return -1
@@ -136,30 +136,30 @@ export const deleteFunctionSignature = async (
 }
 
 /**
- * retrieves the metadata for a function signature from the rules engine component contract.
+ * retrieves the metadata for a calling function from the rules engine component contract.
  *
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI
- * @param policyId - The ID of the policy for which the function signature is being created.
- * @param functionSignatureId - The function signature ID.
+ * @param policyId - The ID of the policy which the calling function belongs to.
+ * @param callingFunctionId - The calling function ID.
  * @returns A promise that resolves to the result of the contract interaction.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
-export const getFunctionSignatureMetadata = async(
+export const getCallingFunctionMetadata = async(
     config: Config,
     rulesEngineComponentContract: RulesEngineComponentContract,
     policyId: number, 
-    functionSignatureId: number): Promise<FunctionSignatureHashMapping> => {
+    callingFunctionId: number): Promise<CallingFunctionHashMapping> => {
         try {
             const getMeta = await readContract(config, {
                 address: rulesEngineComponentContract.address,
                 abi: rulesEngineComponentContract.abi,
                 functionName: "getFunctionSignatureMetadata",
-                args: [ policyId, functionSignatureId ],
+                args: [ policyId, callingFunctionId ],
             });
-    
-            let functionSignatureResult = getMeta as FunctionSignatureHashMapping;
-            return functionSignatureResult;
+            console.log("getMeta", getMeta)
+            let callingFunctionResult = getMeta as CallingFunctionHashMapping;
+            return callingFunctionResult;
         } catch (error) {
             console.error(error);
             return {

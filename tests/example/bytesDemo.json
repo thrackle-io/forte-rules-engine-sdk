@@ -18,7 +18,7 @@
             "defaultValue": "Test" 
         }
     ], 
-    "RulesJSON": [
+    "Rules": [
         {
             "condition": "testByteString == FC:testSig(address)",
             "positiveEffects": ["revert(\"Passed test\")"],

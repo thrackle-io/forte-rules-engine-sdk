@@ -7,23 +7,22 @@ import { injectModifier } from './inject-modifier';
 interface ForeignCall {
     name: string;
     address: string;
-    signature: string;
+    function: string;
     returnType: string;
-    parameterTypes: string;
-    encodedIndices: string;
+    valuesToPass: string;
 }
 
 interface Tracker {
     name: string;
     type: string;
-    defaultValue: any;
+    initialValue: any;
 }
 
 interface Rule {
     condition: string;
     positiveEffects: string[];
     negativeEffects: string[];
-    functionSignature: string;
+    callingFunction: string;
     encodedValues: string;
 }
 
@@ -31,7 +30,7 @@ interface PolicyConfig {
     Policy: string;
     ForeignCalls: ForeignCall[];
     Trackers: Tracker[];
-    RulesJSON: Rule[];
+    Rules: Rule[];
 }
 
 /**
@@ -62,16 +61,16 @@ function validateSolidityFiles(filePaths: string[]): string[] {
 }
 
 /**
- * Checks if a file contains a specific function signature
+ * Checks if a file contains a specific calling function
  * @param filePath Path to the file to check
- * @param functionSignature Function signature to look for
- * @returns True if the function signature is found in the file
+ * @param callingFunction signature of the calling function to look for
+ * @returns True if the calling function is found in the file
  */
-function fileContainsFunction(filePath: string, functionSignature: string): boolean {
+function fileContainsFunction(filePath: string, callingFunction: string): boolean {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     
     // Extract function name and parameters from the signature
-    const functionNameMatch = functionSignature.match(/^([^(]+)\s*\(/);
+    const functionNameMatch = callingFunction.match(/^([^(]+)\s*\(/);
     if (!functionNameMatch) return false;
     
     const functionName = functionNameMatch[1].trim();
@@ -105,7 +104,7 @@ export function policyModifierGeneration(configPath: string, outputFile: string,
     const policyConfig: PolicyConfig = JSON.parse(configData);
     
     console.log(`Processing policy: ${policyConfig.Policy}`);
-    console.log(`Found ${policyConfig.RulesJSON.length} rules to process`);
+    console.log(`Found ${policyConfig.Rules.length} rules to process`);
     
     // Create a temporary directory for modifier files
     const tempDir = path.join(process.cwd(), '.temp-modifiers');
@@ -114,13 +113,13 @@ export function policyModifierGeneration(configPath: string, outputFile: string,
     }
     generateModifier(configData, outputFile)
     // Process each rule
-    policyConfig.RulesJSON.forEach((rule, index) => {
-        const functionName = rule.functionSignature.split('(')[0].trim();
+    policyConfig.Rules.forEach((rule, index) => {
+        const functionName = rule.callingFunction.split('(')[0].trim();
         
-        // Find files that contain the function signature and inject the modifier
+        // Find files that contain the calling function and inject the modifier
         let injectionCount = 0;
         for (const filePath of validFiles) {
-            if (fileContainsFunction(filePath, rule.functionSignature)) {
+            if (fileContainsFunction(filePath, rule.callingFunction)) {
                 console.log(`Found matching function in ${filePath}`);
                 
                 // Inject the modifier (without creating a diff file)
@@ -137,7 +136,7 @@ export function policyModifierGeneration(configPath: string, outputFile: string,
         }
         
         if (injectionCount === 0) {
-            console.warn(`Warning: No files found containing function ${rule.functionSignature}`);
+            console.warn(`Warning: No files found containing function ${rule.callingFunction}`);
         } else {
             console.log(`Injected modifier for ${functionName} into ${injectionCount} files`);
         }

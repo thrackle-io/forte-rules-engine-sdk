@@ -54,7 +54,7 @@ import { cleanString } from '../parsing/parsing-utilities';
  * 
  * @remarks
  * - The function assumes the Solidity file uses standard formatting for pragma, contract declaration, and function definitions.
- * - The `checkRulesBefore` modifier is added to the function signature with the provided arguments.
+ * - The `checkRulesBefore` modifier is added to the calling function with the provided arguments.
  * - The diff file is generated in a format that highlights added and removed lines.
  * 
  * @throws Will throw an error if the file at `userFilePath` cannot be read or written.
