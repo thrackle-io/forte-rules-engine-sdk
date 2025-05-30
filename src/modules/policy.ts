@@ -395,7 +395,7 @@ export const getPolicy = async (
       );
       var newMapping: hexToFunctionString = {
         hex: mapp.signature,
-        functionString: mapp.functionSignature,
+        functionString: mapp.callingFunction,
         encodedValues: mapp.encodedValues,
         index: -1,
       };

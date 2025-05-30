@@ -50,8 +50,7 @@ export type hexToFunctionString = {
 };
 
 export type CallingFunctionHashMapping = {
-  // TODO: Rename this to callingFunction once the rename has taken place on the rules engine side
-  functionSignature: string;
+  callingFunction: string;
   signature: string;
   encodedValues: string;
 };
@@ -139,7 +138,6 @@ export type RuleStruct = RuleBase & {
 export type ForeignCallOnChain = {
   set: boolean;
   foreignCallAddress: string;
-  // TODO: Rename this to function once the rename has taken place on the rules engine side
   signature: string;
   returnType: number;
   foreignCallIndex: number;
