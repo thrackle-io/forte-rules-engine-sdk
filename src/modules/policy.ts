@@ -23,6 +23,7 @@ import {
   ForeignCallOnChain,
   TrackerOnChain,
   hexToFunctionString,
+  RulesEngineRulesContract,
 } from "./types";
 import {
   createForeignCall,
@@ -69,6 +70,7 @@ import {
  * Creates a policy in the Rules Engine, including rules, trackers, and foreign calls.
  *
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param rulesEngineRulesContract - The contract instance for interacting with the Rules Engine Rules.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
  * @param policySyntax - The JSON string representing the policy syntax.
  * @returns The ID of the newly created policy.
@@ -76,6 +78,7 @@ import {
 export const createPolicy = async (
   config: Config,
   rulesEnginePolicyContract: RulesEnginePolicyContract,
+  rulesEngineRulesContract: RulesEngineRulesContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policySyntax?: string
 ): Promise<{ policyId: number }> => {
@@ -165,7 +168,7 @@ export const createPolicy = async (
 
       const ruleId = await createRule(
         config,
-        rulesEnginePolicyContract,
+        rulesEngineRulesContract,
         policyId,
         JSON.stringify(rule),
         fcIds,
@@ -274,6 +277,7 @@ export const setPolicies = async (
       });
       break;
     } catch (error) {
+      console.log(error);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -362,6 +366,7 @@ export const deletePolicy = async (
  * Retrieves the full policy, including rules, trackers, and foreign calls, as a JSON string.
  *
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param rulesEngineRulesContract - The contract instance for interacting with the Rules Engine Rules.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
  * @param policyId - The ID of the policy to retrieve.
  * @returns A JSON string representing the full policy.
@@ -369,6 +374,7 @@ export const deletePolicy = async (
 export const getPolicy = async (
   config: Config,
   rulesEnginePolicyContract: RulesEnginePolicyContract,
+  rulesEngineRulesContract: RulesEngineRulesContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number
 ): Promise<string> => {
@@ -473,11 +479,10 @@ export const getPolicy = async (
           break;
         }
       }
-      console.log("FUNCTION STRING", functionString);
       for (var ruleId of innerArray) {
         var ruleS = await getRule(
           config,
-          rulesEnginePolicyContract,
+          rulesEngineRulesContract,
           policyId,
           ruleId
         );

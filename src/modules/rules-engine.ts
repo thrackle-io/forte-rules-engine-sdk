@@ -32,6 +32,8 @@ import {
   RulesEnginePolicyContract,
   RuleStruct,
   Maybe,
+  RulesEngineRulesContract,
+  RulesEngineRulesABI,
 } from "./types";
 import {
   createPolicy as createPolicyInternal,
@@ -81,7 +83,7 @@ var config: Config;
 export class RulesEngine {
   private rulesEnginePolicyContract: RulesEnginePolicyContract;
   private rulesEngineComponentContract: RulesEngineComponentContract;
-
+  private rulesEngineRulesContract: RulesEngineRulesContract;
   /**
    * @constructor
    * @param {Address} rulesEngineAddress - The address of the deployed Rules Engine smart contract.
@@ -98,6 +100,11 @@ export class RulesEngine {
       abi: RulesEngineComponentABI,
       client,
     });
+    this.rulesEngineRulesContract = getContract({
+      address: rulesEngineAddress,
+      abi: RulesEngineRulesABI,
+      client,
+    });
     config = localConfig;
   }
   public getRulesEnginePolicyContract(): RulesEnginePolicyContract {
@@ -106,7 +113,9 @@ export class RulesEngine {
   public getRulesEngineComponentContract(): RulesEngineComponentContract {
     return this.rulesEngineComponentContract;
   }
-
+  public getRulesEngineRulesContract(): RulesEngineRulesContract {
+    return this.rulesEngineRulesContract;
+  }
   /**
    * Creates a policy in the Rules Engine.
    *
@@ -117,6 +126,7 @@ export class RulesEngine {
     return createPolicyInternal(
       config,
       this.rulesEnginePolicyContract,
+      this.rulesEngineRulesContract,
       this.rulesEngineComponentContract,
       policyJSON
     );
@@ -217,6 +227,7 @@ export class RulesEngine {
     return getPolicyInternal(
       config,
       this.rulesEnginePolicyContract,
+      this.rulesEngineRulesContract,
       this.rulesEngineComponentContract,
       policyId
     );
@@ -258,7 +269,7 @@ export class RulesEngine {
   ): Promise<number> {
     return createRuleInternal(
       config,
-      this.rulesEnginePolicyContract,
+      this.rulesEngineRulesContract,
       policyId,
       ruleS,
       foreignCallNameToID,
@@ -287,7 +298,7 @@ export class RulesEngine {
   ): Promise<number> {
     return updateRuleInternal(
       config,
-      this.rulesEnginePolicyContract,
+      this.rulesEngineRulesContract,
       policyId,
       ruleId,
       ruleS,
@@ -310,7 +321,7 @@ export class RulesEngine {
   deleteRule(policyId: number, ruleId: number): Promise<number> {
     return deleteRuleInternal(
       config,
-      this.rulesEngineComponentContract,
+      this.rulesEngineRulesContract,
       policyId,
       ruleId
     );
@@ -326,7 +337,7 @@ export class RulesEngine {
   getRule(policyId: number, ruleId: number): Promise<Maybe<RuleStruct>> {
     return getRuleInternal(
       config,
-      this.rulesEnginePolicyContract,
+      this.rulesEngineRulesContract,
       policyId,
       ruleId
     );
@@ -341,11 +352,7 @@ export class RulesEngine {
    * @throws Will log an error to the console if the operation fails.
    */
   getAllRules(policyId: number): Promise<Maybe<any[]>> {
-    return getAllRulesInternal(
-      config,
-      this.rulesEnginePolicyContract,
-      policyId
-    );
+    return getAllRulesInternal(config, this.rulesEngineRulesContract, policyId);
   }
 
   /**

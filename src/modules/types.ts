@@ -3,6 +3,7 @@ import { Abi, Address, ByteArray, GetContractReturnType, Hex } from "viem";
 
 import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
 import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet.json";
+import RulesEngineRuleLogicArtifact from "../abis/RulesEngineRuleFacet.json";
 
 /**
  * @file types.ts
@@ -23,12 +24,16 @@ import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet
 
 export const RulesEnginePolicyABI = RulesEnginePolicyLogicArtifact.abi;
 export const RulesEngineComponentABI = RulesEngineComponentLogicArtifact.abi;
+export const RulesEngineRulesABI = RulesEngineRuleLogicArtifact.abi;
 
 export type RulesEnginePolicyContract = GetContractReturnType<
   typeof RulesEnginePolicyABI
 >;
 export type RulesEngineComponentContract = GetContractReturnType<
   typeof RulesEngineComponentABI
+>;
+export type RulesEngineRulesContract = GetContractReturnType<
+  typeof RulesEngineRulesABI
 >;
 
 export type FCNameToID = {
