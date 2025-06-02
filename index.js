@@ -10,7 +10,7 @@ export {
   RulesEngineComponentContract,
   FCNameToID,
   RuleStorageSet,
-  hexToFunctionSignature,
+  hexToFunctionString,
   PolicyJSON,
   foreignCallJSON,
   ruleJSON,

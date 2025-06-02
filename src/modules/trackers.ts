@@ -1,9 +1,20 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, Config } from "@wagmi/core";
+import {
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+  readContract,
+  Config,
+} from "@wagmi/core";
 import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "../parsing/parser";
-import { RulesEngineComponentContract, trackerJSON, TrackerDefinition, TrackerOnChain } from "./types";
+import {
+  RulesEngineComponentContract,
+  trackerJSON,
+  TrackerDefinition,
+  TrackerOnChain,
+} from "./types";
 
 /**
  * @file Trackers.ts
@@ -42,9 +53,14 @@ export const createTracker = async (
   policyId: number,
   trSyntax: string
 ): Promise<number> => {
-  const json: trackerJSON = JSON.parse(trSyntax);
-  const tracker = parseTrackerSyntax(json);
-  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: 0 };
+  var json: trackerJSON = JSON.parse(trSyntax);
+  var tracker: TrackerDefinition = parseTrackerSyntax(json);
+  var transactionTracker = {
+    set: true,
+    pType: tracker.type,
+    trackerValue: tracker.initialValue,
+    trackerIndex: 0,
+  };
   var addTR;
   while (true) {
     try {
@@ -93,9 +109,14 @@ export const updateTracker = async (
   trackerId: number,
   trSyntax: string
 ): Promise<number> => {
-  const json: trackerJSON = JSON.parse(trSyntax);
-  const tracker = parseTrackerSyntax(json);
-  var transactionTracker = { set: true, pType: tracker.type, trackerValue: tracker.defaultValue, trackerIndex: trackerId };
+  var json: trackerJSON = JSON.parse(trSyntax);
+  var tracker: TrackerDefinition = parseTrackerSyntax(json);
+  var transactionTracker = {
+    set: true,
+    pType: tracker.type,
+    trackerValue: tracker.initialValue,
+    trackerIndex: trackerId,
+  };
   var addTR;
   while (true) {
     try {
@@ -118,7 +139,7 @@ export const updateTracker = async (
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
-    })
+    });
     return trackerId;
   }
   return -1;
@@ -161,7 +182,7 @@ export const deleteTracker = async (
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
-    })
+    });
   }
 
   return 0;
@@ -197,7 +218,7 @@ export const getTracker = async (
       set: false,
       pType: 0,
       trackerValue: "",
-      trackerIndex: -1
+      trackerIndex: -1,
     };
   }
 };
@@ -216,7 +237,8 @@ export const getTrackerMetadata = async (
   config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
-  trackerId: number): Promise<string> => {
+  trackerId: number
+): Promise<string> => {
   try {
     const getMeta = await readContract(config, {
       address: rulesEngineComponentContract.address,
@@ -231,7 +253,7 @@ export const getTrackerMetadata = async (
     console.error(error);
     return "";
   }
-}
+};
 
 /**
  * Retrieves all trackers associated with a specific policy ID from the Rules Engine Component Contract.
@@ -260,6 +282,6 @@ export const getAllTrackers = async (
     return trackerResult;
   } catch (error) {
     console.error(error);
-    return []
+    return [];
   }
 };
