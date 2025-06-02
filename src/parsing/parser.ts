@@ -77,10 +77,8 @@ export function parseRuleSyntax(
   var names = parseFunctionArguments(encodedValues, condition);
   var effectNames: any[] = [];
   condition = parseForeignCalls(condition, names, foreignCallNameToID);
-  console.log(condition);
   parseTrackers(condition, names, indexMap);
-  var placeHolders: PlaceholderStruct[] = [];
-  placeHolders = buildPlaceholderList(names);
+  var placeHolders = buildPlaceholderList(names);
 
   for (var effectP in syntax.positiveEffects) {
     syntax.positiveEffects[effectP] = parseForeignCalls(
@@ -98,8 +96,7 @@ export function parseRuleSyntax(
     );
     parseTrackers(syntax.negativeEffects[effectN], effectNames, indexMap);
   }
-  var effectPlaceHolders: PlaceholderStruct[] = [];
-  effectPlaceHolders = buildPlaceholderList(effectNames);
+  var effectPlaceHolders = buildPlaceholderList(effectNames);
 
   var positiveEffectsFinal = [];
   var negativeEffectsFinal = [];
@@ -140,7 +137,6 @@ export function parseRuleSyntax(
 
   excludeArray.push(...matchArray);
   excludeArray.push(...operandArray);
-  var rawData: any[] = [];
   var raw = buildRawData(retVal.instructionSet, excludeArray);
   return {
     instructionSet: retVal.instructionSet,
