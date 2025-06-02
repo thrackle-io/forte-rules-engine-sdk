@@ -2,7 +2,6 @@
 import {
     encodePacked,
     Address,
-    getAddress,
     toHex,
     encodeAbiParameters,
     parseAbiParameters,
@@ -34,11 +33,14 @@ import {
     buildRawData,
     parseForeignCalls,
     buildPlaceholderList,
-    parseEffect,
-} from "./parsing-utilities";
+    parseEffect
+} from './parsing-utilities';
 import {
+    getAddress,
+    isLeft,
     makeLeft,
-    makeRight
+    makeRight,
+    unwrapEither
 } from '../modules/utils';
 
 /**
@@ -185,11 +187,17 @@ export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, Trac
             })
         }
     } else if (trackerType == "address") {
-        var address = encodeAbiParameters(parseAbiParameters("address"), [
-            getAddress(syntax.initialValue.trim()),
-        ]);
+        const validatedAddress = getAddress(syntax.initialValue.trim())
+        if (isLeft(validatedAddress)) {
+            return validatedAddress;
+        } else {
+            var address = encodeAbiParameters(
+                parseAbiParameters('address'),
+                [unwrapEither(validatedAddress)]
+            )
 
-        trackerInitialValue = address;
+            trackerInitialValue = address
+        }
     } else if (trackerType == "bytes") {
         var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
             toHex(stringToBytes(String(syntax.initialValue.trim()))),
@@ -230,59 +238,63 @@ export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, Trac
 export function parseForeignCallDefinition(
     syntax: foreignCallJSON
 ): Either<RulesError, ForeignCallDefinition> {
-    var address: Address = getAddress(syntax.address.trim());
-    var func = syntax.function.trim();
-    var returnType = pTypeEnum.VOID; // default to void
-    if (!PT.some((parameter) => parameter.name === syntax.returnType)) {
-        return makeLeft({
-            errorType: "INPUT",
-            state: { PT, syntax },
-            message: "Unsupported return type"
-        })
-    }
-    for (var parameterType of PT) {
-        if (parameterType.name == syntax.returnType) {
-            returnType = parameterType.enumeration;
-        }
-    }
-    var parameterTypes: number[] = [];
-    var parameterSplit = syntax.function
-        .trim()
-        .split("(")[1]
-        .split(")")[0]
-        .split(",");
-    for (var fcParameter of parameterSplit) {
-        if (!PT.some((parameter) => parameter.name === fcParameter.trim())) {
+    const validatedAddress = getAddress(syntax.address.trim());
+    if (isLeft(validatedAddress)) {
+        return validatedAddress;
+    } else {
+        const address = unwrapEither(validatedAddress);
+        var func = syntax.function.trim();
+        var returnType = pTypeEnum.VOID; // default to void
+        if (!PT.some((parameter) => parameter.name === syntax.returnType)) {
             return makeLeft({
                 errorType: "INPUT",
                 state: { PT, syntax },
-                message: "Unsupported argument type"
+                message: "Unsupported return type"
             })
         }
-
         for (var parameterType of PT) {
-            if (fcParameter.trim() == parameterType.name) {
-                parameterTypes.push(parameterType.enumeration);
+            if (parameterType.name == syntax.returnType) {
+                returnType = parameterType.enumeration;
             }
         }
-    }
-
-    var valuesToPass: number[] = [];
-    var encodedIndecesSplit = syntax.valuesToPass.trim().split(",");
-    for (var encodedIndex of encodedIndecesSplit) {
-        if (!isNaN(Number(encodedIndex))) {
-            valuesToPass.push(Number(encodedIndex));
+        var parameterTypes: number[] = [];
+        var parameterSplit = syntax.function
+            .trim()
+            .split("(")[1]
+            .split(")")[0]
+            .split(",");
+        for (var fcParameter of parameterSplit) {
+            if (!PT.some((parameter) => parameter.name === fcParameter.trim())) {
+                return makeLeft({
+                    errorType: "INPUT",
+                    state: { PT, syntax },
+                    message: "Unsupported return type"
+                })
+            }
+            for (var parameterType of PT) {
+                if (fcParameter.trim() == parameterType.name) {
+                    parameterTypes.push(parameterType.enumeration);
+                }
+            }
         }
-    }
 
-    return makeRight({
-        name: syntax.name.trim(),
-        address: address,
-        function: func,
-        returnType: returnType,
-        parameterTypes: parameterTypes,
-        valuesToPass: valuesToPass,
-    })
+        var valuesToPass: number[] = [];
+        var encodedIndecesSplit = syntax.valuesToPass.trim().split(",");
+        for (var encodedIndex of encodedIndecesSplit) {
+            if (!isNaN(Number(encodedIndex))) {
+                valuesToPass.push(Number(encodedIndex));
+            }
+        }
+
+        return makeRight({
+            name: syntax.name.trim(),
+            address: address,
+            function: func,
+            returnType: returnType,
+            parameterTypes: parameterTypes,
+            valuesToPass: valuesToPass,
+        })
+    }
 }
 
 /**

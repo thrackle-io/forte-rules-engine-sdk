@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from "vitest";
-import { EffectType, ForeignCallDefinition, pTypeEnum, TrackerDefinition } from "../src/modules/types.js";
+import { EffectType, ForeignCallDefinition, pTypeEnum, RulesError, TrackerDefinition } from "../src/modules/types.js";
 import {
   keccak256,
   hexToNumber,
@@ -865,9 +865,8 @@ test("Tests unsupported type", () => {
   "type": "book",
   "initialValue": "test"
   }`;
-  expect(() => parseTrackerSyntax(JSON.parse(str))).toThrowError(
-    "Unsupported type"
-  );
+  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as RulesError
+  expect(retVal.message).toEqual('Unsupported type')
 });
 
 test("Creates a simple foreign call", () => {
@@ -897,9 +896,8 @@ test("Tests incorrect format for address", () => {
   "valuesToPass": "0, 1, 2"
   }`;
 
-  expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError(
-    'Address "test" is invalid'
-  );
+  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as RulesError
+  expect(retVal.message).toEqual('Address "test" is invalid')
 });
 
 test("Tests unsupported return type", () => {
@@ -910,9 +908,8 @@ test("Tests unsupported return type", () => {
   "returnType": "notAnInt",
   "valuesToPass": "0, 1, 2"
   }`;
-  expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError(
-    "Unsupported return type"
-  );
+  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as RulesError
+  expect(retVal.message).toEqual('Unsupported return type')
 });
 
 test("Tests unsupported argument type", () => {
@@ -924,9 +921,8 @@ test("Tests unsupported argument type", () => {
     "valuesToPass": "0, 1, 2"
     }`;
 
-  expect(() => parseForeignCallDefinition(JSON.parse(str))).toThrowError(
-    "Unsupported argument type"
-  );
+  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as RulesError
+  expect(retVal.message).toEqual('Unsupported argument type')
 });
 
 test("Evaluates a simple syntax string with a Foreign Call", () => {

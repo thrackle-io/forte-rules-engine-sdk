@@ -1,4 +1,6 @@
-import { Either, Left, Right, UnwrapEither } from "./types";
+import { Either, Left, Right, RulesError, UnwrapEither } from "./types";
+import { getAddress as _getAddress, Address, ethAddress } from 'viem';
+
 
 // Get a default encoded values string from a Calling Function
 export function getEncodedValues(callingFunction: string) {
@@ -47,3 +49,16 @@ export const isRight = <T, U>(e: Either<T, U>): e is Right<U> => {
 export const makeLeft = <T>(value: T): Left<T> => ({ left: value });
 
 export const makeRight = <U>(value: U): Right<U> => ({ right: value });
+
+export const getAddress = (address: string): Either<RulesError, Address> => {
+    try {
+        return makeRight(_getAddress(address));
+    } catch (error) {
+        const message = `Address "${address}" is invalid`
+        return makeLeft({
+            errorType: "INPUT",
+            state: { address },
+            message
+        });
+    }
+}
