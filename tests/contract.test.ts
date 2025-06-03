@@ -3,15 +3,16 @@ import { getAddress, toFunctionSelector, toHex } from "viem";
 import { expect, test, describe, beforeAll, beforeEach } from "vitest";
 import {
   getConfig,
-  account,
   DiamondAddress,
   connectConfig,
   createTestConfig,
+  foundryAccountAddress,
 } from "../config";
 import {
   getRulesEnginePolicyContract,
   getRulesEngineComponentContract,
   getRulesEngineRulesContract,
+  getRulesEngineAdminContract,
 } from "../src/modules/contract-interaction-utils";
 import {
   createForeignCall,
@@ -48,10 +49,17 @@ import {
 } from "../src/modules/trackers";
 import { sleep } from "../src/modules/contract-interaction-utils";
 import { Config } from "@wagmi/core";
+import {
+  confirmNewPolicyAdmin,
+  isPolicyAdmin,
+  proposeNewPolicyAdmin,
+} from "../src/modules/admin";
 
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
 var config: Config;
 var client: any;
+var secondUserConfig: Config;
+var secondUserClient: any;
 
 // Take snapshot
 export const takeSnapshot = async () => {
@@ -73,9 +81,14 @@ describe("Rules Engine Interactions", async () => {
   let snapshotId: `0x${string}`;
   config = await createTestConfig();
   client = config.getClient({ chainId: config.chains[0].id });
+  secondUserConfig = await createTestConfig(false);
+  secondUserClient = secondUserConfig.getClient({
+    chainId: secondUserConfig.chains[0].id,
+  });
 
   beforeAll(async () => {
     await connectConfig(config, 0);
+    await connectConfig(secondUserConfig, 0);
     snapshotId = await takeSnapshot();
   });
 
@@ -844,4 +857,110 @@ describe("Rules Engine Interactions", async () => {
     },
     { timeout: 15000 }
   );
+
+  test("Can check if address is admin", async () => {
+    var policyJSON = `
+      {
+      "Policy": "Test Policy",
+      "PolicyType": "open",
+      "ForeignCalls": [
+          {
+              "name": "Simple Foreign Call",
+              "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+              "function": "testSig(address)",
+              "returnType": "uint256",
+              "valuesToPass": "0"
+          }
+      ],
+      "Trackers": [
+      {
+          "name": "Simple String Tracker",
+          "type": "string",
+          "initialValue": "test"
+      }
+      ],
+      "Rules": [
+          {
+              "condition": "value > 500",
+              "positiveEffects": ["emit Success"],
+              "negativeEffects": ["revert()"],
+              "callingFunction": "transfer(address to, uint256 value)",
+              "encodedValues": "address to, uint256 value"
+          }
+          ]
+          }`;
+    var result = await createPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      policyJSON
+    );
+    var admin = await isPolicyAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      result.policyId,
+      getAddress(foundryAccountAddress)
+    );
+    expect(admin).toEqual(true);
+  });
+  test("Can update a policies admin", options, async () => {
+    var policyJSON = `
+      {
+      "Policy": "Test Policy",
+      "PolicyType": "open",
+      "ForeignCalls": [
+          {
+              "name": "Simple Foreign Call",
+              "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+              "function": "testSig(address)",
+              "returnType": "uint256",
+              "valuesToPass": "0"
+          }
+      ],
+      "Trackers": [
+      {
+          "name": "Simple String Tracker",
+          "type": "string",
+          "initialValue": "test"
+      }
+      ],
+      "Rules": [
+          {
+              "condition": "value > 500",
+              "positiveEffects": ["emit Success"],
+              "negativeEffects": ["revert()"],
+              "callingFunction": "transfer(address to, uint256 value)",
+              "encodedValues": "address to, uint256 value"
+          }
+          ]
+          }`;
+    var result = await createPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      policyJSON
+    );
+    proposeNewPolicyAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      result.policyId,
+      getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+    );
+    await sleep(5000);
+    await confirmNewPolicyAdmin(
+      secondUserConfig,
+      getRulesEngineAdminContract(rulesEngineContract, secondUserClient),
+      result.policyId
+    );
+    await sleep(5000);
+    var admin = await isPolicyAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      result.policyId,
+      getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+    );
+    expect(admin).toEqual(true);
+  });
 });

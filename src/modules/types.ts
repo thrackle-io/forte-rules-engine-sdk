@@ -4,6 +4,7 @@ import { Abi, Address, ByteArray, GetContractReturnType, Hex } from "viem";
 import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
 import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet.json";
 import RulesEngineRuleLogicArtifact from "../abis/RulesEngineRuleFacet.json";
+import RulesEngineAdminLogicArtifact from "../abis/RulesEngineAdminRolesFacet.json";
 
 /**
  * @file types.ts
@@ -25,6 +26,7 @@ import RulesEngineRuleLogicArtifact from "../abis/RulesEngineRuleFacet.json";
 export const RulesEnginePolicyABI = RulesEnginePolicyLogicArtifact.abi;
 export const RulesEngineComponentABI = RulesEngineComponentLogicArtifact.abi;
 export const RulesEngineRulesABI = RulesEngineRuleLogicArtifact.abi;
+export const RulesEngineAdminABI = RulesEngineAdminLogicArtifact.abi;
 
 export type RulesEnginePolicyContract = GetContractReturnType<
   typeof RulesEnginePolicyABI
@@ -34,6 +36,9 @@ export type RulesEngineComponentContract = GetContractReturnType<
 >;
 export type RulesEngineRulesContract = GetContractReturnType<
   typeof RulesEngineRulesABI
+>;
+export type RulesEngineAdminContract = GetContractReturnType<
+  typeof RulesEngineAdminABI
 >;
 
 export type FCNameToID = {
