@@ -268,7 +268,7 @@ export function parseForeignCallDefinition(
                 return makeLeft({
                     errorType: "INPUT",
                     state: { PT, syntax },
-                    message: "Unsupported return type"
+                    message: "Unsupported argument type"
                 })
             }
             for (var parameterType of PT) {
@@ -307,7 +307,6 @@ export function buildForeignCallList(condition: string): string[] {
     // Use a regular expression to find all FC expressions
     const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
     const matches = condition.matchAll(fcRegex);
-    let processedCondition = condition;
     var names: string[] = [];
     // Convert matches iterator to array to process all at once
     for (const match of matches) {
