@@ -25,7 +25,6 @@ import { Address, getContract } from "viem";
 import {
   FCNameToID,
   CallingFunctionHashMapping,
-  hexToFunctionString,
   RulesEngineComponentABI,
   RulesEngineComponentContract,
   RulesEnginePolicyABI,
@@ -34,6 +33,8 @@ import {
   Maybe,
   RulesEngineRulesContract,
   RulesEngineRulesABI,
+  RulesEngineAdminContract,
+  RulesEngineAdminABI,
 } from "./types";
 import {
   createPolicy as createPolicyInternal,
@@ -73,6 +74,12 @@ import {
 } from "./trackers";
 
 import {
+  proposeNewPolicyAdmin as proposeNewPolicyAdminInternal,
+  confirmNewPolicyAdmin as confirmNewPolicyAdminInternal,
+  isPolicyAdmin as isPolicyAdminInternal,
+} from "./admin";
+
+import {
   createCallingFunction as createCallingFunctionInternal,
   getCallingFunctionMetadata as getCallingFunctionMetadataInternal,
 } from "./calling-functions";
@@ -84,6 +91,8 @@ export class RulesEngine {
   private rulesEnginePolicyContract: RulesEnginePolicyContract;
   private rulesEngineComponentContract: RulesEngineComponentContract;
   private rulesEngineRulesContract: RulesEngineRulesContract;
+  private rulesEngineAdminContract: RulesEngineAdminContract;
+
   /**
    * @constructor
    * @param {Address} rulesEngineAddress - The address of the deployed Rules Engine smart contract.
@@ -103,6 +112,11 @@ export class RulesEngine {
     this.rulesEngineRulesContract = getContract({
       address: rulesEngineAddress,
       abi: RulesEngineRulesABI,
+      client,
+    });
+    this.rulesEngineAdminContract = getContract({
+      address: rulesEngineAddress,
+      abi: RulesEngineAdminABI,
       client,
     });
     config = localConfig;
@@ -651,6 +665,63 @@ export class RulesEngine {
       this.rulesEngineComponentContract,
       policyId,
       callingFunctionId
+    );
+  }
+
+  /**
+   * Propose a new admin in the rules engine admin contract.
+   *
+   * This function proposes a new admin for a specific policy.
+   *
+   * @param policyId - The ID of the policy to set the admin for.
+   * @param newAdminAddress - The address to propose as the new admin
+   * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+   *
+   * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+   */
+  proposeNewPolicyAdmin(policyId: number, newAdminAddress: Address) {
+    proposeNewPolicyAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      policyId,
+      newAdminAddress
+    );
+  }
+
+  /**
+   * Confirm a new admin in the rules engine admin contract.
+   *
+   * This function confirms a new admin for a specific policy.
+   *
+   * @param policyId - The ID of the policy to set the admin for.
+   * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+   *
+   * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+   */
+  confirmNewPolicyAdmin(policyId: number) {
+    confirmNewPolicyAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      policyId
+    );
+  }
+
+  /**
+   * Determine if address is policy admin.
+   *
+   * This function determines whether or not an address is the admin for a specific policy.
+   *
+   * @param policyId - The ID of the policy to check the admin for.
+   * @param adminAddress - The address to check
+   * @returns whether or not the address is the policy admin.
+   *
+   */
+  isPolicyAdmin(policyId: number, adminAddress: Address): Promise<boolean> {
+    return isPolicyAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      policyId,
+      adminAddress
     );
   }
 }

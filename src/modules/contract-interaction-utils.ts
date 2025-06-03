@@ -21,6 +21,8 @@ import {
   EffectStructs,
   FCNameToID,
   ruleJSON,
+  RulesEngineAdminABI,
+  RulesEngineAdminContract,
   RulesEngineComponentABI,
   RulesEngineComponentContract,
   RulesEnginePolicyABI,
@@ -83,6 +85,16 @@ export const getRulesEngineComponentContract = (
   getContract({
     address,
     abi: RulesEngineComponentABI,
+    client,
+  });
+
+export const getRulesEngineAdminContract = (
+  address: Address,
+  client: any
+): RulesEngineAdminContract =>
+  getContract({
+    address,
+    abi: RulesEngineAdminABI,
     client,
   });
 
