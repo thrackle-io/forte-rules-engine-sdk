@@ -15,6 +15,11 @@ import {
   TrackerDefinition,
   TrackerOnChain,
 } from "./types";
+import {
+  isLeft,
+  isRight,
+  unwrapEither
+} from "./utils";
 
 /**
  * @file Trackers.ts
@@ -53,42 +58,47 @@ export const createTracker = async (
   policyId: number,
   trSyntax: string
 ): Promise<number> => {
-  var json: trackerJSON = JSON.parse(trSyntax);
-  var tracker: TrackerDefinition = parseTrackerSyntax(json);
-  var transactionTracker = {
-    set: true,
-    pType: tracker.type,
-    trackerValue: tracker.initialValue,
-    trackerIndex: 0,
-  };
-  var addTR;
-  while (true) {
-    try {
-      addTR = await simulateContract(config, {
-        address: rulesEngineComponentContract.address,
-        abi: rulesEngineComponentContract.abi,
-        functionName: "createTracker",
-        args: [policyId, transactionTracker, tracker.name],
-      });
-      break;
-    } catch (err) {
-      // TODO: Look into replacing this loop/sleep with setTimeout
-      await sleep(1000);
+  const json: trackerJSON = JSON.parse(trSyntax);
+  const parsedTracker = parseTrackerSyntax(json);
+  if (isRight(parsedTracker)) {
+    const tracker = unwrapEither(parsedTracker);
+    var transactionTracker = {
+      set: true,
+      pType: tracker.type,
+      trackerValue: tracker.initialValue,
+      trackerIndex: 0
+    };
+    var addTR;
+    while (true) {
+      try {
+        addTR = await simulateContract(config, {
+          address: rulesEngineComponentContract.address,
+          abi: rulesEngineComponentContract.abi,
+          functionName: "createTracker",
+          args: [policyId, transactionTracker, tracker.name],
+        });
+        break;
+      } catch (err) {
+        // TODO: Look into replacing this loop/sleep with setTimeout
+        await sleep(1000);
+      }
     }
-  }
-  if (addTR != null) {
-    const returnHash = await writeContract(config, {
-      ...addTR.request,
-      account,
-    });
-    await waitForTransactionReceipt(config, {
-      hash: returnHash,
-    });
+    if (addTR != null) {
+      const returnHash = await writeContract(config, {
+        ...addTR.request,
+        account,
+      });
+      await waitForTransactionReceipt(config, {
+        hash: returnHash,
+      });
 
-    let trackerResult = addTR.result;
-    return trackerResult;
+      let trackerResult = addTR.result;
+      return trackerResult;
+    }
+    return -1;
+  } else {
+    throw new Error(unwrapEither(parsedTracker).message);
   }
-  return -1;
 };
 /**
  * Asynchronously updates a tracker in the rules engine component contract.
@@ -109,40 +119,45 @@ export const updateTracker = async (
   trackerId: number,
   trSyntax: string
 ): Promise<number> => {
-  var json: trackerJSON = JSON.parse(trSyntax);
-  var tracker: TrackerDefinition = parseTrackerSyntax(json);
-  var transactionTracker = {
-    set: true,
-    pType: tracker.type,
-    trackerValue: tracker.initialValue,
-    trackerIndex: trackerId,
-  };
-  var addTR;
-  while (true) {
-    try {
-      addTR = await simulateContract(config, {
-        address: rulesEngineComponentContract.address,
-        abi: rulesEngineComponentContract.abi,
-        functionName: "updateTracker",
-        args: [policyId, trackerId, transactionTracker],
-      });
-      break;
-    } catch (err) {
-      // TODO: Look into replacing this loop/sleep with setTimeout
-      await sleep(1000);
+  const json: trackerJSON = JSON.parse(trSyntax);
+  const parsedTracker = parseTrackerSyntax(json);
+  if (isRight(parsedTracker)) {
+    const tracker = unwrapEither(parsedTracker);
+    var transactionTracker = {
+      set: true,
+      pType: tracker.type,
+      trackerValue: tracker.initialValue,
+      trackerIndex: trackerId
+    };
+    var addTR;
+    while (true) {
+      try {
+        addTR = await simulateContract(config, {
+          address: rulesEngineComponentContract.address,
+          abi: rulesEngineComponentContract.abi,
+          functionName: "updateTracker",
+          args: [policyId, trackerId, transactionTracker],
+        });
+        break;
+      } catch (err) {
+        // TODO: Look into replacing this loop/sleep with setTimeout
+        await sleep(1000);
+      }
     }
+    if (addTR != null) {
+      const returnHash = await writeContract(config, {
+        ...addTR.request,
+        account,
+      });
+      await waitForTransactionReceipt(config, {
+        hash: returnHash,
+      })
+      return trackerId;
+    }
+    return -1;
+  } else {
+    throw new Error(unwrapEither(parsedTracker).message);
   }
-  if (addTR != null) {
-    const returnHash = await writeContract(config, {
-      ...addTR.request,
-      account,
-    });
-    await waitForTransactionReceipt(config, {
-      hash: returnHash,
-    });
-    return trackerId;
-  }
-  return -1;
 };
 
 /**
