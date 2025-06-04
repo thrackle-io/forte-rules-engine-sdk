@@ -77,6 +77,9 @@ import {
   proposeNewPolicyAdmin as proposeNewPolicyAdminInternal,
   confirmNewPolicyAdmin as confirmNewPolicyAdminInternal,
   isPolicyAdmin as isPolicyAdminInternal,
+  proposeNewCallingContractAdmin as proposeCallingContractAdminInternal,
+  confirmNewCallingContractAdmin as confirmNewCallingContractAdminInternal,
+  isCallingContractAdmin as isCallingContractAdminInternal,
 } from "./admin";
 
 import {
@@ -722,6 +725,72 @@ export class RulesEngine {
       this.rulesEngineAdminContract,
       policyId,
       adminAddress
+    );
+  }
+
+  /**
+   * Propose a new calling contract admin in the rules engine admin contract.
+   *
+   * This function proposes a new admin for a specific calling contract.
+   *
+   * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+   * @param callingContractAddress - The address of the calling contract to set the admin for.
+   * @param newAdminAddress - The address to propose as the new admin
+   * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+   *
+   * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+   */
+  proposeCallingContractAdmin(
+    callingContractAddress: Address,
+    newAdminAddress: Address
+  ) {
+    proposeCallingContractAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      callingContractAddress,
+      newAdminAddress
+    );
+  }
+
+  /**
+   * Confirm a new calling contract admin in the rules engine admin contract.
+   *
+   * This function confirms a new admin for a specific callng contract.
+   *
+   * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+   * @param callingContractAddress - The address of the calling contract to set the admin for.
+   * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+   *
+   * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+   */
+  confirmNewCallingContractAdmin(callingContractAddress: Address) {
+    confirmNewCallingContractAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      callingContractAddress
+    );
+  }
+
+  /**
+   * Determine if address is the calling contract admin.
+   *
+   * This function determines whether or not an address is the admin for a specific calling contract.
+   *
+   * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+   * @param callingContract - The address of the contract to check the admin for.
+   * @param adminAddress - The address to check
+   * @returns whether or not the address is the calling contract admin.
+   *
+   */
+  isCallingContractAdmin(
+    callingContract: Address,
+    account: Address
+  ): Promise<boolean> {
+    return isCallingContractAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      callingContract,
+      account
     );
   }
 }
