@@ -9,7 +9,6 @@ import {
 } from "@wagmi/core";
 import { RulesEngineAdminContract } from "./types";
 import { sleep } from "./contract-interaction-utils";
-import { account } from "../../config";
 
 /**
  * @file admin.ts
@@ -67,7 +66,6 @@ export const proposeNewPolicyAdmin = async (
   if (proposeAdmin != null) {
     const returnHash = await writeContract(config, {
       ...proposeAdmin.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -106,11 +104,9 @@ export const confirmNewPolicyAdmin = async (
       await sleep(1000);
     }
   }
-  console.log(confirmAdmin);
   if (confirmAdmin != null) {
     const returnHash = await writeContract(config, {
       ...confirmAdmin.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -141,6 +137,157 @@ export const isPolicyAdmin = async (
       abi: rulesEngineAdminContract.abi,
       functionName: "isPolicyAdmin",
       args: [policyId, adminAddress],
+    });
+    return policyExists.result as boolean;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * UTILITY FUNCTION - used to mimic the contract setting the initial calling contract admin (used for testing purposes)
+ *
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param contractAddress - address of the "contract" must also be the address calling this function
+ * @param adminAddress - The address to make the initial calling contract admin
+ */
+export const grantCallingContractRole_Utility = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  contractAddress: Address,
+  adminAddress: Address
+) => {
+  var confirmAdmin;
+  while (true) {
+    try {
+      confirmAdmin = await simulateContract(config, {
+        address: rulesEngineAdminContract.address,
+        abi: rulesEngineAdminContract.abi,
+        functionName: "grantCallingContractRole",
+        args: [contractAddress, adminAddress],
+      });
+      break;
+    } catch (err) {
+      console.log(err);
+      await sleep(1000);
+    }
+  }
+  if (confirmAdmin != null) {
+    const returnHash = await writeContract(config, {
+      ...confirmAdmin.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+};
+
+/**
+ * Propose a new calling contract admin in the rules engine admin contract.
+ *
+ * This function proposes a new admin for a specific calling contract.
+ *
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param callingContractAddress - The address of the calling contract to set the admin for.
+ * @param newAdminAddress - The address to propose as the new admin
+ * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const proposeNewCallingContractAdmin = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  callingContractAddress: Address,
+  newAdminAddress: Address
+) => {
+  var proposeAdmin;
+  while (true) {
+    try {
+      proposeAdmin = await simulateContract(config, {
+        address: rulesEngineAdminContract.address,
+        abi: rulesEngineAdminContract.abi,
+        functionName: "proposeNewCallingContractAdmin",
+        args: [callingContractAddress, newAdminAddress],
+      });
+      break;
+    } catch (err) {
+      await sleep(1000);
+    }
+  }
+  if (proposeAdmin != null) {
+    const returnHash = await writeContract(config, {
+      ...proposeAdmin.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+};
+
+/**
+ * Confirm a new calling contract admin in the rules engine admin contract.
+ *
+ * This function confirms a new admin for a specific callng contract.
+ *
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param callingContractAddress - The address of the calling contract to set the admin for.
+ * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const confirmNewCallingContractAdmin = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  callingContractAddress: Address
+) => {
+  var confirmAdmin;
+  while (true) {
+    try {
+      confirmAdmin = await simulateContract(config, {
+        address: rulesEngineAdminContract.address,
+        abi: rulesEngineAdminContract.abi,
+        functionName: "confirmNewCallingContractAdmin",
+        args: [callingContractAddress],
+      });
+      break;
+    } catch (err) {
+      console.log(err);
+      await sleep(1000);
+    }
+  }
+  if (confirmAdmin != null) {
+    const returnHash = await writeContract(config, {
+      ...confirmAdmin.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+};
+
+/**
+ * Determine if address is the calling contract admin.
+ *
+ * This function determines whether or not an address is the admin for a specific calling contract.
+ *
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param callingContract - The address of the contract to check the admin for.
+ * @param adminAddress - The address to check
+ * @returns whether or not the address is the calling contract admin.
+ *
+ */
+export const isCallingContractAdmin = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  callingContract: Address,
+  account: Address
+): Promise<boolean> => {
+  try {
+    let policyExists = await simulateContract(config, {
+      address: rulesEngineAdminContract.address,
+      abi: rulesEngineAdminContract.abi,
+      functionName: "isCallingContractAdmin",
+      args: [callingContract, account],
     });
     return policyExists.result as boolean;
   } catch (error) {

@@ -50,8 +50,12 @@ import {
 import { sleep } from "../src/modules/contract-interaction-utils";
 import { Config } from "@wagmi/core";
 import {
+  confirmNewCallingContractAdmin,
   confirmNewPolicyAdmin,
+  grantCallingContractRole_Utility,
+  isCallingContractAdmin,
   isPolicyAdmin,
+  proposeNewCallingContractAdmin,
   proposeNewPolicyAdmin,
 } from "../src/modules/admin";
 
@@ -963,4 +967,45 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(admin).toEqual(true);
   });
+
+  test(
+    "Can set, poll and update the calling contract admin",
+    options,
+    async () => {
+      await grantCallingContractRole_Utility(
+        config,
+        getRulesEngineAdminContract(rulesEngineContract, client),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+      );
+      await sleep(5000);
+      var admin = await isCallingContractAdmin(
+        config,
+        getRulesEngineAdminContract(rulesEngineContract, client),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+      );
+      expect(admin).toEqual(true);
+      proposeNewCallingContractAdmin(
+        secondUserConfig,
+        getRulesEngineAdminContract(rulesEngineContract, client),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+      );
+      await sleep(5000);
+      await confirmNewCallingContractAdmin(
+        config,
+        getRulesEngineAdminContract(rulesEngineContract, secondUserClient),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+      );
+      await sleep(5000);
+      var admin = await isCallingContractAdmin(
+        config,
+        getRulesEngineAdminContract(rulesEngineContract, client),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+      );
+      expect(admin).toEqual(true);
+    }
+  );
 });
