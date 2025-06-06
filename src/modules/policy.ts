@@ -9,7 +9,6 @@ import {
   writeContract,
 } from "@wagmi/core";
 
-import { account } from "../../config";
 import {
   parseForeignCallDefinition,
   parseTrackerSyntax,
@@ -102,7 +101,6 @@ export const createPolicy = async (
   });
   const returnHash = await writeContract(config, {
     ...addPolicy.request,
-    account,
   });
   const transactionReceipt = await waitForTransactionReceipt(config, {
     hash: returnHash,
@@ -254,7 +252,6 @@ export const updatePolicy = async (
   if (updatePolicy != null) {
     const returnHash = await writeContract(config, {
       ...updatePolicy.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -299,7 +296,6 @@ export const setPolicies = async (
   if (applyPolicy != null) {
     const returnHash = await writeContract(config, {
       ...applyPolicy.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -365,7 +361,6 @@ export const deletePolicy = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -632,7 +627,6 @@ export const closePolicy = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -669,7 +663,6 @@ export const openPolicy = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -733,7 +726,6 @@ export const addClosedPolicySubscriber = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -771,7 +763,6 @@ export const removeClosedPolicySubscriber = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
