@@ -281,7 +281,6 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-          break;
         case 14:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
@@ -490,9 +489,9 @@ export function convertForeignCallStructsToStrings(
  */
 export function convertTrackerStructsToStrings(
   trackers: TrackerOnChain[],
-  trackerStrings: string[],
   trackerNames: string[]
-): void {
+): string[] {
+  const trackerStrings: string[] = [];
   if (trackers != null) {
     var iter = 0;
     for (var tracker of trackers) {
@@ -513,6 +512,7 @@ export function convertTrackerStructsToStrings(
       iter += 1;
     }
   }
+  return trackerStrings;
 }
 
 /**

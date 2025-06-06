@@ -211,9 +211,9 @@ export function buildARuleStruct(
     argumentTypes: [],
     dataValues: [],
   };
-  cleanInstructionSet(output.instructionSet);
+  const instructionSet = cleanInstructionSet(output.instructionSet);
   const rule = {
-    instructionSet: output.instructionSet,
+    instructionSet,
     rawData: rawData,
     placeHolders: output.placeHolders,
     effectPlaceHolders: output.effectPlaceHolders,
@@ -260,7 +260,7 @@ export function buildAnEffectStruct(
   var nEffects: EffectStruct[] = [];
 
   for (var pEffect of output.positiveEffects) {
-    cleanInstructionSet(pEffect.instructionSet);
+    const instructionSet = cleanInstructionSet(pEffect.instructionSet);
     var param: any;
 
     if (pEffect.pType == 0) {
@@ -293,7 +293,7 @@ export function buildAnEffectStruct(
       param: param,
       text: toHex(stringToBytes(pEffect.text, { size: 32 })),
       errorMessage: pEffect.text,
-      instructionSet: pEffect.instructionSet,
+      instructionSet,
     };
     pEffects.push(effect);
   }
@@ -322,7 +322,7 @@ export function buildAnEffectStruct(
       ]);
     }
 
-    cleanInstructionSet(nEffect.instructionSet);
+    const instructionSet = cleanInstructionSet(nEffect.instructionSet);
     const effect = {
       valid: true,
       dynamicParam: false,
@@ -331,7 +331,7 @@ export function buildAnEffectStruct(
       param: param,
       text: toHex(stringToBytes(nEffect.text, { size: 32 })),
       errorMessage: nEffect.text,
-      instructionSet: nEffect.instructionSet,
+      instructionSet,
     };
     nEffects.push(effect);
   }
