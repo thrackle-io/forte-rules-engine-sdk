@@ -45,6 +45,8 @@ import {
   getPolicy as getPolicyInternal,
   policyExists as policyExistsInternal,
   getAppliedPolicyIds as getAppliedPolicyIdsInternal,
+  cementPolicy as cementPolicyInternal,
+  isCementedPolicy as isCementedPolicyInternal,
 } from "./policy";
 
 import {
@@ -791,6 +793,33 @@ export class RulesEngine {
       this.rulesEngineAdminContract,
       callingContract,
       account
+    );
+  }
+
+  /**
+   * Cements a policy on the Rules Engine.
+   *
+   * @param policyId - The ID of the policy to cement.
+   * @returns `0` if successful, `-1` if an error occurs.
+   */
+  cementPolicy(policyId: number): Promise<number> {
+    return cementPolicyInternal(
+      config,
+      this.rulesEnginePolicyContract,
+      policyId
+    );
+  }
+
+  /**
+   * Retrieves whether a policy is cemented.
+   * @param policyId - The ID of the policy to check.
+   * @returns whether or not the policy is cemented
+   */
+  isCementedPolicy(policyId: number): Promise<boolean> {
+    return isCementedPolicyInternal(
+      config,
+      this.rulesEnginePolicyContract,
+      policyId
     );
   }
 }
