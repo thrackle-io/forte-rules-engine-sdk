@@ -9,7 +9,6 @@ import {
   writeContract,
 } from "@wagmi/core";
 
-import { account } from "../../config";
 import {
   parseForeignCallDefinition,
   parseTrackerSyntax,
@@ -44,10 +43,7 @@ import {
   convertForeignCallStructsToStrings,
   convertTrackerStructsToStrings,
 } from "../parsing/reverse-parsing-logic";
-import {
-  isRight,
-  unwrapEither
-} from "./utils";
+import { isRight, unwrapEither } from "./utils";
 
 /**
  * @file policy.ts
@@ -105,7 +101,6 @@ export const createPolicy = async (
   });
   const returnHash = await writeContract(config, {
     ...addPolicy.request,
-    account,
   });
   const transactionReceipt = await waitForTransactionReceipt(config, {
     hash: returnHash,
@@ -117,20 +112,21 @@ export const createPolicy = async (
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
     if (policyJSON.ForeignCalls != null) {
       for (var foreignCall of policyJSON.ForeignCalls) {
-        const parsedFC = parseForeignCallDefinition(foreignCall)
+        const parsedFC = parseForeignCallDefinition(foreignCall);
         if (isRight(parsedFC)) {
-          const fcStruct = unwrapEither(parsedFC)
+          const fcStruct = unwrapEither(parsedFC);
           const fcId = await createForeignCall(
             config,
             rulesEngineComponentContract,
-            policyId, JSON.stringify(foreignCall)
-          )
+            policyId,
+            JSON.stringify(foreignCall)
+          );
           var struc: FCNameToID = {
             id: fcId,
-            name: fcStruct.name.split('(')[0],
-            type: 0
-          }
-          fcIds.push(struc)
+            name: fcStruct.name.split("(")[0],
+            type: 0,
+          };
+          fcIds.push(struc);
         } else {
           throw new Error(unwrapEither(parsedFC).message);
         }
@@ -139,21 +135,21 @@ export const createPolicy = async (
 
     if (policyJSON.Trackers != null) {
       for (var tracker of policyJSON.Trackers) {
-        const parsedTracker = parseTrackerSyntax(tracker)
+        const parsedTracker = parseTrackerSyntax(tracker);
         if (isRight(parsedTracker)) {
-          const trackerStruct = unwrapEither(parsedTracker)
+          const trackerStruct = unwrapEither(parsedTracker);
           const trId = await createTracker(
             config,
             rulesEngineComponentContract,
             policyId,
             JSON.stringify(tracker)
-          )
+          );
           var struc: FCNameToID = {
             id: trId,
             name: trackerStruct.name,
-            type: trackerStruct.type
-          }
-          trackerIds.push(struc)
+            type: trackerStruct.type,
+          };
+          trackerIds.push(struc);
           trackers.push(trackerStruct);
         } else {
           throw new Error(unwrapEither(parsedTracker).message);
@@ -256,7 +252,6 @@ export const updatePolicy = async (
   if (updatePolicy != null) {
     const returnHash = await writeContract(config, {
       ...updatePolicy.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -301,7 +296,6 @@ export const setPolicies = async (
   if (applyPolicy != null) {
     const returnHash = await writeContract(config, {
       ...applyPolicy.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -367,7 +361,6 @@ export const deletePolicy = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -562,7 +555,7 @@ export async function policyExists(
 /**
  * Retrieves the IDs of all of the policies that have been applied to a contract address.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
- * @param address - The ID of the policy to check.
+ * @param address - The address to check.
  * @returns array of all of the policy ids applied to the contract
  */
 export async function getAppliedPolicyIds(
@@ -582,3 +575,199 @@ export async function getAppliedPolicyIds(
     return [];
   }
 }
+
+/**
+ * Retrieves whether a policy is open or closed.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to check.
+ * @returns array of all of the policy ids applied to the contract
+ */
+export async function isClosedPolicy(
+  config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
+  policyId: number
+): Promise<boolean> {
+  try {
+    let isClosed = await simulateContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "isClosedPolicy",
+      args: [policyId],
+    });
+    return isClosed.result;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Closes a policy on the Rules Engine.
+ *
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to close.
+ * @returns `0` if successful, `-1` if an error occurs.
+ */
+export const closePolicy = async (
+  config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
+  policyId: number
+): Promise<number> => {
+  var addFC;
+  try {
+    addFC = await simulateContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "closePolicy",
+      args: [policyId],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Opens a policy on the Rules Engine.
+ *
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to open.
+ * @returns `0` if successful, `-1` if an error occurs.
+ */
+export const openPolicy = async (
+  config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
+  policyId: number
+): Promise<number> => {
+  var addFC;
+  try {
+    addFC = await simulateContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "openPolicy",
+      args: [policyId],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Retrieves whether an address is a possible subscriber to the closed policy.
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Components.
+ * @param policyId - The ID of the policy to check.
+ * @param subscriber - The address to check
+ * @returns array of all of the policy ids applied to the contract
+ */
+export async function isClosedPolicySubscriber(
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  policyId: number,
+  subscriber: Address
+): Promise<boolean> {
+  try {
+    let isClosed = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "isClosedPolicySubscriber",
+      args: [policyId, subscriber],
+    });
+    return isClosed.result;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Adds a subscriber to the closed policy.
+ *
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Components.
+ * @param policyId - The ID of the policy to add to.
+ * @returns `0` if successful, `-1` if an error occurs.
+ */
+export const addClosedPolicySubscriber = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  policyId: number,
+  subscriber: Address
+): Promise<number> => {
+  var addFC;
+  try {
+    addFC = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "addClosedPolicySubscriber",
+      args: [policyId, subscriber],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Removes a subscriber from the closed policy.
+ *
+ * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Components.
+ * @param policyId - The ID of the policy to remove from.
+ * @returns `0` if successful, `-1` if an error occurs.
+ */
+export const removeClosedPolicySubscriber = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  policyId: number,
+  subscriber: Address
+): Promise<number> => {
+  var addFC;
+  try {
+    addFC = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "removeClosedPolicySubscriber",
+      args: [policyId, subscriber],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};

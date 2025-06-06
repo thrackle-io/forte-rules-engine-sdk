@@ -8,7 +8,6 @@ import {
   Config,
 } from "@wagmi/core";
 
-import { account } from "../../config";
 import {
   buildAnEffectStruct,
   buildARuleStruct,
@@ -115,7 +114,6 @@ export const createRule = async (
   if (addRule != null) {
     const returnHash = await writeContract(config, {
       ...addRule.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -179,7 +177,6 @@ export const updateRule = async (
   if (addRule != null) {
     const returnHash = await writeContract(config, {
       ...addRule.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -223,7 +220,6 @@ export const deleteRule = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,

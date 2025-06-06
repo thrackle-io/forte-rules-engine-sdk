@@ -6,7 +6,6 @@ import {
   readContract,
   Config,
 } from "@wagmi/core";
-import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseTrackerSyntax } from "../parsing/parser";
 import {
@@ -15,11 +14,7 @@ import {
   TrackerDefinition,
   TrackerOnChain,
 } from "./types";
-import {
-  isLeft,
-  isRight,
-  unwrapEither
-} from "./utils";
+import { isLeft, isRight, unwrapEither } from "./utils";
 
 /**
  * @file Trackers.ts
@@ -66,7 +61,7 @@ export const createTracker = async (
       set: true,
       pType: tracker.type,
       trackerValue: tracker.initialValue,
-      trackerIndex: 0
+      trackerIndex: 0,
     };
     var addTR;
     while (true) {
@@ -86,7 +81,6 @@ export const createTracker = async (
     if (addTR != null) {
       const returnHash = await writeContract(config, {
         ...addTR.request,
-        account,
       });
       await waitForTransactionReceipt(config, {
         hash: returnHash,
@@ -127,7 +121,7 @@ export const updateTracker = async (
       set: true,
       pType: tracker.type,
       trackerValue: tracker.initialValue,
-      trackerIndex: trackerId
+      trackerIndex: trackerId,
     };
     var addTR;
     while (true) {
@@ -147,11 +141,10 @@ export const updateTracker = async (
     if (addTR != null) {
       const returnHash = await writeContract(config, {
         ...addTR.request,
-        account,
       });
       await waitForTransactionReceipt(config, {
         hash: returnHash,
-      })
+      });
       return trackerId;
     }
     return -1;
@@ -193,7 +186,6 @@ export const deleteTracker = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
