@@ -33,6 +33,8 @@ import {
   policyExists,
   getAppliedPolicyIds,
   setPolicies,
+  cementPolicy,
+  isCementedPolicy,
 } from "../src/modules/policy";
 import {
   createRule,
@@ -1008,4 +1010,69 @@ describe("Rules Engine Interactions", async () => {
       expect(admin).toEqual(true);
     }
   );
+  test("Can cement a policy", options, async () => {
+    var policyJSON = `
+    {
+    "Policy": "Test Policy",
+    "PolicyType": "open",
+    "ForeignCalls": [
+        {
+            "name": "Simple Foreign Call",
+            "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "function": "testSig(address)",
+            "returnType": "uint256",
+            "valuesToPass": "0"
+        }
+    ],
+    "Trackers": [
+    {
+        "name": "Simple String Tracker",
+        "type": "string",
+        "initialValue": "test"
+    }
+    ],
+    "Rules": [
+        {
+            "condition": "value > 500",
+            "positiveEffects": ["emit Success"],
+            "negativeEffects": ["revert()"],
+            "callingFunction": "transfer(address to, uint256 value)",
+            "encodedValues": "address to, uint256 value"
+        }
+        ]
+        }`;
+    var result = await createPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      policyJSON
+    );
+
+    var isCemented = await isCementedPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId
+    );
+    expect(isCemented).toEqual(false);
+    var admin = await isPolicyAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      result.policyId,
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+    );
+    expect(admin).toEqual(true);
+    await cementPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId
+    );
+    await sleep(5000);
+    isCemented = await isCementedPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId
+    );
+    expect(isCemented).toEqual(true);
+  });
 });
