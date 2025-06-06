@@ -202,11 +202,14 @@ export function parseForeignCalls(
 ): string {
   let iter = 0;
 
+  /*
   for (var name of names) {
     if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
       iter += 1;
     }
   }
+    */
+  //const names:PlaceholderStruct[] = []
 
   // Use a regular expression to find all FC expressions
   const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
@@ -358,13 +361,13 @@ export function parseEffect(
     effectText = match ? match[2] : "";
   } else {
     effectType = EffectType.EXPRESSION;
-    var effectStruct = convertHumanReadableToInstructionSet(
+    var instructionSet = convertHumanReadableToInstructionSet(
       effect,
       names,
       indexMap,
       placeholders
     );
-    effectInstructionSet = effectStruct.instructionSet;
+    effectInstructionSet = instructionSet;
   }
 
   return {

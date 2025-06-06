@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { isAddress } from "viem"
-import { trackerIndexNameMapping, PlaceholderStruct, matchArray, truMatchArray, Tuple, InstructionSet } from "../modules/types"
+import { trackerIndexNameMapping, PlaceholderStruct, matchArray, truMatchArray, Tuple, InstructionSet, ASTAccumulator } from "../modules/types"
 
 /**
  * @file internal-parsing-logic.ts
@@ -57,6 +57,7 @@ export function convertHumanReadableToInstructionSet(syntax: string, names: any[
     var whiteSpaceSplit = syntax.split(" ")
     var delimiterIterator = 0
     var first = true
+    let array_: any[] = []
     for (var str of whiteSpaceSplit) {
         if (str == "AND" || str == "OR" || str == "NOT") {
             originalDelimiters.push(str)
@@ -96,26 +97,27 @@ export function convertHumanReadableToInstructionSet(syntax: string, names: any[
             iterate(array, matchCase)
         }
 
-        removeArrayWrappers(array)
-        intify(array)
+        array_ = removeArrayWrappers(array)
+        array_ = intify(array_)
     }
-    var instructionSet: any[] = []
-    var mem: any[] = []
-    var placeHolders: PlaceholderStruct[] = []
-    const iter = { value: 0 };
+    const astAccumulator: ASTAccumulator = {
+        instructionSet: [],
+        mem: [],
+        iterator: { value: 0 }
+    };
 
-    // Convert the AST into the Instruction Set Syntax 
-    convertASTToInstructionSet(instructionSet, mem, array, iter, names, existingPlaceHolders, indexMap)
+    // Convert the AST into the Instruction Set Syntax
+    convertASTToInstructionSet(astAccumulator, array_, names, existingPlaceHolders, indexMap)
 
-    for (var instructionIter in instructionSet) {
-        if (typeof instructionSet[instructionIter] == "string") {
-            if (instructionSet[instructionIter].includes("PLA")) {
-                var index = parseInt(instructionSet[instructionIter].replace("PLA", "").trim())
-                instructionSet[instructionIter] = originalDelimiters[index]
+    for (var instructionIter in astAccumulator.instructionSet) {
+        if (typeof astAccumulator.instructionSet[instructionIter] == "string") {
+            if (astAccumulator.instructionSet[instructionIter].includes("PLA")) {
+                var index = parseInt(astAccumulator.instructionSet[instructionIter].replace("PLA", "").trim())
+                astAccumulator.instructionSet[instructionIter] = originalDelimiters[index]
             }
         }
     }
-    return { instructionSet: instructionSet, placeHolders: placeHolders }
+    return astAccumulator.instructionSet
 }
 
 /**
@@ -123,23 +125,26 @@ export function convertHumanReadableToInstructionSet(syntax: string, names: any[
  * 
  * @param retVal - The resulting instruction set.
  * @param mem - The memory map for the instruction set.
+ * * @param iterator - An iterator for tracking memory locations.
  * @param expression - The AST to convert.
- * @param iterator - An iterator for tracking memory locations.
  * @param parameterNames - An array of argument placeholders.
  * @param placeHolders - An array to store placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
  */
-function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[], iterator: { value: number }, parameterNames: any[], placeHolders: PlaceholderStruct[], indexMap: trackerIndexNameMapping[]): void {
-    if (!expression || expression.length === 0) {
-        return;
-    }
+function convertASTToInstructionSet(
+    acc: ASTAccumulator,
+    expression: any[],
+    parameterNames: any[],
+    placeHolders: PlaceholderStruct[],
+    indexMap: trackerIndexNameMapping[]
+): ASTAccumulator {
 
     // If it's a number add it directly to the instruction set and store its memory location in mem
     if (typeof expression == "number" || typeof expression == "bigint") {
-        retVal.push("N")
-        retVal.push(BigInt(expression))
-        mem.push(iterator.value)
-        iterator.value += 1
+        acc.instructionSet.push("N")
+        acc.instructionSet.push(BigInt(expression))
+        acc.mem.push(acc.iterator.value)
+        acc.iterator.value += 1
         // If it's an array with a string as the first index, recursively run starting at the next index
         // Then add the the string and the two memory addresses generated from the recusive run to the instruction set 
     } else if (typeof expression[0] == "string") {
@@ -156,15 +161,15 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     // these two get their own cases (found below)
                     if (expression[0].trim().includes("TR:")) {
                         if (place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && place.trackerValue) {
-                            retVal.push("PLH")
-                            retVal.push(plhIter)
+                            acc.instructionSet.push("PLH")
+                            acc.instructionSet.push(plhIter)
                             copyFound = true
                             break
                         }
                     } else {
                         if (place.typeSpecificIndex == parameter.tIndex && !place.foreignCall && !place.trackerValue) {
-                            retVal.push("PLH")
-                            retVal.push(plhIter)
+                            acc.instructionSet.push("PLH")
+                            acc.instructionSet.push(plhIter)
                             copyFound = true
                             break
                         }
@@ -173,20 +178,20 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
 
                 }
                 if (!copyFound) {
-                    retVal.push("PLH")
-                    retVal.push(plhIndex)
+                    acc.instructionSet.push("PLH")
+                    acc.instructionSet.push(plhIndex)
                 }
                 var sliced = expression.slice(1)
-                mem.push(iterator.value)
-                iterator.value += 1
-                convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                acc.mem.push(acc.iterator.value)
+                acc.iterator.value += 1
+                convertASTToInstructionSet(acc, sliced, parameterNames, placeHolders, indexMap)
 
                 // Check if the expression is a foreign call
             } else if (parameter.fcPlaceholder) {
                 if (parameter.fcPlaceholder == expression[0].trim()) {
                     foundMatch = true
-                    retVal.push("PLH")
-                    retVal.push(plhIndex)
+                    acc.instructionSet.push("PLH")
+                    acc.instructionSet.push(plhIndex)
                     var found = false
                     for (var pHold of placeHolders) {
                         if (pHold.foreignCall && pHold.typeSpecificIndex == parameter.tIndex) {
@@ -194,9 +199,9 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                         }
                     }
                     var sliced = expression.slice(1)
-                    mem.push(iterator.value)
-                    iterator.value += 1
-                    convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                    acc.mem.push(acc.iterator.value)
+                    acc.iterator.value += 1
+                    convertASTToInstructionSet(acc, sliced, parameterNames, placeHolders, indexMap)
                 } else {
                     plhIndex += 1
                 }
@@ -211,8 +216,8 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     comparison = values[1]
                 }
                 if (comparison == parameter.name) {
-                    retVal.push("PLH")
-                    retVal.push(plhIndex)
+                    acc.instructionSet.push("PLH")
+                    acc.instructionSet.push(plhIndex)
 
                     for (var ind of indexMap) {
                         if (parameter.name == "TR:" + ind.name) {
@@ -221,9 +226,9 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     }
 
                     var sliced = expression.slice(1)
-                    mem.push(iterator.value)
-                    iterator.value += 1
-                    convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                    acc.mem.push(acc.iterator.value)
+                    acc.iterator.value += 1
+                    convertASTToInstructionSet(acc, sliced, parameterNames, placeHolders, indexMap)
 
                 } else {
                     plhIndex += 1
@@ -237,27 +242,27 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
             if (matchArray.includes(expression[0].trim()) || expression[0].includes("PLA")) {
                 foundMatch = true
                 var sliced = expression.slice(1)
-                convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+                convertASTToInstructionSet(acc, sliced, parameterNames, placeHolders, indexMap)
                 if (truMatchArray.includes(expression[0].trim())) {
                     switch (expression[0].trim()) {
                         case '+=':
-                            retVal.push('+')
+                            acc.instructionSet.push('+')
                             break
                         case '-=':
-                            retVal.push('-')
+                            acc.instructionSet.push('-')
                             break
                         case '*=':
-                            retVal.push('*')
+                            acc.instructionSet.push('*')
                             break
                         case '/=':
-                            retVal.push('/')
+                            acc.instructionSet.push('/')
                             break
                         case '=':
-                            retVal.push('=')
+                            acc.instructionSet.push('=')
                             break
                     }
                 } else {
-                    retVal.push(expression[0])
+                    acc.instructionSet.push(expression[0])
                 }
                 var not = false
                 if (expression[0].includes("PLA")) {
@@ -267,47 +272,49 @@ function convertASTToInstructionSet(retVal: any[], mem: any[], expression: any[]
                     }
                 }
                 if (not) {
-                    retVal.push(mem.pop())
+                    acc.instructionSet.push(acc.mem.pop())
                 } else {
-                    retVal.push(...mem.splice(mem.length - 2, 2))
+                    acc.instructionSet.push(...acc.mem.splice(acc.mem.length - 2, 2))
                 }
                 if (truMatchArray.includes(expression[0].trim())) {
-                    retVal.push('TRU')
-                    retVal.push(truIndex)
-                    retVal.push(iterator.value)
+                    acc.instructionSet.push('TRU')
+                    acc.instructionSet.push(truIndex)
+                    acc.instructionSet.push(acc.iterator.value)
                     // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates
-                    retVal.push(0)
+                    acc.instructionSet.push(0)
                 } else {
-                    mem.push(iterator.value)
+                    acc.mem.push(acc.iterator.value)
                 }
-                iterator.value += 1
+                acc.iterator.value += 1
             }
         }
         if (!foundMatch) {
-            retVal.push("N")
-            retVal.push(expression[0].trim())
+            acc.instructionSet.push("N")
+            acc.instructionSet.push(expression[0].trim())
             var sliced = expression.slice(1)
-            mem.push(iterator.value)
-            iterator.value += 1
-            convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
+            acc.mem.push(acc.iterator.value)
+            acc.iterator.value += 1
+            convertASTToInstructionSet(acc, sliced, parameterNames, placeHolders, indexMap)
         }
 
         // If it's an array with a number as the first index, add the number to the instruction set, add its memory
         // location to the memory map and recursively run starting at the next index
     } else if (typeof expression[0] == "number" || typeof expression[0] == "bigint") {
-        retVal.push("N")
-        retVal.push(BigInt(expression[0]))
+        acc.instructionSet.push("N")
+        acc.instructionSet.push(BigInt(expression[0]))
         var sliced = expression.slice(1)
-        mem.push(iterator.value)
-        iterator.value += 1
-        convertASTToInstructionSet(retVal, mem, sliced, iterator, parameterNames, placeHolders, indexMap)
-        // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map 
+        acc.mem.push(acc.iterator.value)
+        acc.iterator.value += 1
+        convertASTToInstructionSet(acc, sliced, parameterNames, placeHolders, indexMap)
+        // If it's an array with a nested array as the first index recursively run with the nested array, update the memory map
         // and recursively run starting at the next index
     } else if (Array.isArray(expression[0])) {
-        convertASTToInstructionSet(retVal, mem, expression[0], iterator, parameterNames, placeHolders, indexMap)
+        convertASTToInstructionSet(acc, expression[0], parameterNames, placeHolders, indexMap)
         expression = expression.slice(1)
-        convertASTToInstructionSet(retVal, mem, expression, iterator, parameterNames, placeHolders, indexMap)
+        convertASTToInstructionSet(acc, expression, parameterNames, placeHolders, indexMap)
     }
+
+    return acc
 }
 
 /**
@@ -511,19 +518,20 @@ function retrieveParenthesisContent(str: string, tuples: Tuple[]): string {
  * than one element, the function is called recursively on that nested array.
  *
  * @param array - The array to process, which may contain nested arrays.
+ * @return A new array with unnecessary wrappers removed, where single-element arrays
+ *         are replaced by their single value.
  */
-function removeArrayWrappers(array: any[]): void {
-    var iter = 0
-    while (iter < array.length) {
-        if (Array.isArray(array[iter])) {
-            if (array[iter].length == 1) {
-                array[iter] = array[iter][0]
+export function removeArrayWrappers(array: any[]): any[] {
+    return array.map((iter) => {
+        if (Array.isArray(iter)) {
+            if (iter.length == 1) {
+                return iter[0]
             } else {
-                removeArrayWrappers(array[iter])
+                return removeArrayWrappers(iter)
             }
         }
-        iter++
-    }
+        return iter
+    })
 }
 
 /**
@@ -537,22 +545,17 @@ function removeArrayWrappers(array: any[]): void {
  * 
  * @param array - The array to process. Can contain nested arrays and elements
  *                of any type.
+ * @returns The processed array with elements converted to `BigInt` where applicable.
  */
-function intify(array: any[]): void {
-    var iter = 0
-    while (iter < array.length) {
-        if (Array.isArray(array[iter])) {
-            intify(array[iter])
+function intify(array: any[]): Array<number | BigInt> {
+    return array.map((iter) => {
+        if (Array.isArray(iter)) {
+            return intify(iter)
         } else {
-            if (isAddress(array[iter])) {
-                array[iter] = BigInt(array[iter])
-            } else {
-                if (!isNaN(Number(array[iter]))) {
-                    array[iter] = BigInt(array[iter])
-                }
+            if (isAddress(iter) || !isNaN(Number(iter))) {
+                return BigInt(iter)
             }
-
         }
-        iter++
-    }
+        return iter
+    })
 }
