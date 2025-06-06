@@ -39,6 +39,8 @@ import {
   isClosedPolicySubscriber,
   addClosedPolicySubscriber,
   removeClosedPolicySubscriber,
+  cementPolicy,
+  isCementedPolicy,
 } from "../src/modules/policy";
 import {
   createRule,
@@ -1014,8 +1016,7 @@ describe("Rules Engine Interactions", async () => {
       expect(admin).toEqual(true);
     }
   );
-
-  test("Can close a policy", options, async () => {
+  test("Can cement a policy", options, async () => {
     var policyJSON = `
     {
     "Policy": "Test Policy",
@@ -1053,43 +1054,37 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineComponentContract(rulesEngineContract, client),
       policyJSON
     );
-    var isClosed = await isClosedPolicy(
-      config,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      result.policyId
-    );
-    expect(isClosed).toEqual(false);
 
-    await closePolicy(
+    var isCemented = await isCementedPolicy(
       config,
       getRulesEnginePolicyContract(rulesEngineContract, client),
       result.policyId
     );
-    var isClosed = await isClosedPolicy(
+    expect(isCemented).toEqual(false);
+    var admin = await isPolicyAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      result.policyId,
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+    );
+    expect(admin).toEqual(true);
+    await cementPolicy(
       config,
       getRulesEnginePolicyContract(rulesEngineContract, client),
       result.policyId
     );
-    expect(isClosed).toEqual(true);
+    await sleep(5000);
+    isCemented = await isCementedPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId
+    );
 
-    await openPolicy(
-      config,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      result.policyId
-    );
-    var isClosed = await isClosedPolicy(
-      config,
-      getRulesEnginePolicyContract(rulesEngineContract, client),
-      result.policyId
-    );
-    expect(isClosed).toEqual(false);
-  });
-
-  test(
-    "Can manipulate closed subscriber list for a policy",
-    options,
-    async () => {
-      var policyJSON = `
+    test(
+      "Can manipulate closed subscriber list for a policy",
+      options,
+      async () => {
+        var policyJSON = `
     {
     "Policy": "Test Policy",
     "PolicyType": "open",
@@ -1119,50 +1114,51 @@ describe("Rules Engine Interactions", async () => {
         }
         ]
         }`;
-      var result = await createPolicy(
-        config,
-        getRulesEnginePolicyContract(rulesEngineContract, client),
-        getRulesEngineRulesContract(rulesEngineContract, client),
-        getRulesEngineComponentContract(rulesEngineContract, client),
-        policyJSON
-      );
+        var result = await createPolicy(
+          config,
+          getRulesEnginePolicyContract(rulesEngineContract, client),
+          getRulesEngineRulesContract(rulesEngineContract, client),
+          getRulesEngineComponentContract(rulesEngineContract, client),
+          policyJSON
+        );
 
-      await closePolicy(
-        config,
-        getRulesEnginePolicyContract(rulesEngineContract, client),
-        result.policyId
-      );
-      var isClosed = await isClosedPolicy(
-        config,
-        getRulesEnginePolicyContract(rulesEngineContract, client),
-        result.policyId
-      );
-      expect(isClosed).toEqual(true);
+        await closePolicy(
+          config,
+          getRulesEnginePolicyContract(rulesEngineContract, client),
+          result.policyId
+        );
+        var isClosed = await isClosedPolicy(
+          config,
+          getRulesEnginePolicyContract(rulesEngineContract, client),
+          result.policyId
+        );
+        expect(isClosed).toEqual(true);
 
-      var isSubscriber = await isClosedPolicySubscriber(
-        config,
-        getRulesEngineComponentContract(rulesEngineContract, client),
-        result.policyId,
-        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
-      );
+        var isSubscriber = await isClosedPolicySubscriber(
+          config,
+          getRulesEngineComponentContract(rulesEngineContract, client),
+          result.policyId,
+          getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+        );
 
-      expect(isSubscriber).toEqual(false);
+        expect(isSubscriber).toEqual(false);
 
-      await removeClosedPolicySubscriber(
-        config,
-        getRulesEngineComponentContract(rulesEngineContract, client),
-        result.policyId,
-        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
-      );
+        await removeClosedPolicySubscriber(
+          config,
+          getRulesEngineComponentContract(rulesEngineContract, client),
+          result.policyId,
+          getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+        );
 
-      var isSubscriber = await isClosedPolicySubscriber(
-        config,
-        getRulesEngineComponentContract(rulesEngineContract, client),
-        result.policyId,
-        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
-      );
+        var isSubscriber = await isClosedPolicySubscriber(
+          config,
+          getRulesEngineComponentContract(rulesEngineContract, client),
+          result.policyId,
+          getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
+        );
 
-      expect(isSubscriber).toEqual(false);
-    }
-  );
+        expect(isSubscriber).toEqual(false);
+      }
+    );
+  });
 });
