@@ -45,6 +45,12 @@ import {
   getPolicy as getPolicyInternal,
   policyExists as policyExistsInternal,
   getAppliedPolicyIds as getAppliedPolicyIdsInternal,
+  isClosedPolicy as isClosedPolicyInternal,
+  closePolicy as closePolicyInternal,
+  openPolicy as openPolicyInternal,
+  isClosedPolicySubscriber as isClosedPolicySubscriberInternal,
+  addClosedPolicySubscriber as addClosedPolicySubscriberInternal,
+  removeClosedPolicySubscriber as removeClosedPolicySubscriberInternal,
 } from "./policy";
 
 import {
@@ -260,6 +266,96 @@ export class RulesEngine {
       config,
       this.rulesEnginePolicyContract,
       address
+    );
+  }
+
+  /**
+   * Retrieves whether a policy is open or closed.
+   * @param policyId - The ID of the policy to check.
+   * @returns array of all of the policy ids applied to the contract
+   */
+  isClosedPolicy(policyId: number): Promise<boolean> {
+    return isClosedPolicyInternal(
+      config,
+      this.rulesEnginePolicyContract,
+      policyId
+    );
+  }
+
+  /**
+   * Opens a policy on the Rules Engine.
+   *
+   * @param policyId - The ID of the policy to open.
+   * @returns `0` if successful, `-1` if an error occurs.
+   */
+  openPolicy(policyId: number): Promise<number> {
+    return openPolicyInternal(config, this.rulesEnginePolicyContract, policyId);
+  }
+
+  /**
+   * Closes a policy on the Rules Engine.
+   *
+   * @param policyId - The ID of the policy to close.
+   * @returns `0` if successful, `-1` if an error occurs.
+   */
+  closePolicy(policyId: number): Promise<number> {
+    return closePolicyInternal(
+      config,
+      this.rulesEnginePolicyContract,
+      policyId
+    );
+  }
+
+  /**
+   * Retrieves whether an address is a possible subscriber to the closed policy.
+   * @param policyId - The ID of the policy to check.
+   * @param subscriber - The address to check
+   * @returns array of all of the policy ids applied to the contract
+   */
+  isClosedPolicySubscriber(
+    policyId: number,
+    subscriber: Address
+  ): Promise<boolean> {
+    return isClosedPolicySubscriberInternal(
+      config,
+      this.rulesEngineComponentContract,
+      policyId,
+      subscriber
+    );
+  }
+
+  /** Adds a subscriber to the closed policy.
+   *
+   * @param policyId - The ID of the policy to add to.
+   * @returns `0` if successful, `-1` if an error occurs.
+   */
+  addClosedPolicySubscriber(
+    policyId: number,
+    subscriber: Address
+  ): Promise<number> {
+    return addClosedPolicySubscriberInternal(
+      config,
+      this.rulesEngineComponentContract,
+      policyId,
+      subscriber
+    );
+  }
+
+  /**
+   * Removes a subscriber from the closed policy.
+   *
+   * @param policyId - The ID of the policy to remove from.
+   * @returns `0` if successful, `-1` if an error occurs.
+   */
+  removeClosedPolicySubscriber(
+    policyId: number,
+    subscriber: Address
+  ): Promise<number> {
+    return removeClosedPolicySubscriberInternal(
+      config,
+      this.rulesEngineComponentContract,
+      policyId,
+      subscriber
     );
   }
 

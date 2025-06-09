@@ -7,7 +7,6 @@ import {
   Config,
   readContract,
 } from "@wagmi/core";
-import { account } from "../../config";
 import { sleep } from "./contract-interaction-utils";
 import { parseFunctionArguments } from "../parsing/parser";
 import {
@@ -94,7 +93,6 @@ export const createCallingFunction = async (
   if (addRule != null) {
     const returnHash = await writeContract(config, {
       ...addRule.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -136,7 +134,6 @@ export const deleteCallingFunction = async (
   if (addRule != null) {
     const returnHash = await writeContract(config, {
       ...addRule.request,
-      account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
