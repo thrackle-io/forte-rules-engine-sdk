@@ -771,3 +771,64 @@ export const removeClosedPolicySubscriber = async (
 
   return 0;
 };
+
+/**
+ * Cements a policy on the Rules Engine.
+ *
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to cement.
+ * @returns `0` if successful, `-1` if an error occurs.
+ */
+export const cementPolicy = async (
+  config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
+  policyId: number
+): Promise<number> => {
+  var addFC;
+  try {
+    addFC = await simulateContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "cementPolicy",
+      args: [policyId],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Retrieves whether a policy is cemented.
+ * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
+ * @param policyId - The ID of the policy to check.
+ * @returns whether or not the policy is cemented
+ */
+export const isCementedPolicy = async (
+  config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
+  policyId: number
+): Promise<boolean> => {
+  try {
+    const retrievePolicy = await simulateContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "isCementedPolicy",
+      args: [policyId],
+    });
+
+    return retrievePolicy.result;
+  } catch (err) {
+    return false;
+  }
+};
