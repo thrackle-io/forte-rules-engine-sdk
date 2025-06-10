@@ -194,6 +194,22 @@ export type FunctionArgument = {
   fcPlaceholder?: PlaceholderStruct;
 };
 
+export type ForeignCall = {
+  name: string,
+  tIndex: number,
+  rawType: "foreign call",
+  fcPlaceholder: string,
+}
+
+export type Tracker = {
+  name: string,
+  tIndex: number,
+  rawType: "tracker",
+  rawTypeTwo?: string,
+}
+
+export type RuleComponent = FunctionArgument | ForeignCall | Tracker;
+
 export type stringReplacement = {
   instructionSetIndex: number;
   originalData: string;

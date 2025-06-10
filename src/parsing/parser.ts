@@ -18,6 +18,7 @@ import {
     PlaceholderStruct,
     PT,
     pTypeEnum,
+    RuleComponent,
     RuleDefinition,
     ruleJSON,
     RulesError,
@@ -82,38 +83,48 @@ export function parseRuleSyntax(
     condition = removeExtraParenthesis(condition);
 
     var encodedValues = syntax.encodedValues;
+    let ruleComponents: RuleComponent[] = [...parseFunctionArguments(encodedValues, condition)];
 
-    var names = parseFunctionArguments(encodedValues, condition);
-    var effectNames: any[] = [];
-    condition = parseForeignCalls(condition, names, foreignCallNameToID);
-    parseTrackers(condition, names, indexMap);
-    var placeHolders = buildPlaceholderList(names);
+    const [fcCondition, fcNames] = parseForeignCalls(condition, ruleComponents, foreignCallNameToID);
+    ruleComponents = [...ruleComponents, ...fcNames];
+    const trackers = parseTrackers(fcCondition, ruleComponents, indexMap);
+    ruleComponents = [...ruleComponents, ...trackers];
+    const placeHolders = buildPlaceholderList(ruleComponents);
 
+    let effectComponents: RuleComponent[] = [];
     for (var effectP in syntax.positiveEffects) {
-        syntax.positiveEffects[effectP] = parseForeignCalls(
+        const [effectCondition, effectCalls] = parseForeignCalls(
             syntax.positiveEffects[effectP],
-            effectNames,
+            effectComponents,
             foreignCallNameToID
         );
-        parseTrackers(syntax.positiveEffects[effectP], effectNames, indexMap);
+        syntax.positiveEffects[effectP] = effectCondition;
+        effectComponents = [...effectComponents, ...effectCalls];
+        const effectTrackers = parseTrackers(syntax.positiveEffects[effectP], effectComponents, indexMap);
+
+        effectComponents = [...effectComponents, ...effectTrackers];
     }
     for (var effectN in syntax.negativeEffects) {
-        syntax.negativeEffects[effectN] = parseForeignCalls(
+        const [effectCondition, effectCalls] = parseForeignCalls(
             syntax.negativeEffects[effectN],
-            effectNames,
+            effectComponents,
             foreignCallNameToID
         );
-        parseTrackers(syntax.negativeEffects[effectN], effectNames, indexMap);
-    }
-    var effectPlaceHolders = buildPlaceholderList(effectNames);
+        syntax.negativeEffects[effectN] = effectCondition;
+        effectComponents = [...effectComponents, ...effectCalls];
+        const effectTrackers = parseTrackers(syntax.negativeEffects[effectN], effectComponents, indexMap);
 
-    var positiveEffectsFinal = [];
-    var negativeEffectsFinal = [];
+        effectComponents = [...effectComponents, ...effectTrackers];
+    }
+    const effectPlaceHolders = buildPlaceholderList(effectComponents);
+
+    const positiveEffectsFinal = [];
+    const negativeEffectsFinal = [];
     if (syntax.positiveEffects != null) {
         for (var effectP of syntax.positiveEffects) {
             let effect = parseEffect(
                 effectP,
-                effectNames,
+                effectComponents,
                 effectPlaceHolders,
                 indexMap
             );
@@ -125,7 +136,7 @@ export function parseRuleSyntax(
         for (var effectN of syntax.negativeEffects) {
             let effect = parseEffect(
                 effectN,
-                effectNames,
+                effectComponents,
                 effectPlaceHolders,
                 indexMap
             );
@@ -134,13 +145,13 @@ export function parseRuleSyntax(
     }
 
     var instructionSet = convertHumanReadableToInstructionSet(
-        condition,
-        names,
+        fcCondition,
+        ruleComponents,
         indexMap,
         placeHolders
     );
     var excludeArray = [];
-    for (var name of names) {
+    for (var name of ruleComponents) {
         excludeArray.push(name.name);
     }
 

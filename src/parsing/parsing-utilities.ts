@@ -115,7 +115,7 @@ export function parseFunctionArguments(
  * @param nextIndex - The next available index for placeholders.
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
-
+   */
 export function parseTrackers(
   condition: string,
   names: any[],
@@ -169,7 +169,7 @@ export function parseTrackers(
         }
       }
       var found = false;
-      for (var name of names) {
+      for (var name of [...names, ...trackers]) {
         if (name.name == match) {
           found = true;
           break;
@@ -182,71 +182,6 @@ export function parseTrackers(
   }
 
   return trackers
-}
-   */
-export function parseTrackers(
-  condition: string,
-  names: any[],
-  indexMap: trackerIndexNameMapping[]
-): void {
-  const trRegex = /TR:[a-zA-Z]+/g;
-  const truRegex = /TRU:[a-zA-Z]+/g;
-  var matches = condition.match(trRegex);
-
-  if (matches != null) {
-    var uniq = [...new Set(matches)];
-    for (var match of uniq!) {
-      var type = "address";
-      var index = 0;
-      for (var ind of indexMap) {
-        if ("TR:" + ind.name == match) {
-          index = ind.id;
-          if (ind.type == 0) {
-            type = "address";
-          } else if (ind.type == 1) {
-            type = "string";
-          } else if (ind.type == 3) {
-            type = "bool";
-          } else if (ind.type == 5) {
-            type = "bytes";
-          } else {
-            type = "uint256";
-          }
-        }
-      }
-      names.push({
-        name: match,
-        tIndex: index,
-        rawType: "tracker",
-        rawTypeTwo: type,
-      });
-    }
-  }
-
-  var matchesUpdate = condition.match(truRegex);
-
-  if (matchesUpdate != null) {
-    var uniq = [...new Set(matchesUpdate)];
-    for (var match of uniq!) {
-      var index = 0;
-      match = match.replace("TRU:", "TR:");
-      for (var ind of indexMap) {
-        if ("TR:" + ind.name == match) {
-          index = ind.id;
-        }
-      }
-      var found = false;
-      for (var name of names) {
-        if (name.name == match) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        names.push({ name: match, tIndex: index, rawType: "tracker" });
-      }
-    }
-  }
 }
 
 /**
@@ -265,7 +200,7 @@ export function parseTrackers(
  * - If an FC expression is already present in the `names` array, its existing placeholder
  *   is reused.
  * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
-
+  */
 export function parseForeignCalls(
   condition: string,
   names: any[],
@@ -276,13 +211,6 @@ export function parseForeignCalls(
   const matches = condition.matchAll(fcRegex);
   let processedCondition = condition;
   const foreignCalls: ForeignCall[] = [];
-  let iter = 0;
-
-  for (var name of names) {
-    if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
-      iter += 1;
-    }
-  }
 
   // Convert matches iterator to array to process all at once
   for (const match of matches) {
@@ -293,7 +221,7 @@ export function parseForeignCalls(
       continue;
     }
     // Create a unique placeholder for this FC expression
-    var placeholder = `FC:${iter}`;
+    var placeholder = `FC:${getRandom()}`;
     for (var existing of names) {
       if (existing.name == fullFcExpr) {
         placeholder = existing.fcPlaceholder;
@@ -316,78 +244,15 @@ export function parseForeignCalls(
         }
       }
       foreignCalls.push({
-        name: match,
+        name: match[0],
         tIndex: index,
         rawType: "foreign call",
         fcPlaceholder: placeholder,
       });
     }
-    iter++
   }
 
   return [processedCondition, foreignCalls];
-}
-   */
-export function parseForeignCalls(
-  condition: string,
-  names: any[],
-  foreignCallNameToID: FCNameToID[]
-): string {
-  let iter = 0;
-
-  for (var name of names) {
-    if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
-      iter += 1;
-    }
-  }
-
-  // Use a regular expression to find all FC expressions
-  const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
-  const matches = condition.matchAll(fcRegex);
-  let processedCondition = condition;
-
-  // Convert matches iterator to array to process all at once
-  for (const match of matches) {
-    const fullFcExpr = match[0];
-    if (names.indexOf(match) !== -1) {
-      let ph = names[names.indexOf(match)].fcPlaceholder;
-      processedCondition = processedCondition.replace(fullFcExpr, ph);
-      continue;
-    }
-    // Create a unique placeholder for this FC expression
-    var placeholder = `FC:${iter}`;
-    for (var existing of names) {
-      if (existing.name == fullFcExpr) {
-        placeholder = existing.fcPlaceholder;
-      }
-    }
-
-    processedCondition = processedCondition.replace(fullFcExpr, placeholder);
-    var alreadyFound = false;
-    for (var existing of names) {
-      if (existing.name == fullFcExpr) {
-        alreadyFound = true;
-        break;
-      }
-    }
-    if (!alreadyFound) {
-      var index = 0;
-      for (var fcMap of foreignCallNameToID) {
-        if ("FC:" + fcMap.name.trim() == fullFcExpr.trim()) {
-          index = fcMap.id;
-        }
-      }
-      names.push({
-        name: match,
-        tIndex: index,
-        rawType: "foreign call",
-        fcPlaceholder: placeholder,
-      });
-    }
-    iter++;
-  }
-
-  return processedCondition;
 }
 
 /**

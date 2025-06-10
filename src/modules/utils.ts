@@ -1,5 +1,6 @@
 import { Either, Left, Right, RulesError, UnwrapEither } from "./types";
 import { getAddress as _getAddress, Address, ethAddress } from 'viem';
+import { v4 as uuidv4 } from 'uuid';
 
 
 // Get a default encoded values string from a Calling Function
@@ -62,3 +63,5 @@ export const getAddress = (address: string): Either<RulesError, Address> => {
         });
     }
 }
+
+export const getRandom = () => uuidv4();
