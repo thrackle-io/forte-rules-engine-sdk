@@ -734,12 +734,6 @@ test("Evaluates a simple syntax string (using AND + OR operators and function pa
     15n,
   ];
 
-  var expectedRawDataArray = {
-    argumentTypes: [1],
-    instructionSetIndex: [25],
-    dataValues: [toBytes("test")],
-  };
-
   var ruleStringA = `{
 "condition": "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
@@ -750,7 +744,6 @@ test("Evaluates a simple syntax string (using AND + OR operators and function pa
 
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
   expect(retVal.instructionSet).toEqual(expectedArray);
-  expect(retVal.rawData).toEqual(expectedRawDataArray);
 });
 
 test("Creates a simple uint256 tracker", () => {

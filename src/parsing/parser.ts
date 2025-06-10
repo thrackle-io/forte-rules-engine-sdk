@@ -146,10 +146,9 @@ export function parseRuleSyntax(
 
     excludeArray.push(...matchArray);
     excludeArray.push(...operandArray);
-    var raw = buildRawData(instructionSet, excludeArray);
+    var rawInstructionSet = buildRawData(instructionSet, excludeArray);
     return {
-        instructionSet,
-        rawData: raw,
+        instructionSet: rawInstructionSet,
         positiveEffects: positiveEffectsFinal,
         negativeEffects: negativeEffectsFinal,
         placeHolders,

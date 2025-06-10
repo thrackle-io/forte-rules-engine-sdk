@@ -16,8 +16,11 @@ import {
   RawData,
   EffectDefinition,
   FunctionArgument,
+  ForeignCall,
+  Tracker,
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
+import { getRandom } from "../modules/utils";
 
 /**
  * @file parsing-utilities.ts
@@ -112,7 +115,75 @@ export function parseFunctionArguments(
  * @param nextIndex - The next available index for placeholders.
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
- */
+
+export function parseTrackers(
+  condition: string,
+  names: any[],
+  indexMap: trackerIndexNameMapping[]
+): Tracker[] {
+  const trRegex = /TR:[a-zA-Z]+/g;
+  const truRegex = /TRU:[a-zA-Z]+/g;
+  var matches = condition.match(trRegex);
+  const trackers: Tracker[] = [];
+
+  if (matches != null) {
+    var uniq = [...new Set(matches)];
+    for (var match of uniq!) {
+      var type = "address";
+      var index = 0;
+      for (var ind of indexMap) {
+        if ("TR:" + ind.name == match) {
+          index = ind.id;
+          if (ind.type == 0) {
+            type = "address";
+          } else if (ind.type == 1) {
+            type = "string";
+          } else if (ind.type == 3) {
+            type = "bool";
+          } else if (ind.type == 5) {
+            type = "bytes";
+          } else {
+            type = "uint256";
+          }
+        }
+      }
+      trackers.push({
+        name: match,
+        tIndex: index,
+        rawType: "tracker",
+        rawTypeTwo: type,
+      });
+    }
+  }
+
+  var matchesUpdate = condition.match(truRegex);
+
+  if (matchesUpdate != null) {
+    var uniq = [...new Set(matchesUpdate)];
+    for (var match of uniq!) {
+      var index = 0;
+      match = match.replace("TRU:", "TR:");
+      for (var ind of indexMap) {
+        if ("TR:" + ind.name == match) {
+          index = ind.id;
+        }
+      }
+      var found = false;
+      for (var name of names) {
+        if (name.name == match) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        trackers.push({ name: match, tIndex: index, rawType: "tracker" });
+      }
+    }
+  }
+
+  return trackers
+}
+   */
 export function parseTrackers(
   condition: string,
   names: any[],
@@ -194,7 +265,69 @@ export function parseTrackers(
  * - If an FC expression is already present in the `names` array, its existing placeholder
  *   is reused.
  * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
- */
+
+export function parseForeignCalls(
+  condition: string,
+  names: any[],
+  foreignCallNameToID: FCNameToID[]
+): [string, ForeignCall[]] {
+  // Use a regular expression to find all FC expressions
+  const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
+  const matches = condition.matchAll(fcRegex);
+  let processedCondition = condition;
+  const foreignCalls: ForeignCall[] = [];
+  let iter = 0;
+
+  for (var name of names) {
+    if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
+      iter += 1;
+    }
+  }
+
+  // Convert matches iterator to array to process all at once
+  for (const match of matches) {
+    const fullFcExpr = match[0];
+    if (names.indexOf(match) !== -1) {
+      let ph = names[names.indexOf(match)].fcPlaceholder;
+      processedCondition = processedCondition.replace(fullFcExpr, ph);
+      continue;
+    }
+    // Create a unique placeholder for this FC expression
+    var placeholder = `FC:${iter}`;
+    for (var existing of names) {
+      if (existing.name == fullFcExpr) {
+        placeholder = existing.fcPlaceholder;
+      }
+    }
+
+    processedCondition = processedCondition.replace(fullFcExpr, placeholder);
+    var alreadyFound = false;
+    for (var existing of names) {
+      if (existing.name == fullFcExpr) {
+        alreadyFound = true;
+        break;
+      }
+    }
+    if (!alreadyFound) {
+      var index = 0;
+      for (var fcMap of foreignCallNameToID) {
+        if (fcMap.name.trim() == fullFcExpr.trim()) {
+          index = fcMap.id;
+        }
+      }
+      foreignCalls.push({
+        name: match,
+        tIndex: index,
+        rawType: "foreign call",
+        fcPlaceholder: placeholder,
+      });
+    }
+    iter++
+  }
+
+  return [processedCondition, foreignCalls];
+}
+   */
 export function parseForeignCalls(
   condition: string,
   names: any[],
@@ -202,14 +335,11 @@ export function parseForeignCalls(
 ): string {
   let iter = 0;
 
-  /*
   for (var name of names) {
     if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
       iter += 1;
     }
   }
-    */
-  //const names:PlaceholderStruct[] = []
 
   // Use a regular expression to find all FC expressions
   const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
@@ -395,54 +525,35 @@ export function parseEffect(
 export function buildRawData(
   instructionSet: any[],
   excludeArray: string[]
-): RawData {
-  var instructionSetArray: number[] = [];
-  var argumentTypes: number[] = []; // string: 1
-  var dataValues: ByteArray[] = [];
-  let iter = 0;
-  while (iter < instructionSet.length) {
+): number[] {
+  return instructionSet.map((instruction) => {
+
     // Only capture values that aren't naturally numbers
-    if (!isNaN(Number(instructionSet[iter]))) {
-      instructionSet[iter] = BigInt(instructionSet[iter]);
-    } else {
-      if (!excludeArray.includes(instructionSet[iter].trim())) {
-        const currentInstruction = instructionSet[iter].trim();
-        if (currentInstruction == "true") {
-          instructionSet[iter] = 1n;
-        } else if (currentInstruction == "false") {
-          instructionSet[iter] = 0n;
-        } else {
-          // Determine if the current instruction is a bytes type (hex string starting with "0x")
-          const isBytes = currentInstruction.startsWith("0x");
-
-          instructionSetArray.push(iter);
-          argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
-          dataValues.push(
-            isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction)
-          );
-
-          if (!operandArray.includes(currentInstruction)) {
-            // Convert the string or bytes to a keccak256 hash then to a uint256
-            instructionSet[iter] = BigInt(
-              keccak256(
-                encodeAbiParameters(
-                  parseAbiParameters(isBytes ? "bytes" : "string"),
-                  [currentInstruction]
-                )
-              )
-            );
-          }
-        }
+    if (!isNaN(Number(instruction))) {
+      return BigInt(instruction);
+    } else if (!excludeArray.includes(instruction.trim())) {
+      instruction = instruction.trim();
+      if (instruction == "true") {
+        return 1n;
+      } else if (instruction == "false") {
+        return 0n;
+      } else if (!operandArray.includes(instruction)) {
+        // Convert the string or bytes to a keccak256 hash then to a uint256
+        return BigInt(
+          keccak256(
+            encodeAbiParameters(
+              parseAbiParameters(instruction.startsWith("0x") ? "bytes" : "string"),
+              [instruction]
+            )
+          )
+        );
+      } else {
+        return instruction;
       }
+    } else {
+      return instruction;
     }
-    iter++;
-  }
-
-  return {
-    instructionSetIndex: instructionSetArray,
-    argumentTypes: argumentTypes,
-    dataValues: dataValues,
-  };
+  });
 }
 
 /**
