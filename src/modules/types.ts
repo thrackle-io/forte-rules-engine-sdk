@@ -132,8 +132,7 @@ export type EffectStructs = {
 };
 
 export type RuleBase = {
-  instructionSet: number[];
-  rawData: RawData;
+  instructionSet: any[];
   placeHolders: any[];
   effectPlaceHolders: any[];
 };
@@ -192,7 +191,24 @@ export type FunctionArgument = {
   name: string;
   tIndex: number;
   rawType: string;
+  fcPlaceholder?: PlaceholderStruct;
 };
+
+export type ForeignCall = {
+  name: string,
+  tIndex: number,
+  rawType: "foreign call",
+  fcPlaceholder: string,
+}
+
+export type Tracker = {
+  name: string,
+  tIndex: number,
+  rawType: "tracker",
+  rawTypeTwo?: string,
+}
+
+export type RuleComponent = FunctionArgument | ForeignCall | Tracker;
 
 export type stringReplacement = {
   instructionSetIndex: number;
@@ -211,10 +227,7 @@ export type TrackerDefinition = {
   initialValue: any;
 };
 
-export type InstructionSet = {
-  instructionSet: any[];
-  placeHolders: PlaceholderStruct[];
-};
+export type InstructionSet = (number | string | BigInt)[];
 
 export type RawData = {
   instructionSetIndex: number[];
@@ -271,19 +284,19 @@ export const PT = [
 export type ErrorType = "INPUT" | "CONTRACT_READ" | "CONTRACT_WRITE" | "COMPILATION";
 
 export type RulesError = {
-    errorType: ErrorType;
-    state: any;
-    message: string;
+  errorType: ErrorType;
+  state: any;
+  message: string;
 }
 
 export type Left<T> = {
-    left: T;
-    right?: never;
+  left: T;
+  right?: never;
 };
 
 export type Right<U> = {
-    right: U;
-    left?: never;
+  right: U;
+  left?: never;
 };
 
 export type Either<T, U> = NonNullable<Left<T> | Right<U>>;
@@ -291,3 +304,9 @@ export type Either<T, U> = NonNullable<Left<T> | Right<U>>;
 export type UnwrapEither = <T, U>(e: Either<T, U>) => NonNullable<T | U>;
 
 export type Maybe<T> = NonNullable<T> | null;
+
+export type ASTAccumulator = {
+  instructionSet: any[],
+  mem: any[],
+  iterator: { value: number };
+}

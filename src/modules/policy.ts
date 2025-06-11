@@ -471,8 +471,7 @@ export const getPolicy = async (
       callingFunctionMappings.push(newMapping);
     }
 
-    var trackerStrings: string[] = [];
-    convertTrackerStructsToStrings(trackers, trackerStrings, trackerNames);
+    const trackerStrings = convertTrackerStructsToStrings(trackers, trackerNames);
 
     var iter = 0;
     var ruleJSONObjs = [];

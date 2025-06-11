@@ -8,6 +8,7 @@ import {
     stringToBytes,
 } from "viem";
 import {
+    EffectDefinition,
     Either,
     FCNameToID,
     ForeignCallDefinition,
@@ -17,6 +18,7 @@ import {
     PlaceholderStruct,
     PT,
     pTypeEnum,
+    RuleComponent,
     RuleDefinition,
     ruleJSON,
     RulesError,
@@ -81,38 +83,48 @@ export function parseRuleSyntax(
     condition = removeExtraParenthesis(condition);
 
     var encodedValues = syntax.encodedValues;
+    let ruleComponents: RuleComponent[] = [...parseFunctionArguments(encodedValues, condition)];
 
-    var names = parseFunctionArguments(encodedValues, condition);
-    var effectNames: any[] = [];
-    condition = parseForeignCalls(condition, names, foreignCallNameToID);
-    parseTrackers(condition, names, indexMap);
-    var placeHolders = buildPlaceholderList(names);
+    const [fcCondition, fcNames] = parseForeignCalls(condition, ruleComponents, foreignCallNameToID);
+    ruleComponents = [...ruleComponents, ...fcNames];
+    const trackers = parseTrackers(fcCondition, ruleComponents, indexMap);
+    ruleComponents = [...ruleComponents, ...trackers];
+    const placeHolders = buildPlaceholderList(ruleComponents);
 
+    let effectComponents: RuleComponent[] = [];
     for (var effectP in syntax.positiveEffects) {
-        syntax.positiveEffects[effectP] = parseForeignCalls(
+        const [effectCondition, effectCalls] = parseForeignCalls(
             syntax.positiveEffects[effectP],
-            effectNames,
+            effectComponents,
             foreignCallNameToID
         );
-        parseTrackers(syntax.positiveEffects[effectP], effectNames, indexMap);
+        syntax.positiveEffects[effectP] = effectCondition;
+        effectComponents = [...effectComponents, ...effectCalls];
+        const effectTrackers = parseTrackers(syntax.positiveEffects[effectP], effectComponents, indexMap);
+
+        effectComponents = [...effectComponents, ...effectTrackers];
     }
     for (var effectN in syntax.negativeEffects) {
-        syntax.negativeEffects[effectN] = parseForeignCalls(
+        const [effectCondition, effectCalls] = parseForeignCalls(
             syntax.negativeEffects[effectN],
-            effectNames,
+            effectComponents,
             foreignCallNameToID
         );
-        parseTrackers(syntax.negativeEffects[effectN], effectNames, indexMap);
-    }
-    var effectPlaceHolders = buildPlaceholderList(effectNames);
+        syntax.negativeEffects[effectN] = effectCondition;
+        effectComponents = [...effectComponents, ...effectCalls];
+        const effectTrackers = parseTrackers(syntax.negativeEffects[effectN], effectComponents, indexMap);
 
-    var positiveEffectsFinal = [];
-    var negativeEffectsFinal = [];
+        effectComponents = [...effectComponents, ...effectTrackers];
+    }
+    const effectPlaceHolders = buildPlaceholderList(effectComponents);
+
+    const positiveEffectsFinal = [];
+    const negativeEffectsFinal = [];
     if (syntax.positiveEffects != null) {
         for (var effectP of syntax.positiveEffects) {
             let effect = parseEffect(
                 effectP,
-                effectNames,
+                effectComponents,
                 effectPlaceHolders,
                 indexMap
             );
@@ -124,7 +136,7 @@ export function parseRuleSyntax(
         for (var effectN of syntax.negativeEffects) {
             let effect = parseEffect(
                 effectN,
-                effectNames,
+                effectComponents,
                 effectPlaceHolders,
                 indexMap
             );
@@ -132,27 +144,26 @@ export function parseRuleSyntax(
         }
     }
 
-    var retVal = convertHumanReadableToInstructionSet(
-        condition,
-        names,
+    var instructionSet = convertHumanReadableToInstructionSet(
+        fcCondition,
+        ruleComponents,
         indexMap,
         placeHolders
     );
     var excludeArray = [];
-    for (var name of names) {
+    for (var name of ruleComponents) {
         excludeArray.push(name.name);
     }
 
     excludeArray.push(...matchArray);
     excludeArray.push(...operandArray);
-    var raw = buildRawData(retVal.instructionSet, excludeArray);
+    var rawInstructionSet = buildRawData(instructionSet, excludeArray);
     return {
-        instructionSet: retVal.instructionSet,
-        rawData: raw,
+        instructionSet: rawInstructionSet,
         positiveEffects: positiveEffectsFinal,
         negativeEffects: negativeEffectsFinal,
-        placeHolders: placeHolders,
-        effectPlaceHolders: effectPlaceHolders,
+        placeHolders,
+        effectPlaceHolders,
     };
 }
 
@@ -353,47 +364,45 @@ export function buildTrackerList(condition: string): string[] {
  *
  * @param instructionSet - The instruction set to clean.
  */
-export function cleanInstructionSet(instructionSet: any[]): void {
-    var iter = 0;
-    for (var val of instructionSet) {
-        if (val == "N") {
-            instructionSet[iter] = 0;
-        } else if (val == "+") {
-            instructionSet[iter] = 1;
-        } else if (val == "-") {
-            instructionSet[iter] = 2;
-        } else if (val == "*") {
-            instructionSet[iter] = 3;
-        } else if (val == "/") {
-            instructionSet[iter] = 4;
-        } else if (val == "<") {
-            instructionSet[iter] = 5;
-        } else if (val == ">") {
-            instructionSet[iter] = 6;
-        } else if (val == "==") {
-            instructionSet[iter] = 7;
-        } else if (val == "AND") {
-            instructionSet[iter] = 8;
-        } else if (val == "OR") {
-            instructionSet[iter] = 9;
-        } else if (val == "NOT") {
-            instructionSet[iter] = 10;
-        } else if (val == "PLH") {
-            instructionSet[iter] = 11;
-        } else if (val == "TRU") {
-            instructionSet[iter] = 12;
-        } else if (val == "=") {
-            instructionSet[iter] = 13;
-        } else if (val == ">=") {
-            instructionSet[iter] = 14;
-        } else if (val == "<=") {
-            instructionSet[iter] = 15;
-        } else if (val == "!=") {
-            instructionSet[iter] = 16;
+export function cleanInstructionSet(instructionSet: any[]): any[] {
+    return instructionSet.map((instruction) => {
+        if (instruction == "N") {
+            return 0;
+        } else if (instruction == "+") {
+            return 1;
+        } else if (instruction == "-") {
+            return 2;
+        } else if (instruction == "*") {
+            return 3;
+        } else if (instruction == "/") {
+            return 4;
+        } else if (instruction == "<") {
+            return 5;
+        } else if (instruction == ">") {
+            return 6;
+        } else if (instruction == "==") {
+            return 7;
+        } else if (instruction == "AND") {
+            return 8;
+        } else if (instruction == "OR") {
+            return 9;
+        } else if (instruction == "NOT") {
+            return 10;
+        } else if (instruction == "PLH") {
+            return 11;
+        } else if (instruction == "TRU") {
+            return 12;
+        } else if (instruction == "=") {
+            return 13;
+        } else if (instruction == ">=") {
+            return 14;
+        } else if (instruction == "<=") {
+            return 15;
+        } else if (instruction == "!=") {
+            return 16;
         }
-
-        iter++;
-    }
+        return instruction
+    })
 }
 
 export { parseFunctionArguments };

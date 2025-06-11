@@ -20,6 +20,8 @@ import {
 import { reverseParseRule } from "../src/parsing/reverse-parsing-logic.js";
 import { removeExtraParenthesis } from "../src/parsing/parsing-utilities.js";
 import { unwrapEither } from '../src/modules/utils.js';
+import { removeArrayWrappers } from "../src/parsing/internal-parsing-logic.js";
+import { removeFlag } from "typedoc/dist/lib/utils/enum.js";
 
 test("Evaluates a simple syntax string (using only values and operators)", () => {
   /**
@@ -343,10 +345,10 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using o
     11,
   ];
   var expectedString = "3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray: any[] = [];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );
@@ -507,10 +509,10 @@ test('Reverse Interpretation for the: "Evaluates a complex syntax string (using 
   ];
   var expectedString =
     "1 + 1 == 2 AND ( ( 3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 ) ) AND 4 == 4 )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray: any[] = [];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );
@@ -645,10 +647,10 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
     15,
   ];
   var expectedString = "( 3 + 4 > 5 AND 5 == 5 ) OR ( 1 == 1 OR 2 == 3 )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray: any[] = [];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );
@@ -732,12 +734,6 @@ test("Evaluates a simple syntax string (using AND + OR operators and function pa
     15n,
   ];
 
-  var expectedRawDataArray = {
-    argumentTypes: [1],
-    instructionSetIndex: [25],
-    dataValues: [toBytes("test")],
-  };
-
   var ruleStringA = `{
 "condition": "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
@@ -748,7 +744,6 @@ test("Evaluates a simple syntax string (using AND + OR operators and function pa
 
   var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
   expect(retVal.instructionSet).toEqual(expectedArray);
-  expect(retVal.rawData).toEqual(expectedRawDataArray);
 });
 
 test("Creates a simple uint256 tracker", () => {
@@ -825,9 +820,9 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
   ];
   var expectedString =
     "( value + 4 > 5 AND 5 == 5 ) OR ( info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray = ["value", "info", "addr"];
-  var retVal = reverseParseRule(instructionSet as number[], placeholderArray, [
+  var retVal = reverseParseRule(cleanedInstructionSet as number[], placeholderArray, [
     { instructionSetIndex: 25, originalData: "test" },
   ]);
   expect(retVal).toEqual(expectedString);
@@ -1059,10 +1054,10 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
     5,
   ];
   var expectedString = "FC:leaderboard > 100 AND value == 100";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray = ["FC:leaderboard", "value"];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );
@@ -1218,7 +1213,7 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
   ];
   var expectedString =
     "( FC:isAllowed == 1 AND to == 16045690984833335000 ) OR ( ( FC:isSuperCoolGuy AND FC:isRich == 1 ) AND FC:creditRisk < 500 )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray = [
     "FC:isAllowed",
     "to",
@@ -1227,7 +1222,7 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string with a F
     "FC:creditRisk",
   ];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );
@@ -1382,10 +1377,10 @@ test('Reverse Interpretation for the: "Evaluate complex expression with placehol
   ];
   var expectedString =
     "( to == 1 AND sender == 0xdeadbeefdeadbeef ) OR ( ( value == 1 AND to == 1 ) AND value < 500 )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray = ["to", "sender", "value", "to", "value"];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );
@@ -1534,7 +1529,7 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
   ];
   var expectedString =
     "( FC:isAllowed + 4 > 5 AND TR:testOne == 5 ) OR ( info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC )";
-  cleanInstructionSet(instructionSet);
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray = [
     "FC:isAllowed",
     "TR:testOne",
@@ -1543,7 +1538,7 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using A
     "TR:testOne",
   ];
   var retVal = reverseParseRule(
-    instructionSet as number[],
+    cleanedInstructionSet as number[],
     placeholderArray,
     []
   );

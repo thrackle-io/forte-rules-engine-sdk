@@ -16,8 +16,11 @@ import {
   RawData,
   EffectDefinition,
   FunctionArgument,
+  ForeignCall,
+  Tracker,
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
+import { getRandom } from "../modules/utils";
 
 /**
  * @file parsing-utilities.ts
@@ -112,15 +115,18 @@ export function parseFunctionArguments(
  * @param nextIndex - The next available index for placeholders.
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
+ * 
+ * @returns an array of created Tracker objects.
  */
 export function parseTrackers(
   condition: string,
   names: any[],
   indexMap: trackerIndexNameMapping[]
-): void {
+): Tracker[] {
   const trRegex = /TR:[a-zA-Z]+/g;
   const truRegex = /TRU:[a-zA-Z]+/g;
   var matches = condition.match(trRegex);
+  const trackers: Tracker[] = [];
 
   if (matches != null) {
     var uniq = [...new Set(matches)];
@@ -143,7 +149,7 @@ export function parseTrackers(
           }
         }
       }
-      names.push({
+      trackers.push({
         name: match,
         tIndex: index,
         rawType: "tracker",
@@ -165,17 +171,19 @@ export function parseTrackers(
         }
       }
       var found = false;
-      for (var name of names) {
+      for (var name of [...names, ...trackers]) {
         if (name.name == match) {
           found = true;
           break;
         }
       }
       if (!found) {
-        names.push({ name: match, tIndex: index, rawType: "tracker" });
+        trackers.push({ name: match, tIndex: index, rawType: "tracker" });
       }
     }
   }
+
+  return trackers
 }
 
 /**
@@ -187,31 +195,25 @@ export function parseTrackers(
  * @param nextIndex - The starting index for tracking FC expressions in the `names` array.
  * @param names - An array to store metadata about the processed FC expressions, including
  *                their placeholders, indices, and types.
- * @returns The updated condition string with FC expressions replaced by placeholders.
+ * @returns The updated condition string with FC expressions replaced by placeholders
+ *          and an array of created ForeignCall
  *
  * @remarks
  * - FC expressions are identified using the regular expression `/FC:[a-zA-Z]+[^\s]+/g`.
  * - If an FC expression is already present in the `names` array, its existing placeholder
  *   is reused.
- * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
- */
+ * - Each new FC expression is assigned a unique placeholder in the format `FC:<getRandom()>`.
+  */
 export function parseForeignCalls(
   condition: string,
   names: any[],
   foreignCallNameToID: FCNameToID[]
-): string {
-  let iter = 0;
-
-  for (var name of names) {
-    if (name.fcPlaceholder && name.fcPlaceholder.includes("FC:")) {
-      iter += 1;
-    }
-  }
-
+): [string, ForeignCall[]] {
   // Use a regular expression to find all FC expressions
   const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
   const matches = condition.matchAll(fcRegex);
   let processedCondition = condition;
+  const foreignCalls: ForeignCall[] = [];
 
   // Convert matches iterator to array to process all at once
   for (const match of matches) {
@@ -222,7 +224,7 @@ export function parseForeignCalls(
       continue;
     }
     // Create a unique placeholder for this FC expression
-    var placeholder = `FC:${iter}`;
+    var placeholder = `FC:${getRandom()}`;
     for (var existing of names) {
       if (existing.name == fullFcExpr) {
         placeholder = existing.fcPlaceholder;
@@ -244,17 +246,16 @@ export function parseForeignCalls(
           index = fcMap.id;
         }
       }
-      names.push({
-        name: match,
+      foreignCalls.push({
+        name: match[0],
         tIndex: index,
         rawType: "foreign call",
         fcPlaceholder: placeholder,
       });
     }
-    iter++;
   }
 
-  return processedCondition;
+  return [processedCondition, foreignCalls];
 }
 
 /**
@@ -358,13 +359,13 @@ export function parseEffect(
     effectText = match ? match[2] : "";
   } else {
     effectType = EffectType.EXPRESSION;
-    var effectStruct = convertHumanReadableToInstructionSet(
+    var instructionSet = convertHumanReadableToInstructionSet(
       effect,
       names,
       indexMap,
       placeholders
     );
-    effectInstructionSet = effectStruct.instructionSet;
+    effectInstructionSet = instructionSet;
   }
 
   return {
@@ -392,54 +393,35 @@ export function parseEffect(
 export function buildRawData(
   instructionSet: any[],
   excludeArray: string[]
-): RawData {
-  var instructionSetArray: number[] = [];
-  var argumentTypes: number[] = []; // string: 1
-  var dataValues: ByteArray[] = [];
-  let iter = 0;
-  while (iter < instructionSet.length) {
+): number[] {
+  return instructionSet.map((instruction) => {
+
     // Only capture values that aren't naturally numbers
-    if (!isNaN(Number(instructionSet[iter]))) {
-      instructionSet[iter] = BigInt(instructionSet[iter]);
-    } else {
-      if (!excludeArray.includes(instructionSet[iter].trim())) {
-        const currentInstruction = instructionSet[iter].trim();
-        if (currentInstruction == "true") {
-          instructionSet[iter] = 1n;
-        } else if (currentInstruction == "false") {
-          instructionSet[iter] = 0n;
-        } else {
-          // Determine if the current instruction is a bytes type (hex string starting with "0x")
-          const isBytes = currentInstruction.startsWith("0x");
-
-          instructionSetArray.push(iter);
-          argumentTypes.push(isBytes ? 2 : 1); // Use 2 for bytes, 1 for string
-          dataValues.push(
-            isBytes ? toBytes(currentInstruction) : toBytes(currentInstruction)
-          );
-
-          if (!operandArray.includes(currentInstruction)) {
-            // Convert the string or bytes to a keccak256 hash then to a uint256
-            instructionSet[iter] = BigInt(
-              keccak256(
-                encodeAbiParameters(
-                  parseAbiParameters(isBytes ? "bytes" : "string"),
-                  [currentInstruction]
-                )
-              )
-            );
-          }
-        }
+    if (!isNaN(Number(instruction))) {
+      return BigInt(instruction);
+    } else if (!excludeArray.includes(instruction.trim())) {
+      instruction = instruction.trim();
+      if (instruction == "true") {
+        return 1n;
+      } else if (instruction == "false") {
+        return 0n;
+      } else if (!operandArray.includes(instruction)) {
+        // Convert the string or bytes to a keccak256 hash then to a uint256
+        return BigInt(
+          keccak256(
+            encodeAbiParameters(
+              parseAbiParameters(instruction.startsWith("0x") ? "bytes" : "string"),
+              [instruction]
+            )
+          )
+        );
+      } else {
+        return instruction;
       }
+    } else {
+      return instruction;
     }
-    iter++;
-  }
-
-  return {
-    instructionSetIndex: instructionSetArray,
-    argumentTypes: argumentTypes,
-    dataValues: dataValues,
-  };
+  });
 }
 
 /**
