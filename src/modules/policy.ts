@@ -219,12 +219,13 @@ export const createPolicy = async (
 /**
  * Updates an existing policy in the Rules Engine.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to update.
- * @param callingFunctions - The calling functions associated with the policy.
+ * @param signatures - The function signatures associated with the policy.
  * @param ids - The IDs of the rules associated with the policy.
  * @param ruleIds - The mapping of rules to calling functions.
- * @returns The result of the policy update.
+ * @returns The result of the policy update if succesfful, or -1 if an error occurs.
  */
 export const updatePolicy = async (
   config: Config,
@@ -266,6 +267,7 @@ export const updatePolicy = async (
 /**
  * Sets the policies appled to a specific contract address.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
@@ -306,6 +308,7 @@ export const setPolicies = async (
 /**
  * Appends a policy to the list of policies applied to a specific contract address.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to apply.
  * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
@@ -337,6 +340,7 @@ export const appendPolicy = async (
 /**
  * Deletes a policy from the Rules Engine.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to delete.
  * @returns `0` if successful, `-1` if an error occurs.
@@ -373,6 +377,7 @@ export const deletePolicy = async (
 /**
  * Retrieves the full policy, including rules, trackers, and foreign calls, as a JSON string.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param rulesEngineRulesContract - The contract instance for interacting with the Rules Engine Rules.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
@@ -524,15 +529,14 @@ export const getPolicy = async (
 };
 /**
  * Checks if a policy exists in the Rules Engine.
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
- * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
  * @param policyId - The ID of the policy to check.
  * @returns True if the policy exists, false otherwise.
  */
 export async function policyExists(
   config: Config,
   rulesEnginePolicyContract: RulesEnginePolicyContract,
-  rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number
 ): Promise<boolean> {
   try {
@@ -553,6 +557,7 @@ export async function policyExists(
 
 /**
  * Retrieves the IDs of all of the policies that have been applied to a contract address.
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param address - The address to check.
  * @returns array of all of the policy ids applied to the contract
@@ -577,6 +582,7 @@ export async function getAppliedPolicyIds(
 
 /**
  * Retrieves whether a policy is open or closed.
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to check.
  * @returns array of all of the policy ids applied to the contract
@@ -602,6 +608,7 @@ export async function isClosedPolicy(
 /**
  * Closes a policy on the Rules Engine.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to close.
  * @returns `0` if successful, `-1` if an error occurs.
@@ -638,6 +645,7 @@ export const closePolicy = async (
 /**
  * Opens a policy on the Rules Engine.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to open.
  * @returns `0` if successful, `-1` if an error occurs.
@@ -673,6 +681,7 @@ export const openPolicy = async (
 
 /**
  * Retrieves whether an address is a possible subscriber to the closed policy.
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Components.
  * @param policyId - The ID of the policy to check.
  * @param subscriber - The address to check
@@ -700,6 +709,7 @@ export async function isClosedPolicySubscriber(
 /**
  * Adds a subscriber to the closed policy.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Components.
  * @param policyId - The ID of the policy to add to.
  * @returns `0` if successful, `-1` if an error occurs.
@@ -737,8 +747,10 @@ export const addClosedPolicySubscriber = async (
 /**
  * Removes a subscriber from the closed policy.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Components.
  * @param policyId - The ID of the policy to remove from.
+ * @param subscriber - The address of the subscriber to remove.
  * @returns `0` if successful, `-1` if an error occurs.
  */
 export const removeClosedPolicySubscriber = async (
@@ -774,6 +786,7 @@ export const removeClosedPolicySubscriber = async (
 /**
  * Cements a policy on the Rules Engine.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to cement.
  * @returns `0` if successful, `-1` if an error occurs.
@@ -809,6 +822,7 @@ export const cementPolicy = async (
 
 /**
  * Retrieves whether a policy is cemented.
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param policyId - The ID of the policy to check.
  * @returns whether or not the policy is cemented

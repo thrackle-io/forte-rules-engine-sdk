@@ -40,6 +40,7 @@ import { isRight, unwrapEither } from "./utils";
 /**
  * Creates a foreign call in the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the rules engine component.
  * @param policyId - The ID of the policy to associate with the foreign call.
  * @param fcSyntax - A JSON string representing the foreign call definition.
@@ -104,6 +105,7 @@ export const createForeignCall = async (
 /**
  * Updates a foreign call in the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the rules engine component.
  * @param policyId - The ID of the policy to associate with the foreign call.
  * @param foreignCallId - The ID of the foreign call to update.
@@ -172,6 +174,7 @@ export const updateForeignCall = async (
 /**
  * Deletes a foreign call associated with a specific policy in the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interacting with the rules engine component.
  * @param policyId - The ID of the policy to which the foreign call belongs.
  * @param foreignCallId - The ID of the foreign call to be deleted.
@@ -214,6 +217,7 @@ export const deleteForeignCall = async (
 /**
  * Retrieves the result of a foreign call from the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
  * @param policyId - The ID of the policy associated with the foreign call.
  * @param foreignCallId - The ID of the foreign call to retrieve.
@@ -246,6 +250,7 @@ export const getForeignCall = async (
 /**
  * Retrieves the metadata for a foreign call from the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
  * @param policyId - The ID of the policy associated with the foreign call.
  * @param foreignCallId - The ID of the foreign call to retrieve.
@@ -278,6 +283,7 @@ export const getForeignCallMetadata = async (
 /**
  * Retrieves all foreign calls associated with a specific policy ID from the Rules Engine Component Contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
  * @param policyId - The ID of the policy for which foreign calls are to be retrieved.
  * containing its address and ABI.
