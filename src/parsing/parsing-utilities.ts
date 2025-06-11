@@ -115,7 +115,9 @@ export function parseFunctionArguments(
  * @param nextIndex - The next available index for placeholders.
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
-   */
+ * 
+ * @returns an array of created Tracker objects.
+ */
 export function parseTrackers(
   condition: string,
   names: any[],
@@ -193,13 +195,14 @@ export function parseTrackers(
  * @param nextIndex - The starting index for tracking FC expressions in the `names` array.
  * @param names - An array to store metadata about the processed FC expressions, including
  *                their placeholders, indices, and types.
- * @returns The updated condition string with FC expressions replaced by placeholders.
+ * @returns The updated condition string with FC expressions replaced by placeholders
+ *          and an array of created ForeignCall
  *
  * @remarks
  * - FC expressions are identified using the regular expression `/FC:[a-zA-Z]+[^\s]+/g`.
  * - If an FC expression is already present in the `names` array, its existing placeholder
  *   is reused.
- * - Each new FC expression is assigned a unique placeholder in the format `FC:<index>`.
+ * - Each new FC expression is assigned a unique placeholder in the format `FC:<getRandom()>`.
   */
 export function parseForeignCalls(
   condition: string,
