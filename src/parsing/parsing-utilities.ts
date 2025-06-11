@@ -239,7 +239,7 @@ export function parseForeignCalls(
     if (!alreadyFound) {
       var index = 0;
       for (var fcMap of foreignCallNameToID) {
-        if (fcMap.name.trim() == fullFcExpr.trim()) {
+        if ("FC:" + fcMap.name.trim() == fullFcExpr.trim()) {
           index = fcMap.id;
         }
       }
