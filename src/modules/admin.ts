@@ -36,10 +36,11 @@ import { sleep } from "./contract-interaction-utils";
  *
  * This function proposes a new admin for a specific policy.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineAdminContract - The contract instance containing the address and ABI
  * @param policyId - The ID of the policy to set the admin for.
  * @param newAdminAddress - The address to propose as the new admin
- * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ * @returns A promise
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
@@ -48,7 +49,7 @@ export const proposeNewPolicyAdmin = async (
   rulesEngineAdminContract: RulesEngineAdminContract,
   policyId: number,
   newAdminAddress: Address
-) => {
+): Promise<void> => {
   var proposeAdmin;
   while (true) {
     try {
@@ -80,7 +81,7 @@ export const proposeNewPolicyAdmin = async (
  *
  * @param rulesEngineAdminContract - The contract instance containing the address and ABI
  * @param policyId - The ID of the policy to set the admin for.
- * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ * @returns A promise
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
@@ -88,7 +89,7 @@ export const confirmNewPolicyAdmin = async (
   config: Config,
   rulesEngineAdminContract: RulesEngineAdminContract,
   policyId: number
-) => {
+): Promise<void> => {
   var confirmAdmin;
   while (true) {
     try {
@@ -150,13 +151,14 @@ export const isPolicyAdmin = async (
  * @param rulesEngineAdminContract - The contract instance containing the address and ABI
  * @param contractAddress - address of the "contract" must also be the address calling this function
  * @param adminAddress - The address to make the initial calling contract admin
+ * @returns A promise.
  */
 export const grantCallingContractRole_Utility = async (
   config: Config,
   rulesEngineAdminContract: RulesEngineAdminContract,
   contractAddress: Address,
   adminAddress: Address
-) => {
+): Promise<void> => {
   var confirmAdmin;
   while (true) {
     try {
@@ -187,10 +189,11 @@ export const grantCallingContractRole_Utility = async (
  *
  * This function proposes a new admin for a specific calling contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineAdminContract - The contract instance containing the address and ABI
  * @param callingContractAddress - The address of the calling contract to set the admin for.
  * @param newAdminAddress - The address to propose as the new admin
- * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ * @returns A promise.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
@@ -199,7 +202,7 @@ export const proposeNewCallingContractAdmin = async (
   rulesEngineAdminContract: RulesEngineAdminContract,
   callingContractAddress: Address,
   newAdminAddress: Address
-) => {
+): Promise<void> => {
   var proposeAdmin;
   while (true) {
     try {
@@ -229,9 +232,10 @@ export const proposeNewCallingContractAdmin = async (
  *
  * This function confirms a new admin for a specific callng contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineAdminContract - The contract instance containing the address and ABI
  * @param callingContractAddress - The address of the calling contract to set the admin for.
- * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
+ * @returns A promise.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
@@ -270,9 +274,10 @@ export const confirmNewCallingContractAdmin = async (
  *
  * This function determines whether or not an address is the admin for a specific calling contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineAdminContract - The contract instance containing the address and ABI
  * @param callingContract - The address of the contract to check the admin for.
- * @param adminAddress - The address to check
+ * @param account - The address to check
  * @returns whether or not the address is the calling contract admin.
  *
  */

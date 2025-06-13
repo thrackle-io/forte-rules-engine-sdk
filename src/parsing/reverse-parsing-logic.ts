@@ -333,6 +333,9 @@ export function reverseParseRule(
  * @param encodedValues - A string containing encoded values for the rule.
  * @param ruleS - The `RuleStruct` object containing rule details such as placeholders, positive effects, and negative effects.
  * @param plhArray - An array to store the names of placeholders extracted from the rule.
+ * @param foreignCalls - An array of foreign calls used in the rule.
+ * @param trackers - An array of trackers used in the rule.
+ * @param mappings - An array of mappings that associate a `hex` signature with a function.
  * @returns An object of type `ruleJSON` containing the condition, positive effects, negative effects, calling function, and encoded values.
  *
  * The function processes the `RuleStruct` object to:
@@ -426,7 +429,8 @@ export function convertRuleStructToString(
  * @param foreignCalls - An array of foreign call objects or `null`. Each object should contain
  *                       details such as `function`, `returnType`, `parameterTypes`, and `foreignCallAddress`.
  * @param functionMappings - An array of mappings that associate a `hex` signature with
- *                                    a human-readable `functionSignature`.
+ *                           a human-readable `functionSignature`.
+ * @param names - An array of names corresponding to each foreign call, used for formatting the output.
  *
  * The function processes each foreign call by:
  * - Matching its `signature` with the corresponding `functionSignature` from the mappings.
@@ -486,6 +490,7 @@ export function convertForeignCallStructsToStrings(
  *
  * @param trackers - An array of tracker structures.
  * @param trackerStrings - An array to store the resulting strings.
+ * @param trackerNames - An array of names corresponding to each tracker, used for formatting the output.
  */
 export function convertTrackerStructsToStrings(
   trackers: TrackerOnChain[],

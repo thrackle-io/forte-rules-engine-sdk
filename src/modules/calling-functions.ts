@@ -42,10 +42,12 @@ import {
  * types, and interacts with the smart contract to create the calling function. If the contract
  * interaction fails, it retries with a delay until successful.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI
  * @param policyId - The ID of the policy for which the calling function is being created.
  * @param callingFunction - The calling function string to be parsed and added to the contract.
- *                                        of the rules engine component.
+ *                          of the rules engine component.
+ * @param encodedValues - The encoded values string for the calling function.
  * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
  *
  * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
@@ -106,6 +108,7 @@ export const createCallingFunction = async (
 /**
  * Delete a calling function from the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI
  * @param policyId - The ID of the policy for which the calling function is being deleted.
  * @param callingFunctionId - The calling function ID to be deleted.
@@ -147,12 +150,12 @@ export const deleteCallingFunction = async (
 /**
  * retrieves the metadata for a calling function from the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI
  * @param policyId - The ID of the policy which the calling function belongs to.
  * @param callingFunctionId - The calling function ID.
- * @returns A promise that resolves to the result of the contract interaction.
+ * @returns A promise that resolves to CallingFunctionHashMapping.
  *
- * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
  */
 export const getCallingFunctionMetadata = async (
   config: Config,

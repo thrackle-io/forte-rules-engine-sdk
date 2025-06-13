@@ -119,7 +119,6 @@ export async function sleep(ms: number): Promise<void> {
  * effect data, and tracker mappings. This function processes the rule syntax to generate a structured
  * representation of the rule, including placeholders, effects, and associated metadata.
  *
- * @param policyId - The unique identifier for the policy associated with the rule.
  * @param ruleSyntax - The JSON representation of the rule syntax, including conditions and effects.
  * @param foreignCallNameToID - An array of mappings between foreign call names and their corresponding IDs.
  * @param effect - An object containing the positive and negative effects of the rule.
@@ -129,7 +128,6 @@ export async function sleep(ms: number): Promise<void> {
  *          effect placeholders, and associated effects.
  */
 export function buildARuleStruct(
-  policyId: number,
   ruleSyntax: ruleJSON,
   foreignCallNameToID: FCNameToID[],
   effect: EffectStructs,
@@ -230,6 +228,7 @@ export function buildARuleStruct(
  *
  * @param ruleSyntax - The JSON representation of the rule syntax to parse.
  * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
+ * @param foreignCallNameToID - An array mapping foreign call names to their corresponding IDs.
  * @returns An object containing arrays of positive and negative effects, each represented as structured objects.
  *
  * The returned object has the following structure:

@@ -88,7 +88,6 @@ export const createRule = async (
     foreignCallNameToID
   );
   var rule = buildARuleStruct(
-    policyId,
     ruleSyntax,
     foreignCallNameToID,
     effects,
@@ -153,7 +152,6 @@ export const updateRule = async (
     foreignCallNameToID
   );
   var rule = buildARuleStruct(
-    policyId,
     ruleSyntax,
     foreignCallNameToID,
     effects,

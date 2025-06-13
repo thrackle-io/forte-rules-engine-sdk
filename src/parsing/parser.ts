@@ -66,11 +66,13 @@ import {
  */
 
 /**
- * Parses the rule syntax and converts it into an abstract syntax tree (AST) and instruction set.
+ * Parses the rule syntax and converts it into a raw instruction set.
  *
  * @param syntax - The JSON representation of the rule syntax.
  * @param indexMap - A mapping of tracker IDs to their names and types.
- * @returns An object containing the instruction set, raw data, positive effects, negative effects, placeholders, and effect placeholders.
+ * @param foreignCallNameToID - A mapping of foreign call names to their IDs.
+ * @returns An object containing the instruction set, raw data, positive effects, negative effects,
+ *          placeholders, and effect placeholders.
  */
 
 export function parseRuleSyntax(
@@ -171,8 +173,7 @@ export function parseRuleSyntax(
  * Parses the tracker syntax and validates its type and default value.
  *
  * @param syntax - The JSON representation of the tracker syntax.
- * @returns An object containing the tracker's name, type, and encoded default value.
- * @throws An error if the tracker type or default value is invalid.
+ * @returns Either an object containing the tracker's name, type, and encoded default value if successful or an error
  */
 export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, TrackerDefinition> {
     let trackerType = syntax.type.trim();
@@ -243,8 +244,7 @@ export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, Trac
  * Parses the foreign call definition and validates its structure.
  *
  * @param syntax - The JSON representation of the foreign call definition.
- * @returns An object containing the foreign call's name, address, function, return type, parameter types, and encoded indices.
- * @throws An error if the return type or parameter types are unsupported.
+ * @returns Either an object containing the foreign call's name, address, function, return type, parameter types, and encoded indices if successful or an error.
  */
 export function parseForeignCallDefinition(
     syntax: foreignCallJSON
