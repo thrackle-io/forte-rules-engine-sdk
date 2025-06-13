@@ -49,7 +49,6 @@ test("Can return multiple errors if rule JSON is invalid", () => {
     expect(isLeft(parsedRule)).toBeTruthy();
     if (isLeft(parsedRule)) {
         const error = unwrapEither(parsedRule);
-        console.log(error);
         expect(error.issues.length).toEqual(2);
         expect(error.issues[0].message).toEqual("Invalid input: expected string, received undefined");
         expect(error.issues[0].path).toEqual(["condition"]);
