@@ -1,4 +1,4 @@
-import { z, ZodError } from "zod/v4";
+import { z } from "zod/v4";
 import { Either, RulesError } from "./types";
 import { isLeft, makeLeft, makeRight, unwrapEither } from "./utils";
 
