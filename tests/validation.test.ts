@@ -4,7 +4,7 @@ import { isLeft, isRight, unwrapEither } from "../src/modules/utils";
 
 test("Can validate rule JSON", () => {
 
-    var ruleStringA = `{
+    const ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
         "negativeEffects": [],
