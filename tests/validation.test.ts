@@ -38,4 +38,24 @@ test("Can return error if rule JSON is invalid", () => {
     }
 });
 
+test("Can return multiple errors if rule JSON is invalid", () => {
+
+    var ruleStringA = `{
+        "positiveEffects": ["revert"],
+        "negativeEffects": [],
+        "callingFunction": "addValue(uint256 value)"
+        }`;
+    const parsedRule = validateRuleJSON(ruleStringA)
+    expect(isLeft(parsedRule)).toBeTruthy();
+    if (isLeft(parsedRule)) {
+        const error = unwrapEither(parsedRule);
+        console.log(error);
+        expect(error.issues.length).toEqual(2);
+        expect(error.issues[0].message).toEqual("Invalid input: expected string, received undefined");
+        expect(error.issues[0].path).toEqual(["condition"]);
+        expect(error.issues[1].message).toEqual("Invalid input: expected string, received undefined");
+        expect(error.issues[1].path).toEqual(["encodedValues"]);
+    }
+});
+
 
