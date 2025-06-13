@@ -1,6 +1,19 @@
 import { z, ZodError } from "zod/v4";
-import { Either } from "./types";
-import { makeLeft, makeRight } from "./utils";
+import { Either, RulesError } from "./types";
+import { isLeft, makeLeft, makeRight, unwrapEither } from "./utils";
+
+const safeParseJson = (input: string): Either<RulesError, object> => {
+    try {
+        const result = JSON.parse(input);
+        return makeRight(result);
+    } catch (error) {
+        return makeLeft({
+            errorType: "INPUT",
+            state: { input },
+            message: "Failed to parse JSON",
+        });
+    }
+};
 
 const ruleValidator = z.object({
     condition: z.string(),
@@ -12,11 +25,21 @@ const ruleValidator = z.object({
 
 export interface ruleJSON extends z.infer<typeof ruleValidator> { }
 
-export const validateRuleJSON = (rule: string): Either<ZodError, ruleJSON> => {
-    const parsed = ruleValidator.safeParse(JSON.parse(rule));
+export const validateRuleJSON = (rule: string): Either<RulesError[], ruleJSON> => {
+    const parsedJson = safeParseJson(rule);
+
+    if (isLeft(parsedJson)) return makeLeft([unwrapEither(parsedJson)]);
+
+    const parsed = ruleValidator.safeParse(unwrapEither(parsedJson));
+
     if (parsed.success) {
         return makeRight(parsed.data);
     } else {
-        return makeLeft(parsed.error);
+        const errors: RulesError[] = parsed.error.issues.map(err => ({
+            errorType: "INPUT",
+            message: `Error: ${err.message}: Field ${err.path.join('.')}`,
+            state: { input: rule },
+        }));
+        return makeLeft(errors);
     }
 };

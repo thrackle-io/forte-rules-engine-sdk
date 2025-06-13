@@ -31,10 +31,9 @@ test("Can return error if rule JSON is invalid", () => {
     const parsedRule = validateRuleJSON(ruleStringA)
     expect(isLeft(parsedRule)).toBeTruthy();
     if (isLeft(parsedRule)) {
-        const error = unwrapEither(parsedRule);
-        expect(error.issues.length).toEqual(1);
-        expect(error.issues[0].message).toEqual("Invalid input: expected string, received undefined");
-        expect(error.issues[0].path).toEqual(["condition"]);
+        const errors = unwrapEither(parsedRule);
+        expect(errors.length).toEqual(1);
+        expect(errors[0].message).toEqual("Error: Invalid input: expected string, received undefined: Field condition");
     }
 });
 
@@ -48,12 +47,11 @@ test("Can return multiple errors if rule JSON is invalid", () => {
     const parsedRule = validateRuleJSON(ruleStringA)
     expect(isLeft(parsedRule)).toBeTruthy();
     if (isLeft(parsedRule)) {
-        const error = unwrapEither(parsedRule);
-        expect(error.issues.length).toEqual(2);
-        expect(error.issues[0].message).toEqual("Invalid input: expected string, received undefined");
-        expect(error.issues[0].path).toEqual(["condition"]);
-        expect(error.issues[1].message).toEqual("Invalid input: expected string, received undefined");
-        expect(error.issues[1].path).toEqual(["encodedValues"]);
+        const errors = unwrapEither(parsedRule);
+        expect(errors.length).toEqual(2);
+        expect(errors[0].message).toEqual("Error: Invalid input: expected string, received undefined: Field condition");
+        expect(errors[1].message).toEqual("Error: Invalid input: expected string, received undefined: Field encodedValues");
+
     }
 });
 
