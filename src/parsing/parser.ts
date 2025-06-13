@@ -66,7 +66,7 @@ import {
  */
 
 /**
- * Parses the rule syntax and converts it into a rawinstruction set.
+ * Parses the rule syntax and converts it into a raw instruction set.
  *
  * @param syntax - The JSON representation of the rule syntax.
  * @param indexMap - A mapping of tracker IDs to their names and types.
