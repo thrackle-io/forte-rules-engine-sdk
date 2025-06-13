@@ -225,7 +225,7 @@ export const createPolicy = async (
  * @param signatures - The function signatures associated with the policy.
  * @param ids - The IDs of the rules associated with the policy.
  * @param ruleIds - The mapping of rules to calling functions.
- * @returns The result of the policy update if succesfful, or -1 if an error occurs.
+ * @returns The result of the policy update if successful, or -1 if an error occurs.
  */
 export const updatePolicy = async (
   config: Config,
