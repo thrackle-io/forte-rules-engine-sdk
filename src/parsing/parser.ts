@@ -1,47 +1,49 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import {
-    encodePacked,
-    Address,
-    toHex,
-    encodeAbiParameters,
-    parseAbiParameters,
-    stringToBytes,
+  encodePacked,
+  Address,
+  toHex,
+  encodeAbiParameters,
+  parseAbiParameters,
+  stringToBytes,
 } from "viem";
 import {
-    Either,
-    FCNameToID,
-    ForeignCallDefinition,
-    foreignCallJSON,
-    matchArray,
-    operandArray,
-    PlaceholderStruct,
-    PT,
-    pTypeEnum,
-    RuleDefinition,
-    ruleJSON,
-    RulesError,
-    supportedTrackerTypes,
-    TrackerDefinition,
-    trackerIndexNameMapping,
-    trackerJSON,
+  callingFunctionJSON,
+  Either,
+  FCNameToID,
+  ForeignCallDefinition,
+  ForeignCallEncodedIndex,
+  foreignCallJSON,
+  matchArray,
+  operandArray,
+  PlaceholderStruct,
+  PT,
+  pTypeEnum,
+  RuleDefinition,
+  ruleJSON,
+  RulesError,
+  supportedTrackerTypes,
+  TrackerDefinition,
+  trackerIndexNameMapping,
+  trackerJSON,
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 import {
-    removeExtraParenthesis,
-    parseFunctionArguments,
-    parseTrackers,
-    buildRawData,
-    parseForeignCalls,
-    buildPlaceholderList,
-    parseEffect
-} from './parsing-utilities';
+  removeExtraParenthesis,
+  parseFunctionArguments,
+  parseTrackers,
+  buildRawData,
+  parseForeignCalls,
+  buildPlaceholderList,
+  parseEffect,
+} from "./parsing-utilities";
 import {
-    getAddress,
-    isLeft,
-    makeLeft,
-    makeRight,
-    unwrapEither
-} from '../modules/utils';
+  getAddress,
+  isLeft,
+  makeLeft,
+  makeRight,
+  unwrapEither,
+} from "../modules/utils";
 
 /**
  * @file parser.ts
@@ -72,88 +74,87 @@ import {
  */
 
 export function parseRuleSyntax(
-    syntax: ruleJSON,
-    indexMap: trackerIndexNameMapping[],
-    foreignCallNameToID: FCNameToID[]
+  syntax: ruleJSON,
+  indexMap: trackerIndexNameMapping[],
+  foreignCallNameToID: FCNameToID[],
+  encodedValues: string
 ): RuleDefinition {
-    var condition = syntax.condition;
+  var condition = syntax.condition;
 
-    condition = removeExtraParenthesis(condition);
+  condition = removeExtraParenthesis(condition);
 
-    var encodedValues = syntax.encodedValues;
+  var names = parseFunctionArguments(encodedValues, condition);
+  var effectNames: any[] = [];
+  condition = parseForeignCalls(condition, names, foreignCallNameToID);
+  parseTrackers(condition, names, indexMap);
+  var placeHolders = buildPlaceholderList(names);
 
-    var names = parseFunctionArguments(encodedValues, condition);
-    var effectNames: any[] = [];
-    condition = parseForeignCalls(condition, names, foreignCallNameToID);
-    parseTrackers(condition, names, indexMap);
-    var placeHolders = buildPlaceholderList(names);
-
-    for (var effectP in syntax.positiveEffects) {
-        syntax.positiveEffects[effectP] = parseForeignCalls(
-            syntax.positiveEffects[effectP],
-            effectNames,
-            foreignCallNameToID
-        );
-        parseTrackers(syntax.positiveEffects[effectP], effectNames, indexMap);
-    }
-    for (var effectN in syntax.negativeEffects) {
-        syntax.negativeEffects[effectN] = parseForeignCalls(
-            syntax.negativeEffects[effectN],
-            effectNames,
-            foreignCallNameToID
-        );
-        parseTrackers(syntax.negativeEffects[effectN], effectNames, indexMap);
-    }
-    var effectPlaceHolders = buildPlaceholderList(effectNames);
-
-    var positiveEffectsFinal = [];
-    var negativeEffectsFinal = [];
-    if (syntax.positiveEffects != null) {
-        for (var effectP of syntax.positiveEffects) {
-            let effect = parseEffect(
-                effectP,
-                effectNames,
-                effectPlaceHolders,
-                indexMap
-            );
-            positiveEffectsFinal.push(effect);
-        }
-    }
-
-    if (syntax.negativeEffects != null) {
-        for (var effectN of syntax.negativeEffects) {
-            let effect = parseEffect(
-                effectN,
-                effectNames,
-                effectPlaceHolders,
-                indexMap
-            );
-            negativeEffectsFinal.push(effect);
-        }
-    }
-
-    var retVal = convertHumanReadableToInstructionSet(
-        condition,
-        names,
-        indexMap,
-        placeHolders
+  for (var effectP in syntax.positiveEffects) {
+    syntax.positiveEffects[effectP] = parseForeignCalls(
+      syntax.positiveEffects[effectP],
+      effectNames,
+      foreignCallNameToID
     );
-    var excludeArray = [];
-    for (var name of names) {
-        excludeArray.push(name.name);
-    }
+    parseTrackers(syntax.positiveEffects[effectP], effectNames, indexMap);
+  }
+  for (var effectN in syntax.negativeEffects) {
+    syntax.negativeEffects[effectN] = parseForeignCalls(
+      syntax.negativeEffects[effectN],
+      effectNames,
+      foreignCallNameToID
+    );
+    parseTrackers(syntax.negativeEffects[effectN], effectNames, indexMap);
+  }
+  var effectPlaceHolders = buildPlaceholderList(effectNames);
 
-    excludeArray.push(...matchArray);
-    excludeArray.push(...operandArray);
-    var raw = buildRawData(retVal.instructionSet, excludeArray);
-    return {
-        instructionSet: retVal.instructionSet,
-        rawData: raw,
-        positiveEffects: positiveEffectsFinal,
-        negativeEffects: negativeEffectsFinal,
-        placeHolders: placeHolders,
-        effectPlaceHolders: effectPlaceHolders,
-    };
+  var positiveEffectsFinal = [];
+  var negativeEffectsFinal = [];
+  if (syntax.positiveEffects != null) {
+    for (var effectP of syntax.positiveEffects) {
+      let effect = parseEffect(
+        effectP,
+        effectNames,
+        effectPlaceHolders,
+        indexMap
+      );
+      positiveEffectsFinal.push(effect);
+    }
+  }
+
+  if (syntax.negativeEffects != null) {
+    for (var effectN of syntax.negativeEffects) {
+      let effect = parseEffect(
+        effectN,
+        effectNames,
+        effectPlaceHolders,
+        indexMap
+      );
+      negativeEffectsFinal.push(effect);
+    }
+  }
+
+  var retVal = convertHumanReadableToInstructionSet(
+    condition,
+    names,
+    indexMap,
+    placeHolders
+  );
+  var excludeArray = [];
+  for (var name of names) {
+    excludeArray.push(name.name);
+  }
+
+  excludeArray.push(...matchArray);
+  excludeArray.push(...operandArray);
+  var raw = buildRawData(retVal.instructionSet, excludeArray);
+  return {
+    instructionSet: retVal.instructionSet,
+    rawData: raw,
+    positiveEffects: positiveEffectsFinal,
+    negativeEffects: negativeEffectsFinal,
+    placeHolders: placeHolders,
+    effectPlaceHolders: effectPlaceHolders,
+  };
 }
 
 /**
@@ -163,69 +164,70 @@ export function parseRuleSyntax(
  * @returns An object containing the tracker's name, type, and encoded default value.
  * @throws An error if the tracker type or default value is invalid.
  */
-export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, TrackerDefinition> {
-    let trackerType = syntax.type.trim();
-    if (!supportedTrackerTypes.includes(trackerType)) {
-        return makeLeft({
-            errorType: "INPUT",
-            state: { supportedTrackerTypes, trackerType },
-            message: "Unsupported type"
-        })
-    }
-    var trackerInitialValue: any;
-    if (trackerType == "uint256") {
-        if (!isNaN(Number(syntax.initialValue))) {
-            trackerInitialValue = encodePacked(
-                ["uint256"],
-                [BigInt(syntax.initialValue)]
-            );
-        } else {
-            return makeLeft({
-                errorType: "INPUT",
-                state: { defaultValue: syntax.initialValue },
-                message: "Default Value doesn't match type"
-            })
-        }
-    } else if (trackerType == "address") {
-        const validatedAddress = getAddress(syntax.initialValue.trim())
-        if (isLeft(validatedAddress)) {
-            return validatedAddress;
-        } else {
-            var address = encodeAbiParameters(
-                parseAbiParameters('address'),
-                [unwrapEither(validatedAddress)]
-            )
-
-            trackerInitialValue = address
-        }
-    } else if (trackerType == "bytes") {
-        var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
-            toHex(stringToBytes(String(syntax.initialValue.trim()))),
-        ]);
-
-        trackerInitialValue = bytes;
-    } else if (trackerType == "bool") {
-        if (syntax.initialValue == "true") {
-            trackerInitialValue = encodePacked(["uint256"], [1n]);
-        } else {
-            trackerInitialValue = encodePacked(["uint256"], [0n]);
-        }
-    } else {
-        trackerInitialValue = encodeAbiParameters(parseAbiParameters("string"), [
-            syntax.initialValue.trim(),
-        ]);
-    }
-    var trackerTypeEnum = 0;
-    for (var parameterType of PT) {
-        if (parameterType.name == trackerType) {
-            trackerTypeEnum = parameterType.enumeration;
-        }
-    }
-    return makeRight({
-        name: syntax.name.trim(),
-        type: trackerTypeEnum,
-        initialValue: trackerInitialValue,
+export function parseTrackerSyntax(
+  syntax: trackerJSON
+): Either<RulesError, TrackerDefinition> {
+  let trackerType = syntax.type.trim();
+  if (!supportedTrackerTypes.includes(trackerType)) {
+    return makeLeft({
+      errorType: "INPUT",
+      state: { supportedTrackerTypes, trackerType },
+      message: "Unsupported type",
     });
+  }
+  var trackerInitialValue: any;
+  if (trackerType == "uint256") {
+    if (!isNaN(Number(syntax.initialValue))) {
+      trackerInitialValue = encodePacked(
+        ["uint256"],
+        [BigInt(syntax.initialValue)]
+      );
+    } else {
+      return makeLeft({
+        errorType: "INPUT",
+        state: { defaultValue: syntax.initialValue },
+        message: "Default Value doesn't match type",
+      });
+    }
+  } else if (trackerType == "address") {
+    const validatedAddress = getAddress(syntax.initialValue.trim());
+    if (isLeft(validatedAddress)) {
+      return validatedAddress;
+    } else {
+      var address = encodeAbiParameters(parseAbiParameters("address"), [
+        unwrapEither(validatedAddress),
+      ]);
+
+      trackerInitialValue = address;
+    }
+  } else if (trackerType == "bytes") {
+    var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
+      toHex(stringToBytes(String(syntax.initialValue.trim()))),
+    ]);
+
+    trackerInitialValue = bytes;
+  } else if (trackerType == "bool") {
+    if (syntax.initialValue == "true") {
+      trackerInitialValue = encodePacked(["uint256"], [1n]);
+    } else {
+      trackerInitialValue = encodePacked(["uint256"], [0n]);
+    }
+  } else {
+    trackerInitialValue = encodeAbiParameters(parseAbiParameters("string"), [
+      syntax.initialValue.trim(),
+    ]);
+  }
+  var trackerTypeEnum = 0;
+  for (var parameterType of PT) {
+    if (parameterType.name == trackerType) {
+      trackerTypeEnum = parameterType.enumeration;
+    }
+  }
+  return makeRight({
+    name: syntax.name.trim(),
+    type: trackerTypeEnum,
+    initialValue: trackerInitialValue,
+  });
 }
 
 /**
@@ -236,65 +238,102 @@ export function parseTrackerSyntax(syntax: trackerJSON): Either<RulesError, Trac
  * @throws An error if the return type or parameter types are unsupported.
  */
 export function parseForeignCallDefinition(
-    syntax: foreignCallJSON
+  syntax: foreignCallJSON,
+  foreignCallNameToID: FCNameToID[],
+  indexMap: FCNameToID[],
+  functionArguments: string[]
 ): Either<RulesError, ForeignCallDefinition> {
-    const validatedAddress = getAddress(syntax.address.trim());
-    if (isLeft(validatedAddress)) {
-        return validatedAddress;
-    } else {
-        const address = unwrapEither(validatedAddress);
-        var func = syntax.function.trim();
-        var returnType = pTypeEnum.VOID; // default to void
-        if (!PT.some((parameter) => parameter.name === syntax.returnType)) {
-            return makeLeft({
-                errorType: "INPUT",
-                state: { PT, syntax },
-                message: "Unsupported return type"
-            })
-        }
-        for (var parameterType of PT) {
-            if (parameterType.name == syntax.returnType) {
-                returnType = parameterType.enumeration;
-            }
-        }
-        var parameterTypes: number[] = [];
-        var parameterSplit = syntax.function
-            .trim()
-            .split("(")[1]
-            .split(")")[0]
-            .split(",");
-        for (var fcParameter of parameterSplit) {
-            if (!PT.some((parameter) => parameter.name === fcParameter.trim())) {
-                return makeLeft({
-                    errorType: "INPUT",
-                    state: { PT, syntax },
-                    message: "Unsupported argument type"
-                })
-            }
-            for (var parameterType of PT) {
-                if (fcParameter.trim() == parameterType.name) {
-                    parameterTypes.push(parameterType.enumeration);
-                }
-            }
-        }
-
-        var valuesToPass: number[] = [];
-        var encodedIndecesSplit = syntax.valuesToPass.trim().split(",");
-        for (var encodedIndex of encodedIndecesSplit) {
-            if (!isNaN(Number(encodedIndex))) {
-                valuesToPass.push(Number(encodedIndex));
-            }
-        }
-
-        return makeRight({
-            name: syntax.name.trim(),
-            address: address,
-            function: func,
-            returnType: returnType,
-            parameterTypes: parameterTypes,
-            valuesToPass: valuesToPass,
-        })
+  const validatedAddress = getAddress(syntax.address.trim());
+  if (isLeft(validatedAddress)) {
+    return validatedAddress;
+  } else {
+    const address = unwrapEither(validatedAddress);
+    var func = syntax.function.trim();
+    var returnType = pTypeEnum.VOID; // default to void
+    if (!PT.some((parameter) => parameter.name === syntax.returnType)) {
+      return makeLeft({
+        errorType: "INPUT",
+        state: { PT, syntax },
+        message: "Unsupported return type",
+      });
     }
+    for (var parameterType of PT) {
+      if (parameterType.name == syntax.returnType) {
+        returnType = parameterType.enumeration;
+      }
+    }
+    var parameterTypes: number[] = [];
+    var parameterSplit = syntax.function
+      .trim()
+      .split("(")[1]
+      .split(")")[0]
+      .split(",");
+    for (var fcParameter of parameterSplit) {
+      if (!PT.some((parameter) => parameter.name === fcParameter.trim())) {
+        return makeLeft({
+          errorType: "INPUT",
+          state: { PT, syntax },
+          message: "Unsupported argument type",
+        });
+      }
+      for (var parameterType of PT) {
+        if (fcParameter.trim() == parameterType.name) {
+          parameterTypes.push(parameterType.enumeration);
+        }
+      }
+    }
+
+    var encodedIndices: ForeignCallEncodedIndex[] = [];
+    var encodedIndecesSplit = syntax.valuesToPass.trim().split(",");
+    for (var encodedIndex of encodedIndecesSplit) {
+      if (encodedIndex.includes("FC:")) {
+        for (var fcMap of foreignCallNameToID) {
+          if ("FC:" + fcMap.name.trim() == encodedIndex.trim()) {
+            var val: ForeignCallEncodedIndex = { eType: 1, index: fcMap.id };
+            encodedIndices.push(val);
+          }
+        }
+      } else if (encodedIndex.includes("TR:")) {
+        for (var trMap of indexMap) {
+          if ("TR:" + trMap.name.trim() == encodedIndex.trim()) {
+            var val: ForeignCallEncodedIndex = { eType: 2, index: trMap.id };
+            encodedIndices.push(val);
+          }
+        }
+      } else {
+        var iter = 0;
+        for (var functionArg of functionArguments) {
+          if (functionArg.trim() == encodedIndex.trim()) {
+            var val: ForeignCallEncodedIndex = { eType: 0, index: iter };
+            encodedIndices.push(val);
+            break;
+          } else {
+            iter += 1;
+          }
+        }
+      }
+    }
+
+    return makeRight({
+      name: syntax.name.trim(),
+      address: address,
+      function: func,
+      returnType: returnType,
+      parameterTypes: parameterTypes,
+      encodedIndices: encodedIndices,
+    });
+  }
+}
+
+export function parseCallingFunction(syntax: callingFunctionJSON): string[] {
+  var initialSplit = syntax.encodedValues.split(", ");
+  var variableNames: string[] = [];
+  for (var ind of initialSplit) {
+    var variable = ind.trim().split(" ")[1];
+    variableNames.push(variable);
+  }
+
+  return variableNames;
 }
 
 /**
@@ -304,17 +343,17 @@ export function parseForeignCallDefinition(
  * @returns An array of foreign call names.
  */
 export function buildForeignCallList(condition: string): string[] {
-    // Use a regular expression to find all FC expressions
-    const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
-    const matches = condition.matchAll(fcRegex);
-    var names: string[] = [];
-    // Convert matches iterator to array to process all at once
-    for (const match of matches) {
-        const fullFcExpr = match[0];
-        var name = fullFcExpr.split(":")[1];
-        names.push(name);
-    }
-    return names;
+  // Use a regular expression to find all FC expressions
+  const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
+  const matches = condition.matchAll(fcRegex);
+  var names: string[] = [];
+  // Convert matches iterator to array to process all at once
+  for (const match of matches) {
+    const fullFcExpr = match[0];
+    var name = fullFcExpr.split(":")[1];
+    names.push(name);
+  }
+  return names;
 }
 
 /**
@@ -324,28 +363,28 @@ export function buildForeignCallList(condition: string): string[] {
  * @returns An array of tracker names.
  */
 export function buildTrackerList(condition: string): string[] {
-    const trRegex = /TR:[a-zA-Z]+/g;
-    const truRegex = /TRU:[a-zA-Z]+/g;
-    var matches = condition.match(trRegex);
+  const trRegex = /TR:[a-zA-Z]+/g;
+  const truRegex = /TRU:[a-zA-Z]+/g;
+  var matches = condition.match(trRegex);
 
-    var names: string[] = [];
-    if (matches != null) {
-        for (const match of matches) {
-            const fullTRExpr = match;
-            var name = fullTRExpr.replace("TR:", "");
-            names.push(name);
-        }
+  var names: string[] = [];
+  if (matches != null) {
+    for (const match of matches) {
+      const fullTRExpr = match;
+      var name = fullTRExpr.replace("TR:", "");
+      names.push(name);
     }
-    matches = condition.match(truRegex);
-    if (matches != null) {
-        for (const match of matches) {
-            const fullTRExpr = match;
-            var name = fullTRExpr.replace("TRU:", "");
-            names.push(name);
-        }
+  }
+  matches = condition.match(truRegex);
+  if (matches != null) {
+    for (const match of matches) {
+      const fullTRExpr = match;
+      var name = fullTRExpr.replace("TRU:", "");
+      names.push(name);
     }
+  }
 
-    return names;
+  return names;
 }
 
 /**
@@ -354,46 +393,46 @@ export function buildTrackerList(condition: string): string[] {
  * @param instructionSet - The instruction set to clean.
  */
 export function cleanInstructionSet(instructionSet: any[]): void {
-    var iter = 0;
-    for (var val of instructionSet) {
-        if (val == "N") {
-            instructionSet[iter] = 0;
-        } else if (val == "+") {
-            instructionSet[iter] = 1;
-        } else if (val == "-") {
-            instructionSet[iter] = 2;
-        } else if (val == "*") {
-            instructionSet[iter] = 3;
-        } else if (val == "/") {
-            instructionSet[iter] = 4;
-        } else if (val == "<") {
-            instructionSet[iter] = 5;
-        } else if (val == ">") {
-            instructionSet[iter] = 6;
-        } else if (val == "==") {
-            instructionSet[iter] = 7;
-        } else if (val == "AND") {
-            instructionSet[iter] = 8;
-        } else if (val == "OR") {
-            instructionSet[iter] = 9;
-        } else if (val == "NOT") {
-            instructionSet[iter] = 10;
-        } else if (val == "PLH") {
-            instructionSet[iter] = 11;
-        } else if (val == "TRU") {
-            instructionSet[iter] = 12;
-        } else if (val == "=") {
-            instructionSet[iter] = 13;
-        } else if (val == ">=") {
-            instructionSet[iter] = 14;
-        } else if (val == "<=") {
-            instructionSet[iter] = 15;
-        } else if (val == "!=") {
-            instructionSet[iter] = 16;
-        }
-
-        iter++;
+  var iter = 0;
+  for (var val of instructionSet) {
+    if (val == "N") {
+      instructionSet[iter] = 0;
+    } else if (val == "+") {
+      instructionSet[iter] = 1;
+    } else if (val == "-") {
+      instructionSet[iter] = 2;
+    } else if (val == "*") {
+      instructionSet[iter] = 3;
+    } else if (val == "/") {
+      instructionSet[iter] = 4;
+    } else if (val == "<") {
+      instructionSet[iter] = 5;
+    } else if (val == ">") {
+      instructionSet[iter] = 6;
+    } else if (val == "==") {
+      instructionSet[iter] = 7;
+    } else if (val == "AND") {
+      instructionSet[iter] = 8;
+    } else if (val == "OR") {
+      instructionSet[iter] = 9;
+    } else if (val == "NOT") {
+      instructionSet[iter] = 10;
+    } else if (val == "PLH") {
+      instructionSet[iter] = 11;
+    } else if (val == "TRU") {
+      instructionSet[iter] = 12;
+    } else if (val == "=") {
+      instructionSet[iter] = 13;
+    } else if (val == ">=") {
+      instructionSet[iter] = 14;
+    } else if (val == "<=") {
+      instructionSet[iter] = 15;
+    } else if (val == "!=") {
+      instructionSet[iter] = 16;
     }
+
+    iter++;
+  }
 }
 
 export { parseFunctionArguments };

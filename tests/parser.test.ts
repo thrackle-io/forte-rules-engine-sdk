@@ -1,6 +1,12 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { expect, test } from "vitest";
-import { EffectType, ForeignCallDefinition, pTypeEnum, RulesError, TrackerDefinition } from "../src/modules/types.js";
+import {
+  EffectType,
+  ForeignCallDefinition,
+  pTypeEnum,
+  RulesError,
+  TrackerDefinition,
+} from "../src/modules/types.js";
 import {
   keccak256,
   hexToNumber,
@@ -19,7 +25,7 @@ import {
 } from "../src/parsing/parser.js";
 import { reverseParseRule } from "../src/parsing/reverse-parsing-logic.js";
 import { removeExtraParenthesis } from "../src/parsing/parsing-utilities.js";
-import { unwrapEither } from '../src/modules/utils.js';
+import { unwrapEither } from "../src/modules/utils.js";
 
 test("Evaluates a simple syntax string (using only values and operators)", () => {
   /**
@@ -89,10 +95,14 @@ test("Evaluates a simple syntax string (using only values and operators)", () =>
   "condition": "3 == 3 AND (1 == 1 OR (2 == 2 AND 3 == 3))",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value, uint256 sAND)",
-  "encodedValues": "uint256 value, uint256 sAND"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND"
+  );
   console.log(retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -160,10 +170,14 @@ test("Evaluates a simple syntax string (using only values and operators)", () =>
   "condition": "value + sAND > 5 AND (sAND == 1 AND 2 == sAND)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value, uint256 sAND)",
-  "encodedValues": "uint256 value, uint256 sAND"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -230,10 +244,14 @@ test("Evaluates a simple syntax string with >= (using only values and operators)
   "condition": "value + sAND >= 5 AND (sAND == 1 AND 2 == sAND)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value, uint256 sAND)",
-  "encodedValues": "uint256 value, uint256 sAND"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -300,10 +318,14 @@ test("Evaluates a simple syntax string with <= (using only values and operators)
   "condition": "value + sAND <= 5 AND (sAND == 1 AND 2 == sAND)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value, uint256 sAND)",
-  "encodedValues": "uint256 value, uint256 sAND"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -437,11 +459,15 @@ test("Evaluates a complex syntax string (using only values and operators)", () =
      "condition": "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) ",
      "positiveEffects": ["revert"],
      "negativeEffects": [],
-     "callingFunction": "addValue(uint256 value)",
-     "encodedValues": "uint256 value"
+     "callingFunction": "addValue"
      }`;
 
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -591,11 +617,15 @@ test("Evaluates a simple syntax string (using AND + OR operators)", () => {
   "condition": "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
 
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -742,11 +772,15 @@ test("Evaluates a simple syntax string (using AND + OR operators and function pa
 "condition": "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
-"callingFunction": "addValue(uint256 value, string info, address addr)",
-"encodedValues": "uint256 value, string info, address addr"
+"callingFunction": "addValue"
 }`;
 
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, string info, address addr"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
   expect(retVal.rawData).toEqual(expectedRawDataArray);
 });
@@ -756,13 +790,16 @@ test("Creates a simple uint256 tracker", () => {
         "name": "Simple Int Tracker",
         "type": "uint256",
         "initialValue": "14"
-        }`
-  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
+        }`;
+  var retVal = unwrapEither(
+    parseTrackerSyntax(JSON.parse(str))
+  ) as TrackerDefinition;
 
-  expect(retVal.name).toEqual("Simple Int Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.UINT256)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('uint256'), [BigInt(14)]))
+  expect(retVal.name).toEqual("Simple Int Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.UINT256);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(14)])
+  );
 });
 
 test("Creates a simple bool tracker", () => {
@@ -770,12 +807,15 @@ test("Creates a simple bool tracker", () => {
         "name": "Simple bool Tracker",
         "type": "bool",
         "initialValue": "true"
-        }`
-  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
-  expect(retVal.name).toEqual("Simple bool Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.BOOL)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('uint256'), [BigInt(1)]))
+        }`;
+  var retVal = unwrapEither(
+    parseTrackerSyntax(JSON.parse(str))
+  ) as TrackerDefinition;
+  expect(retVal.name).toEqual("Simple bool Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.BOOL);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
+  );
 });
 
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
@@ -838,12 +878,17 @@ test("Creates a simple address tracker", () => {
   "name": "Simple Address Tracker",
   "type": "address",
   "initialValue": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"
-  }`
-  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
-  expect(retVal.name).toEqual("Simple Address Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.ADDRESS)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('address'), ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']))
+  }`;
+  var retVal = unwrapEither(
+    parseTrackerSyntax(JSON.parse(str))
+  ) as TrackerDefinition;
+  expect(retVal.name).toEqual("Simple Address Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.ADDRESS);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("address"), [
+      "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+    ])
+  );
 });
 
 test("Creates a simple string tracker", () => {
@@ -851,12 +896,15 @@ test("Creates a simple string tracker", () => {
   "name": "Simple String Tracker",
   "type": "string",
   "initialValue": "test"
-  }`
-  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as TrackerDefinition
-  expect(retVal.name).toEqual("Simple String Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.STRING)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('string'), ['test']))
+  }`;
+  var retVal = unwrapEither(
+    parseTrackerSyntax(JSON.parse(str))
+  ) as TrackerDefinition;
+  expect(retVal.name).toEqual("Simple String Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.STRING);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["test"])
+  );
 });
 
 test("Tests unsupported type", () => {
@@ -865,8 +913,8 @@ test("Tests unsupported type", () => {
   "type": "book",
   "initialValue": "test"
   }`;
-  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as RulesError
-  expect(retVal.message).toEqual('Unsupported type')
+  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as RulesError;
+  expect(retVal.message).toEqual("Unsupported type");
 });
 
 test("Creates a simple foreign call", () => {
@@ -875,10 +923,17 @@ test("Creates a simple foreign call", () => {
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "valuesToPass": "0, 1, 2"
+  "valuesToPass": "to, someString, value"
   }`;
 
-  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as ForeignCallDefinition
+  var retVal = unwrapEither(
+    parseForeignCallDefinition(
+      JSON.parse(str),
+      [],
+      [],
+      ["to", "someString", "value"]
+    )
+  ) as ForeignCallDefinition;
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
@@ -893,11 +948,18 @@ test("Tests incorrect format for address", () => {
   "address": "test",
   "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "valuesToPass": "0, 1, 2"
+  "valuesToPass": "to, someString, value"
   }`;
 
-  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as RulesError
-  expect(retVal.message).toEqual('Address "test" is invalid')
+  var retVal = unwrapEither(
+    parseForeignCallDefinition(
+      JSON.parse(str),
+      [],
+      [],
+      ["to", "someString", "value"]
+    )
+  ) as RulesError;
+  expect(retVal.message).toEqual('Address "test" is invalid');
 });
 
 test("Tests unsupported return type", () => {
@@ -906,10 +968,17 @@ test("Tests unsupported return type", () => {
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
   "returnType": "notAnInt",
-  "valuesToPass": "0, 1, 2"
+  "valuesToPass": "to, someString, value"
   }`;
-  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as RulesError
-  expect(retVal.message).toEqual('Unsupported return type')
+  var retVal = unwrapEither(
+    parseForeignCallDefinition(
+      JSON.parse(str),
+      [],
+      [],
+      ["to", "someString", "value"]
+    )
+  ) as RulesError;
+  expect(retVal.message).toEqual("Unsupported return type");
 });
 
 test("Tests unsupported argument type", () => {
@@ -918,11 +987,18 @@ test("Tests unsupported argument type", () => {
     "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
     "function": "testSig(address,notAnInt,uint256)",
     "returnType": "uint256",
-    "valuesToPass": "0, 1, 2"
+    "valuesToPass": "to, value, otherValue"
     }`;
 
-  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as RulesError
-  expect(retVal.message).toEqual('Unsupported argument type')
+  var retVal = unwrapEither(
+    parseForeignCallDefinition(
+      JSON.parse(str),
+      [],
+      [],
+      ["to", "value", "otherValue"]
+    )
+  ) as RulesError;
+  expect(retVal.message).toEqual("Unsupported argument type");
 });
 
 test("Evaluates a simple syntax string with a Foreign Call", () => {
@@ -969,14 +1045,14 @@ test("Evaluates a simple syntax string with a Foreign Call", () => {
   "condition": "FC:leaderboard > 100 AND value == 100 ",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "transfer(address to, uint256 value)",
-  "encodedValues": "address to, uint256 value"
+  "callingFunction": "transfer"
   }`;
 
   let retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [],
-    [{ id: 1, name: "leaderboard", type: 0 }]
+    [{ id: 1, name: "leaderboard", type: 0 }],
+    "address to, uint256 value"
   );
   console.log(retVal.placeHolders);
   expect(retVal.instructionSet).toEqual(expectedArray);
@@ -1026,14 +1102,14 @@ test("Evaluates a simple syntax string with a Foreign Call and !=", () => {
     "condition": "FC:leaderboard > 100 AND value != 100 ",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "callingFunction": "transfer(address to, uint256 value)",
-    "encodedValues": "address to, uint256 value"
+    "callingFunction": "transfer"
     }`;
 
   let retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [],
-    [{ id: 1, name: "leaderboard", type: 0 }]
+    [{ id: 1, name: "leaderboard", type: 0 }],
+    "address to, uint256 value"
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -1155,8 +1231,7 @@ test("Evaluate a complex syntax string with multiple foreign calls", () => {
    "condition": "( FC:isAllowed == 1 AND to == 0xdeadbeefdeadbeef ) OR ( (FC:isSuperCoolGuy AND FC:isRich == 1) AND FC:creditRisk < 500 )",
    "positiveEffects": ["revert"],
    "negativeEffects": [],
-   "callingFunction": "transfer(address to, uint256 value)",
-   "encodedValues": "address to, uint256 value" }`;
+   "callingFunction": "transfer" }`;
   let retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [],
@@ -1165,7 +1240,8 @@ test("Evaluate a complex syntax string with multiple foreign calls", () => {
       { id: 2, name: "isSuperCoolGuy", type: 0 },
       { id: 3, name: "isRich", type: 0 },
       { id: 4, name: "creditRisk", type: 0 },
-    ]
+    ],
+    "address to, uint256 value"
   );
   console.log(retVal.placeHolders);
   expect(retVal.instructionSet).toEqual(expectedArray);
@@ -1323,10 +1399,14 @@ test("Evaluate complex expression with placeholders", () => {
   "condition": "( to == 1 AND to == 0xdeadbeefdeadbeef ) OR (( value == 1 AND to == 1) AND value < 500 )",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "transfer(address to, uint256 value)",
-  "encodedValues": "address to, uint256 value"
+  "callingFunction": "transfer"
   }`;
-  let retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  let retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "address to, uint256 value"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -1470,8 +1550,7 @@ test("Evaluates a simple syntax string (using AND + OR operators, trackers and f
 "condition": "(FC:isAllowed + 4 > 5 AND TR:testOne == 5) OR (info == TR:testTwo OR TR:testOne == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
-"callingFunction": "addValue(uint256 value, string info, address addr)",
-"encodedValues": "uint256 value, string info, address addr"
+"callingFunction": "addValue"
 }`;
 
   var retVal = parseRuleSyntax(
@@ -1480,7 +1559,8 @@ test("Evaluates a simple syntax string (using AND + OR operators, trackers and f
       { id: 1, name: "testOne", type: 0 },
       { id: 2, name: "testTwo", type: 0 },
     ],
-    [{ id: 3, name: "isAllowed", type: 0 }]
+    [{ id: 3, name: "isAllowed", type: 0 }],
+    "uint256 value, string info, address addr"
   );
   console.log(retVal.placeHolders);
   console.log(retVal.instructionSet);
@@ -1555,10 +1635,9 @@ test("Evaluate a simple syntax string for a revert effect", () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], [], "int256 value");
   expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 });
@@ -1568,11 +1647,15 @@ test("Evaluate a simple syntax string for a revert effect with message", () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["revert(\\"Didn\'t pass the sniff test\\")"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
   var str = `(TR:simpleTrackler + 2 == 5) AND (value < 10000) --> revert("Didn't pass the sniff test") --> addValue(uint256 value) --> uint256 value`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
   expect(retVal.positiveEffects[0].text).toEqual("Didn't pass the sniff test");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -1583,10 +1666,14 @@ test("Evaluate a simple syntax string for a event effect", () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Something wrong"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Something wrong");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -1597,10 +1684,14 @@ test("Evaluate a simple syntax string for a event effect without text", () => {
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue(uint256 value)"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -1611,10 +1702,14 @@ test("Evaluate a simple syntax string that contains a positive and negative effe
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes"],
   "negativeEffects": [ "revert" ],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -1628,10 +1723,14 @@ test("Evaluate a simple syntax string that contains multiple positive effects an
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes", "emit OtherGoodvibes"],
   "negativeEffects": [ "revert" ],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value"
+  );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
@@ -1648,8 +1747,7 @@ test("Evaluate a simple syntax string that contains multiple positive and negati
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["emit Goodvibes", "emit OtherGoodvibes"],
   "negativeEffects": [ "emit badVibes", "FC:updateOracle AND FC:alert" ],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
@@ -1657,7 +1755,8 @@ test("Evaluate a simple syntax string that contains multiple positive and negati
     [
       { id: 2, name: "updateOracle", type: 0 },
       { id: 3, name: "alert", type: 0 },
-    ]
+    ],
+    "uint256 value"
   );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
@@ -1689,8 +1788,7 @@ test("Evaluate a simple syntax string for an event effect with an instruction se
   "condition": "(TR:simpleTrackler + 2 == 5) AND (value < 10000)",
   "positiveEffects": ["FC:updateOracle AND FC:alert"],
   "negativeEffects": ["FC:alert"],
-  "callingFunction": "addValue(uint256 value)",
-  "encodedValues": "uint256 value"
+  "callingFunction": "addValue"
   }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
@@ -1698,7 +1796,8 @@ test("Evaluate a simple syntax string for an event effect with an instruction se
     [
       { id: 1, name: "updateOracle", type: 0 },
       { id: 2, name: "alert", type: 0 },
-    ]
+    ],
+    "uint256 value"
   );
   expect(retVal.positiveEffects[0].type).toBe(EffectType.EXPRESSION);
   expect(retVal.positiveEffects[0].text).toEqual("");
@@ -1728,8 +1827,7 @@ test("Evaluates a simple effect involving a tracker update (TRU))", () => {
   "condition": " value > 5 ",
   "positiveEffects": [" TRU:testOne -= 1 "],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value, string info)",
-  "encodedValues": "uint256 value, string info, address addr"
+  "callingFunction": "addValue"
   }`;
 
   var str =
@@ -1737,7 +1835,8 @@ test("Evaluates a simple effect involving a tracker update (TRU))", () => {
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [{ id: 4, name: "testOne", type: 0 }],
-    []
+    [],
+    "uint256 value, string info, address addr"
   );
   expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
   expect(retVal.effectPlaceHolders.length).toEqual(1);
@@ -1784,14 +1883,14 @@ test("Multiple copies of the same placeholder test", () => {
 "condition": "(value + 4 > 5 OR value == 5) OR value == TR:testTwo",
 "positiveEffects": ["revert"],
 "negativeEffects": [],
-"callingFunction": "addValue(uint256 value, string info, address addr)",
-"encodedValues": "uint256 value, string info, address addr"
+"callingFunction": "addValue"
 }`;
 
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [{ id: 1, name: "testTwo", type: 0 }],
-    []
+    [],
+    "uint256 value, string info, address addr"
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -1836,13 +1935,13 @@ test("Extraneous paraenthesis", () => {
   "condition": "(((value + 4 > 5) OR value == 5)) OR ((value == TR:testTwo))",
   "positiveEffects": ["revert"],
   "negativeEffects": [],
-  "callingFunction": "addValue(uint256 value, string info, address addr)",
-  "encodedValues": "uint256 value, string info, address addr"
+  "callingFunction": "addValue"
   }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [{ id: 1, name: "testTwo", type: 0 }],
-    []
+    [],
+    "uint256 value, string info, address addr"
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -1915,13 +2014,17 @@ test("Evaluates a syntax string that includes keywords in variable names and raw
     "condition": "value + sAND > 5 AND (lORe == 1 AND bORe test == lORe)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "callingFunction": "addValue(uint256 value, uint256 sAND, address lORe)",
-    "encodedValues": "uint256 value, uint256 sAND, address lORe"
+    "callingFunction": "addValue"
     }`;
 
   var str =
     "value + sAND > 5 AND (lORe == 1 AND bORe test == lORe) --> revert --> addValue(uint256 value, uint256 sAND, address lORe)";
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND, address lORe"
+  );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -1942,14 +2045,14 @@ test("Ensure that the parser can handle FC in various parts of a string", () => 
     "condition": "(FC:updateOracle == FCalert)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "callingFunction": "addValue(uint256 value, string info, address addr)",
-    "encodedValues": ""
+    "callingFunction": "addValue"
     }`;
 
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [],
-    [{ id: 1, name: "updateOracle", type: 0 }]
+    [{ id: 1, name: "updateOracle", type: 0 }],
+    ""
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -2024,10 +2127,14 @@ test("Evaluates a simple syntax string involving a NOT operation", () => {
     "condition": "3 == 3 AND ( NOT (1 == 1 OR (2 == 2 AND 3 == 3)))",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "callingFunction": "addValue(uint256 value, uint256 sAND)",
-    "encodedValues": "uint256 value, uint256 sAND"
+    "callingFunction": "addValue"
     }`;
-  var retVal = parseRuleSyntax(JSON.parse(ruleStringA), [], []);
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND"
+  );
   console.log(retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -2082,8 +2189,7 @@ test("Evaluates a simple syntax string involving a NOT operation", () => {
     "condition": "NOT (TR:trackerOne == 1 AND TR:trackerTwo == 2)",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "callingFunction": "addValue(uint256 value, uint256 sAND)",
-    "encodedValues": "uint256 value, uint256 sAND"
+    "callingFunction": "addValue"
     }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
@@ -2091,7 +2197,8 @@ test("Evaluates a simple syntax string involving a NOT operation", () => {
       { id: 1, name: "trackerOne", type: 0 },
       { id: 2, name: "trackerTwo", type: 0 },
     ],
-    []
+    [],
+    "uint256 value, uint256 sAND"
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -2156,8 +2263,7 @@ test("Evaluates a simple syntax string involving a NOT operation", () => {
     "condition": "TR:trackerOne == 1 OR (TR:trackerTwo == 2 AND ( NOT (1 == 1)))",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "callingFunction": "addValue(uint256 value, uint256 sAND)",
-    "encodedValues": "uint256 value, uint256 sAND"
+    "callingFunction": "addValue"
     }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
@@ -2166,7 +2272,8 @@ test("Evaluates a simple syntax string involving a NOT operation", () => {
       { id: 2, name: "trackerTwo", type: 0 },
       { id: 2, name: "trackerThree", type: 2 },
     ],
-    []
+    [],
+    "uint256 value, uint256 sAND"
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -2221,8 +2328,7 @@ test("Evaluates a simple syntax string involving a boolean variable", () => {
     "condition": "value == true",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(bool value, uint256 sAND)",
-    "encodedValues": "bool value, uint256 sAND"
+    "functionSignature": "addValue"
     }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
@@ -2230,7 +2336,8 @@ test("Evaluates a simple syntax string involving a boolean variable", () => {
       { id: 1, name: "trackerOne", type: 0 },
       { id: 2, name: "trackerTwo", type: 0 },
     ],
-    []
+    [],
+    "bool value, uint256 sAND"
   );
   // expect(retVal.instructionSet).toEqual(expectedArray)
   console.log(retVal.instructionSet);
@@ -2267,8 +2374,7 @@ test("Evaluates a simple syntax string involving a boolean tracker", () => {
     "condition": "TR:trackerOne == true",
     "positiveEffects": ["revert"],
     "negativeEffects": [],
-    "functionSignature": "addValue(bool value, uint256 sAND)",
-    "encodedValues": "bool value, uint256 sAND"
+    "functionSignature": "addValue"
     }`;
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
@@ -2276,7 +2382,8 @@ test("Evaluates a simple syntax string involving a boolean tracker", () => {
       { id: 1, name: "trackerOne", type: 3 },
       { id: 2, name: "trackerTwo", type: 0 },
     ],
-    []
+    [],
+    "bool value, uint256 sAND"
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
@@ -2287,10 +2394,18 @@ test("Creates a simple foreign call with a boolean return", () => {
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
   "returnType": "bool",
-  "valuesToPass": "0, 1, 2"
+  "valuesToPass": "to, someString, value",
+  "callingFunction": "someFunction(address to, string someString, uint256 value)"
   }`;
 
-  var retVal = unwrapEither(parseForeignCallDefinition(JSON.parse(str))) as ForeignCallDefinition
+  var retVal = unwrapEither(
+    parseForeignCallDefinition(
+      JSON.parse(str),
+      [],
+      [],
+      ["to", "someString", "value"]
+    )
+  ) as ForeignCallDefinition;
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")

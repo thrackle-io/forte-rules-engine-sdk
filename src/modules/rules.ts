@@ -20,7 +20,12 @@ import {
   RuleStorageSet,
   Maybe,
   RulesEngineRulesContract,
+  RulesEngineComponentContract,
+  RulesEnginePolicyContract,
+  callingFunctionJSON,
 } from "./types";
+import { getCallingFunctionMetadata } from "./calling-functions";
+import { encode } from "punycode";
 
 /**
  * @file Rules.ts
@@ -64,7 +69,9 @@ import {
  */
 export const createRule = async (
   config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
+  rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   ruleS: string,
   foreignCallNameToID: FCNameToID[],
@@ -82,17 +89,45 @@ export const createRule = async (
   ) {
     return -1;
   }
+
+  const retrievePolicy = await simulateContract(config, {
+    address: rulesEnginePolicyContract.address,
+    abi: rulesEnginePolicyContract.abi,
+    functionName: "getPolicy",
+    args: [policyId],
+  });
+
+  let policyResult = retrievePolicy.result;
+  let callingFunctions: any = policyResult[0];
+
+  var iter = 1;
+  var encodedValues: string = "";
+  for (var cfId in callingFunctions) {
+    var mapp = await getCallingFunctionMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      iter
+    );
+    if (mapp.callingFunction.trim() == ruleSyntax.callingFunction.trim()) {
+      encodedValues = mapp.encodedValues;
+    }
+    iter += 1;
+  }
+
   var effects = buildAnEffectStruct(
     effectSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues
   );
   var rule = buildARuleStruct(
     policyId,
     ruleSyntax,
     foreignCallNameToID,
     effects,
-    trackerNameToID
+    trackerNameToID,
+    encodedValues
   );
 
   var addRule;
@@ -139,7 +174,9 @@ export const createRule = async (
  */
 export const updateRule = async (
   config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
+  rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   ruleId: number,
   ruleS: string,
@@ -147,17 +184,45 @@ export const updateRule = async (
   trackerNameToID: FCNameToID[]
 ): Promise<number> => {
   let ruleSyntax: ruleJSON = JSON.parse(ruleS);
+
+  const retrievePolicy = await simulateContract(config, {
+    address: rulesEnginePolicyContract.address,
+    abi: rulesEnginePolicyContract.abi,
+    functionName: "getPolicy",
+    args: [policyId],
+  });
+
+  let policyResult = retrievePolicy.result;
+  let callingFunctions: any = policyResult[0];
+
+  var iter = 1;
+  var encodedValues: string = "";
+  for (var cfId in callingFunctions) {
+    var mapp = await getCallingFunctionMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      iter
+    );
+    if (mapp.callingFunction.trim() == ruleSyntax.callingFunction.trim()) {
+      encodedValues = mapp.encodedValues;
+    }
+    iter += 1;
+  }
+  console.log("ENCODED VALUES", encodedValues);
   var effects = buildAnEffectStruct(
     ruleSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues
   );
   var rule = buildARuleStruct(
     policyId,
     ruleSyntax,
     foreignCallNameToID,
     effects,
-    trackerNameToID
+    trackerNameToID,
+    encodedValues
   );
   var addRule;
   while (true) {
@@ -170,6 +235,7 @@ export const updateRule = async (
       });
       break;
     } catch (err) {
+      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }

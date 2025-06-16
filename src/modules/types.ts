@@ -68,6 +68,7 @@ export type CallingFunctionHashMapping = {
 export interface PolicyJSON {
   Policy: string;
   PolicyType: string;
+  CallingFunctions: callingFunctionJSON[];
   ForeignCalls: foreignCallJSON[];
   Trackers: trackerJSON[];
   Rules: ruleJSON[];
@@ -79,6 +80,7 @@ export interface foreignCallJSON {
   address: string;
   returnType: string;
   valuesToPass: string;
+  callingFunction: string;
 }
 
 export interface trackerJSON {
@@ -92,6 +94,11 @@ export interface ruleJSON {
   positiveEffects: string[];
   negativeEffects: string[];
   callingFunction: string;
+}
+
+export interface callingFunctionJSON {
+  name: string;
+  functionSignature: string;
   encodedValues: string;
 }
 
@@ -152,7 +159,7 @@ export type ForeignCallOnChain = {
   returnType: number;
   foreignCallIndex: number;
   parameterTypes: number[];
-  typeSpecificIndices: number[];
+  valuesToPass: ForeignCallEncodedIndex[];
 };
 
 export type TrackerOnChain = {
@@ -168,7 +175,12 @@ export type ForeignCallDefinition = {
   function: string;
   returnType: number;
   parameterTypes: number[];
-  valuesToPass: number[];
+  encodedIndices: ForeignCallEncodedIndex[];
+};
+
+export type ForeignCallEncodedIndex = {
+  eType: number;
+  index: number;
 };
 
 export type PlaceholderStruct = {
@@ -176,6 +188,7 @@ export type PlaceholderStruct = {
   typeSpecificIndex: number;
   trackerValue: boolean;
   foreignCall: boolean;
+  mappedTrackerKey: any;
 };
 
 export type IndividualArugmentMapping = {
@@ -268,22 +281,26 @@ export const PT = [
   { name: "bytes", enumeration: pTypeEnum.BYTES },
 ];
 
-export type ErrorType = "INPUT" | "CONTRACT_READ" | "CONTRACT_WRITE" | "COMPILATION";
+export type ErrorType =
+  | "INPUT"
+  | "CONTRACT_READ"
+  | "CONTRACT_WRITE"
+  | "COMPILATION";
 
 export type RulesError = {
-    errorType: ErrorType;
-    state: any;
-    message: string;
-}
+  errorType: ErrorType;
+  state: any;
+  message: string;
+};
 
 export type Left<T> = {
-    left: T;
-    right?: never;
+  left: T;
+  right?: never;
 };
 
 export type Right<U> = {
-    right: U;
-    left?: never;
+  right: U;
+  left?: never;
 };
 
 export type Either<T, U> = NonNullable<Left<T> | Right<U>>;

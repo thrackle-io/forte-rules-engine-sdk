@@ -356,7 +356,6 @@ export function convertRuleStructToString(
     positiveEffects: [],
     negativeEffects: [],
     callingFunction: "",
-    encodedValues: "",
   };
 
   var names = parseFunctionArguments(encodedValues);
@@ -415,7 +414,6 @@ export function convertRuleStructToString(
   }
   rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, []);
   rJSON.callingFunction = functionString;
-  rJSON.encodedValues = encodedValues;
   return rJSON;
 }
 

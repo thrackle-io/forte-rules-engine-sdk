@@ -133,7 +133,8 @@ export function buildARuleStruct(
   ruleSyntax: ruleJSON,
   foreignCallNameToID: FCNameToID[],
   effect: EffectStructs,
-  trackerNameToID: FCNameToID[]
+  trackerNameToID: FCNameToID[],
+  encodedValues: string
 ): RuleStruct {
   var fcList = buildForeignCallList(ruleSyntax.condition);
   if (ruleSyntax.positiveEffects != null) {
@@ -150,8 +151,10 @@ export function buildARuleStruct(
   var output = parseRuleSyntax(
     ruleSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues
   );
+  console.log("ENCODED VALUES TWO", output.placeHolders);
   var trList = buildTrackerList(ruleSyntax.condition);
   if (ruleSyntax.positiveEffects != null) {
     for (var eff of ruleSyntax.positiveEffects) {
@@ -249,12 +252,14 @@ export function buildARuleStruct(
 export function buildAnEffectStruct(
   ruleSyntax: ruleJSON,
   trackerNameToID: FCNameToID[],
-  foreignCallNameToID: FCNameToID[]
+  foreignCallNameToID: FCNameToID[],
+  encodedValues: string
 ): EffectStructs {
   var output = parseRuleSyntax(
     ruleSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues
   );
   var pEffects: EffectStruct[] = [];
   var nEffects: EffectStruct[] = [];

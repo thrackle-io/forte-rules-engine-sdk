@@ -74,7 +74,13 @@ export function generateModifier(
   }
   const filePathOutput = outputFileName;
   for (var syntax of policySyntax.Rules) {
-    var argList = syntax.encodedValues;
+    var argList = "";
+    for (var fCall of policySyntax.CallingFunctions) {
+      if (fCall.functionSignature.trim() == syntax.callingFunction.trim()) {
+        argList = fCall.encodedValues;
+        break;
+      }
+    }
     var callingFunction = syntax.callingFunction.split("(")[0];
     if (functionNames.includes(callingFunction)) {
       continue;

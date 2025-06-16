@@ -298,6 +298,9 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
       typeSpecificIndex: name.tIndex,
       trackerValue: tracker,
       foreignCall: name.rawType == "foreign call",
+      mappedTrackerKey: encodeAbiParameters(parseAbiParameters("uint256"), [
+        BigInt(1),
+      ]),
     };
     placeHolders.push(placeHolder);
   }

@@ -384,7 +384,9 @@ export class RulesEngine {
   ): Promise<number> {
     return createRuleInternal(
       config,
+      this.rulesEnginePolicyContract,
       this.rulesEngineRulesContract,
+      this.rulesEngineComponentContract,
       policyId,
       ruleS,
       foreignCallNameToID,
@@ -413,7 +415,9 @@ export class RulesEngine {
   ): Promise<number> {
     return updateRuleInternal(
       config,
+      this.rulesEnginePolicyContract,
       this.rulesEngineRulesContract,
+      this.rulesEngineComponentContract,
       policyId,
       ruleId,
       ruleS,
@@ -489,6 +493,7 @@ export class RulesEngine {
     return createForeignCallInternal(
       config,
       this.rulesEngineComponentContract,
+      this.rulesEnginePolicyContract,
       policyId,
       fcSyntax
     );
@@ -517,6 +522,7 @@ export class RulesEngine {
   ): Promise<number> {
     return updateForeignCallInternal(
       config,
+      this.rulesEnginePolicyContract,
       this.rulesEngineComponentContract,
       policyId,
       foreignCallId,
