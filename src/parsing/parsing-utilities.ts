@@ -44,7 +44,7 @@ import { getRandom } from "../modules/utils";
  *
  * @param encodedValues - The encoded values string.
  * @param condition - Optional parameter for the condition statement of a rule
- * @returns An array of argument placeholders.
+ * @returns An array of FunctionArgument.
  */
 export function parseFunctionArguments(
   encodedValues: string,
@@ -112,7 +112,6 @@ export function parseFunctionArguments(
  * Parses tracker references in a rule condition string and adds them to the argument list.
  *
  * @param condition - The rule condition string.
- * @param nextIndex - The next available index for placeholders.
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
  * 
@@ -192,9 +191,9 @@ export function parseTrackers(
  * with metadata about the processed expressions.
  *
  * @param condition - The input condition string containing potential FC expressions.
- * @param nextIndex - The starting index for tracking FC expressions in the `names` array.
  * @param names - An array to store metadata about the processed FC expressions, including
  *                their placeholders, indices, and types.
+ * @param foreignCallNameToID - An array mapping foreign call names to their corresponding IDs.
  * @returns The updated condition string with FC expressions replaced by placeholders
  *          and an array of created ForeignCall
  *
@@ -383,8 +382,6 @@ export function parseEffect(
  *
  * @param instructionSet - An array of instructions to process. Elements can be strings or numbers.
  * @param excludeArray - An array of strings to exclude from processing.
- * @param rawDataArray - An array to store raw data entries. Each entry includes the raw data,
- *                       its index in the instruction set, and its data type.
  * @returns An object containing:
  *          - `instructionSetIndex`: An array of indices in the instruction set corresponding to processed elements.
  *          - `argumentTypes`: An array of argument types (e.g., 1 for strings).

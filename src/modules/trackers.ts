@@ -39,6 +39,7 @@ import { isLeft, isRight, unwrapEither } from "./utils";
 /**
  * Asynchronously creates a tracker in the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the rules engine component.
  * @param policyId - The ID of the policy associated with the tracker.
  * @param trSyntax - A JSON string representing the tracker syntax.
@@ -97,6 +98,7 @@ export const createTracker = async (
 /**
  * Asynchronously updates a tracker in the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance for interacting with the rules engine component.
  * @param policyId - The ID of the policy associated with the tracker.
  * @param trackerId - The ID of the tracker to update.
@@ -156,6 +158,7 @@ export const updateTracker = async (
 /**
  * Deletes a tracker associated with a specific policy in the rules engine component contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
  * @param policyId - The ID of the policy to which the tracker belongs.
  * @param trackerId - The ID of the tracker to be deleted.
@@ -198,6 +201,7 @@ export const deleteTracker = async (
 /**
  * Retrieves a tracker from the Rules Engine Component Contract based on the provided policy ID and tracker ID.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
  * @param policyId - The ID of the policy associated with the tracker.
  * @param trackerId - The ID of the tracker to retrieve.
@@ -233,6 +237,7 @@ export const getTracker = async (
 /**
  * Retrieves the metadata for a tracker from the Rules Engine Component Contract based on the provided policy ID and tracker ID.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - The contract instance containing the address and ABI for interaction.
  * @param policyId - The ID of the policy associated with the tracker.
  * @param trackerId - The ID of the tracker to retrieve.
@@ -265,6 +270,7 @@ export const getTrackerMetadata = async (
 /**
  * Retrieves all trackers associated with a specific policy ID from the Rules Engine Component Contract.
  *
+ * @param config - The configuration object containing network and wallet information.
  * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
  * @param policyId - The unique identifier of the policy for which trackers are to be retrieved.
  * including its address and ABI.

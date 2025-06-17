@@ -107,6 +107,7 @@ export class RulesEngine {
   /**
    * @constructor
    * @param {Address} rulesEngineAddress - The address of the deployed Rules Engine smart contract.
+   * @param {Config} localConfig - The configuration object containing network and wallet information.
    * @param {any} client - The client instance for interacting with the blockchain.
    */
   constructor(rulesEngineAddress: Address, localConfig: Config, client: any) {
@@ -167,7 +168,6 @@ export class RulesEngine {
     return policyExistsInternal(
       config,
       this.rulesEnginePolicyContract,
-      this.rulesEngineComponentContract,
       policyId
     );
   }
@@ -200,7 +200,6 @@ export class RulesEngine {
   /**
    * Sets the policies appled to a specific contract address.
    *
-   * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
    * @param policyIds - The list of IDs of all of the policies that will be applied to the contract
    * @param contractAddressForPolicy - The address of the contract to which the policy will be applied.
    */
@@ -329,6 +328,7 @@ export class RulesEngine {
   /** Adds a subscriber to the closed policy.
    *
    * @param policyId - The ID of the policy to add to.
+   * @param subscriber - The address of the subscriber to add.
    * @returns `0` if successful, `-1` if an error occurs.
    */
   addClosedPolicySubscriber(
@@ -347,6 +347,7 @@ export class RulesEngine {
    * Removes a subscriber from the closed policy.
    *
    * @param policyId - The ID of the policy to remove from.
+   * @param subscriber - The address of the subscriber to remove.
    * @returns `0` if successful, `-1` if an error occurs.
    */
   removeClosedPolicySubscriber(
@@ -369,9 +370,7 @@ export class RulesEngine {
    * @param foreignCallNameToID - An array mapping foreign call names to their corresponding IDs.
    * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
    * @returns A promise that resolves to the result of the rule creation operation. Returns the rule ID if successful, or -1 if the operation fails.
-   *
-   * @throws Will log errors to the console if the contract simulation fails and retry the operation after a delay.
-   *
+   *   
    * @remarks
    * - The function parses the rule JSON string to build the rule and effect structures.
    * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
@@ -402,7 +401,6 @@ export class RulesEngine {
    * @param trackerNameToID - A mapping of tracker names to their corresponding IDs.
    * @returns A promise that resolves to the result of the rule update operation. Returns the result ID if successful, or -1 if the operation fails.
    *
-   * @throws Will retry indefinitely if the contract simulation fails, with a 1-second delay between retries.
    */
   updateRule(
     policyId: number,
@@ -750,7 +748,6 @@ export class RulesEngine {
   /**
    * retrieves the metadata for a calling function from the rules engine component contract.
    *
-   * @param rulesEngineComponentContract - The contract instance containing the address and ABI
    * @param policyId - The ID of the policy which the calling function belongs to.
    * @param callingFunctionId - The Calling Function ID.
    * @returns A promise that resolves to the result of the contract interaction.
@@ -831,7 +828,6 @@ export class RulesEngine {
    *
    * This function proposes a new admin for a specific calling contract.
    *
-   * @param rulesEngineAdminContract - The contract instance containing the address and ABI
    * @param callingContractAddress - The address of the calling contract to set the admin for.
    * @param newAdminAddress - The address to propose as the new admin
    * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
@@ -853,9 +849,8 @@ export class RulesEngine {
   /**
    * Confirm a new calling contract admin in the rules engine admin contract.
    *
-   * This function confirms a new admin for a specific callng contract.
+   * This function confirms a new admin for a specific calling contract.
    *
-   * @param rulesEngineAdminContract - The contract instance containing the address and ABI
    * @param callingContractAddress - The address of the calling contract to set the admin for.
    * @returns A promise that resolves to the result of the contract interaction, or -1 if unsuccessful.
    *
@@ -874,9 +869,8 @@ export class RulesEngine {
    *
    * This function determines whether or not an address is the admin for a specific calling contract.
    *
-   * @param rulesEngineAdminContract - The contract instance containing the address and ABI
    * @param callingContract - The address of the contract to check the admin for.
-   * @param adminAddress - The address to check
+   * @param account - The address to check
    * @returns whether or not the address is the calling contract admin.
    *
    */

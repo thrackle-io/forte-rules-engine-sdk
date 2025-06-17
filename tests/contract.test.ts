@@ -791,7 +791,6 @@ describe("Rules Engine Interactions", async () => {
     var exists = await policyExists(
       config,
       getRulesEnginePolicyContract(rulesEngineContract, client),
-      getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
     expect(exists).toEqual(true);
