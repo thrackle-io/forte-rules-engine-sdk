@@ -20,7 +20,15 @@ import {
   RuleStorageSet,
   Maybe,
   RulesEngineRulesContract,
+  RulesEngineComponentContract,
+  RulesEnginePolicyContract,
+  callingFunctionJSON,
 } from "./types";
+import { getCallingFunctionMetadata } from "./calling-functions";
+import { encode } from "punycode";
+import { buildForeignCallList } from "../parsing/parser";
+import { getForeignCall, getForeignCallMetadata } from "./foreign-calls";
+import { getTrackerMetadata } from "./trackers";
 
 /**
  * @file Rules.ts
@@ -64,7 +72,9 @@ import {
  */
 export const createRule = async (
   config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
+  rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   ruleS: string,
   foreignCallNameToID: FCNameToID[],
@@ -82,18 +92,142 @@ export const createRule = async (
   ) {
     return -1;
   }
+
+  const retrievePolicy = await simulateContract(config, {
+    address: rulesEnginePolicyContract.address,
+    abi: rulesEnginePolicyContract.abi,
+    functionName: "getPolicy",
+    args: [policyId],
+  });
+
+  let policyResult = retrievePolicy.result;
+  let callingFunctions: any = policyResult[0];
+
+  var iter = 1;
+  var encodedValues: string = "";
+  for (var cfId in callingFunctions) {
+    var mapp = await getCallingFunctionMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      iter
+    );
+    if (mapp.callingFunction.trim() == ruleSyntax.callingFunction.trim()) {
+      encodedValues = mapp.encodedValues;
+    }
+    iter += 1;
+  }
+
+  var fcList = await buildForeignCallList(ruleSyntax.condition);
+  var fullFCList = [];
+  for (var fc of fcList) {
+    for (var id of foreignCallNameToID) {
+      if (id.name.trim() == fc.trim()) {
+        var fcChain = await getForeignCall(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        var fcChainMeta = await getForeignCallMetadata(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        for (var ind of fcChain!.encodedIndices) {
+          if (ind.eType == 1) {
+            var fcChainInternal = await getForeignCallMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCList.push("FC:" + fcChainInternal);
+          } else if (ind.eType == 2) {
+            var trackerInternal = await getTrackerMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCList.push("TR:" + trackerInternal);
+          }
+        }
+        fullFCList.push("FC:" + fcChainMeta);
+      }
+    }
+  }
+
+  var fcListEff = [];
+  var fullFCListEff = [];
+  if (ruleSyntax.positiveEffects != null) {
+    for (var eff of ruleSyntax.positiveEffects) {
+      fcListEff.push(...buildForeignCallList(eff));
+    }
+  }
+  if (ruleSyntax.negativeEffects != null) {
+    for (var eff of ruleSyntax.negativeEffects) {
+      fcListEff.push(...buildForeignCallList(eff));
+    }
+  }
+
+  for (var fc of fcListEff) {
+    for (var id of foreignCallNameToID) {
+      if (id.name.trim() == fc.trim()) {
+        var fcChain = await getForeignCall(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        var fcChainMeta = await getForeignCallMetadata(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        for (var ind of fcChain!.encodedIndices) {
+          if (ind.eType == 1) {
+            var fcChainInternal = await getForeignCallMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCListEff.push("FC:" + fcChainInternal);
+          } else if (ind.eType == 2) {
+            var trackerInternal = await getTrackerMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCListEff.push("TR:" + trackerInternal);
+          }
+        }
+        fullFCListEff.push("FC:" + fcChainMeta);
+      }
+    }
+  }
+
   var effects = buildAnEffectStruct(
     effectSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues,
+    fullFCList,
+    fullFCListEff
   );
   var rule = buildARuleStruct(
     ruleSyntax,
     foreignCallNameToID,
     effects,
-    trackerNameToID
+    trackerNameToID,
+    encodedValues,
+    fullFCList,
+    fullFCListEff
   );
-
   var addRule;
   while (true) {
     try {
@@ -139,7 +273,9 @@ export const createRule = async (
  */
 export const updateRule = async (
   config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
+  rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   ruleId: number,
   ruleS: string,
@@ -147,16 +283,141 @@ export const updateRule = async (
   trackerNameToID: FCNameToID[]
 ): Promise<number> => {
   let ruleSyntax: ruleJSON = JSON.parse(ruleS);
+
+  const retrievePolicy = await simulateContract(config, {
+    address: rulesEnginePolicyContract.address,
+    abi: rulesEnginePolicyContract.abi,
+    functionName: "getPolicy",
+    args: [policyId],
+  });
+
+  let policyResult = retrievePolicy.result;
+  let callingFunctions: any = policyResult[0];
+
+  var iter = 1;
+  var encodedValues: string = "";
+  for (var cfId in callingFunctions) {
+    var mapp = await getCallingFunctionMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      iter
+    );
+    if (mapp.callingFunction.trim() == ruleSyntax.callingFunction.trim()) {
+      encodedValues = mapp.encodedValues;
+    }
+    iter += 1;
+  }
+
+  var fcList = await buildForeignCallList(ruleSyntax.condition);
+  var fullFCList = [];
+  for (var fc of fcList) {
+    for (var id of foreignCallNameToID) {
+      if (id.name.trim() == fc.trim()) {
+        var fcChain = await getForeignCall(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        var fcChainMeta = await getForeignCallMetadata(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        for (var ind of fcChain!.encodedIndices) {
+          if (ind.eType == 1) {
+            var fcChainInternal = await getForeignCallMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCList.push("FC:" + fcChainInternal);
+          } else if (ind.eType == 2) {
+            var trackerInternal = await getTrackerMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCList.push("TR:" + trackerInternal);
+          }
+        }
+        fullFCList.push("FC:" + fcChainMeta);
+      }
+    }
+  }
+
+  var fcListEff = [];
+  var fullFCListEff = [];
+  if (ruleSyntax.positiveEffects != null) {
+    for (var eff of ruleSyntax.positiveEffects) {
+      fcListEff.push(...buildForeignCallList(eff));
+    }
+  }
+  if (ruleSyntax.negativeEffects != null) {
+    for (var eff of ruleSyntax.negativeEffects) {
+      fcListEff.push(...buildForeignCallList(eff));
+    }
+  }
+
+  for (var fc of fcListEff) {
+    for (var id of foreignCallNameToID) {
+      if (id.name.trim() == fc.trim()) {
+        var fcChain = await getForeignCall(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        var fcChainMeta = await getForeignCallMetadata(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          id.id
+        );
+        for (var ind of fcChain!.encodedIndices) {
+          if (ind.eType == 1) {
+            var fcChainInternal = await getForeignCallMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCListEff.push("FC:" + fcChainInternal);
+          } else if (ind.eType == 2) {
+            var trackerInternal = await getTrackerMetadata(
+              config,
+              rulesEngineComponentContract,
+              policyId,
+              ind.index
+            );
+            fullFCListEff.push("TR:" + trackerInternal);
+          }
+        }
+        fullFCListEff.push("FC:" + fcChainMeta);
+      }
+    }
+  }
+
   var effects = buildAnEffectStruct(
     ruleSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues,
+    fullFCList,
+    fullFCListEff
   );
   var rule = buildARuleStruct(
     ruleSyntax,
     foreignCallNameToID,
     effects,
-    trackerNameToID
+    trackerNameToID,
+    encodedValues,
+    fullFCList,
+    fullFCListEff
   );
   var addRule;
   while (true) {
@@ -169,6 +430,7 @@ export const updateRule = async (
       });
       break;
     } catch (err) {
+      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }

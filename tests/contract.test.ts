@@ -110,23 +110,32 @@ describe("Rules Engine Interactions", async () => {
   const options = {
     timeout: 999999,
   };
-  test("Can create a new rule", options, async () => {
+  test("Can create a new rule", async () => {
     var result = await createPolicy(
       config,
       getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+    var callingFunction = "addValue(uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "uint256 value"
+    );
     var ruleStringA = `{
         "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
         "positiveEffects": ["revert"],
         "negativeEffects": [],
-        "callingFunction": "addValue(uint256 value)",
-        "encodedValues": "uint256 value"
+        "callingFunction": "addValue(uint256 value)"
         }`;
     var ruleId = await createRule(
       config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       ruleStringA,
       [
@@ -136,14 +145,6 @@ describe("Rules Engine Interactions", async () => {
       []
     );
     expect(ruleId).toBeGreaterThan(0);
-    var callingFunction = "addValue(uint256 value)";
-    const fsId = await createCallingFunction(
-      config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      result.policyId,
-      callingFunction,
-      "uint256"
-    );
     var selector = toFunctionSelector(callingFunction);
     await updatePolicy(
       config,
@@ -167,16 +168,25 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+    var callingFunction = "addValue(uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "uint256 value"
+    );
     var ruleStringA = `{
               "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
               "positiveEffects": ["revert"],
               "negativeEffects": [],
-              "callingFunction": "addValue(uint256 value)",
-              "encodedValues": "uint256 value"
+              "callingFunction": "addValue(uint256 value)"
               }`;
     var ruleId = await createRule(
       config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       ruleStringA,
       [
@@ -186,14 +196,6 @@ describe("Rules Engine Interactions", async () => {
       []
     );
     expect(ruleId).toBeGreaterThan(0);
-    var callingFunction = "addValue(uint256 value)";
-    const fsId = await createCallingFunction(
-      config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      result.policyId,
-      callingFunction,
-      "uint256"
-    );
     var selector = toFunctionSelector(callingFunction);
     await updatePolicy(
       config,
@@ -229,16 +231,25 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+    var callingFunction = "addValue(uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "uint256 value"
+    );
     var ruleStringA = `{
           "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
           "positiveEffects": ["revert"],
           "negativeEffects": [],
-          "callingFunction": "addValue(uint256 value)",
-          "encodedValues": "uint256 value"
+          "callingFunction": "addValue(uint256 value)"
           }`;
     var ruleId = await createRule(
       config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       ruleStringA,
       [],
@@ -248,14 +259,6 @@ describe("Rules Engine Interactions", async () => {
       ]
     );
     expect(ruleId).toBeGreaterThan(0);
-    var callingFunction = "addValue(uint256 value)";
-    const fsId = await createCallingFunction(
-      config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      result.policyId,
-      callingFunction,
-      "uint256"
-    );
     var selector = toFunctionSelector(callingFunction);
     await updatePolicy(
       config,
@@ -272,15 +275,16 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(rules?.length).toEqual(1);
     var ruleStringB = `{
-          "condition": "3 + 4 > 5 AND (FC:testCall == 1 AND 2 == 2)",
-          "positiveEffects": ["FC:testCallTwo"],
+          "condition": "3 + 4 > 5 AND (value == 1 AND 2 == 2)",
+          "positiveEffects": ["revert"],
           "negativeEffects": [],
-          "callingFunction": "addValue(uint256 value)",
-          "encodedValues": "uint256 value"
+          "callingFunction": "addValue(uint256 value)"
           }`;
     var updatedRuleId = await updateRule(
       config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       ruleId,
       ruleStringB,
@@ -299,16 +303,25 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+    var callingFunction = "addValue(uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "uint256 value"
+    );
     var ruleStringA = `{
           "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
           "positiveEffects": ["revert"],
           "negativeEffects": [],
-          "callingFunction": "addValue(uint256 value)",
-          "encodedValues": "uint256 value"
+          "callingFunction": "addValue(uint256 value)"
           }`;
     var ruleId = await createRule(
       config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       ruleStringA,
       [
@@ -318,14 +331,6 @@ describe("Rules Engine Interactions", async () => {
       []
     );
     expect(ruleId).toBeGreaterThan(0);
-    var callingFunction = "addValue(uint256 value)";
-    const fsId = await createCallingFunction(
-      config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
-      result.policyId,
-      callingFunction,
-      "uint256"
-    );
     var selector = toFunctionSelector(callingFunction);
     await updatePolicy(
       config,
@@ -363,16 +368,39 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+
+    var callingFunction =
+      "someFunction(address to, string someString, uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "address to, string someString, uint256 value"
+    );
+
+    var selector = toFunctionSelector(callingFunction);
+    await updatePolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId,
+      [selector],
+      [fsId],
+      [[]]
+    );
+
     var fcSyntax = `{
           "name": "Simple Foreign Call",
           "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
           "function": "testSig(address,string,uint256)",
           "returnType": "uint256",
-          "valuesToPass": "0, 1, 2"
+          "valuesToPass": "to, someString, value",
+          "callingFunction": "someFunction(address to, string someString, uint256 value)"
           }`;
     var fcId = await createForeignCall(
       config,
       getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       result.policyId,
       fcSyntax
     );
@@ -397,16 +425,37 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+    var callingFunction =
+      "someFunction(address to, string someString, uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "address to, string someString, uint256 value"
+    );
+
+    var selector = toFunctionSelector(callingFunction);
+    await updatePolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId,
+      [selector],
+      [fsId],
+      [[]]
+    );
     var fcSyntax = `{
                   "name": "Simple Foreign Call",
                   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                   "function": "testSig(address)",
                   "returnType": "uint256",
-                  "valuesToPass": "0"
+                  "valuesToPass": "to",
+                  "callingFunction": "someFunction(address to, string someString, uint256 value)"
               }`;
     var fcId = await createForeignCall(
       config,
       getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       result.policyId,
       fcSyntax
     );
@@ -445,16 +494,37 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineRulesContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client)
     );
+    var callingFunction =
+      "someFunction(address to, string someString, uint256 value)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "address to, string someString, uint256 value"
+    );
+
+    var selector = toFunctionSelector(callingFunction);
+    await updatePolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId,
+      [selector],
+      [fsId],
+      [[]]
+    );
     var fcSyntax = `{
               "name": "Simple Foreign Call",
               "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
               "function": "testSig(address)",
               "returnType": "uint256",
-              "valuesToPass": "0"
+              "valuesToPass": "to",
+              "callingFunction": "someFunction(address to, string someString, uint256 value)"
           }`;
     var fcId = await createForeignCall(
       config,
       getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       result.policyId,
       fcSyntax
     );
@@ -474,12 +544,14 @@ describe("Rules Engine Interactions", async () => {
     var updatedSyntax = `{
               "name": "Simple Foreign Call",
               "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-              "function": "testSig(address,string,uint256)",
+              "function": "testSig(address)",
               "returnType": "uint256",
-              "valuesToPass": "0, 1, 2"
+              "valuesToPass": "to",
+              "callingFunction": "someFunction(address to, string someString, uint256 value)"
           }`;
     var updatedId = await updateForeignCall(
       config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId,
       fcId,
@@ -511,18 +583,6 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
-    while (true) {
-      if (trAllRetrieve!.length < 1) {
-        await sleep(1000);
-        trAllRetrieve = await getAllTrackers(
-          config,
-          getRulesEngineComponentContract(rulesEngineContract, client),
-          result.policyId
-        );
-      } else {
-        break;
-      }
-    }
     expect(trAllRetrieve?.length).toEqual(1);
     var trRetrieve = await getTracker(
       config,
@@ -558,18 +618,6 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
-    while (true) {
-      if (trAllRetrieve!.length < 1) {
-        await sleep(1000);
-        trAllRetrieve = await getAllTrackers(
-          config,
-          getRulesEngineComponentContract(rulesEngineContract, client),
-          result.policyId
-        );
-      } else {
-        break;
-      }
-    }
     expect(trAllRetrieve?.length).toEqual(1);
     var trRetrieve = await getTracker(
       config,
@@ -605,7 +653,7 @@ describe("Rules Engine Interactions", async () => {
     }
     expect(trAllRetrieve![0].set).toEqual(false);
   });
-  test("Can update an existing tracker", options, async () => {
+  test("Can update an existing tracker", async () => {
     var trSyntax = `{
           "name": "Simple String Tracker",
           "type": "uint256",
@@ -629,18 +677,6 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
-    while (true) {
-      if (trAllRetrieve!.length < 1) {
-        await sleep(1000);
-        trAllRetrieve = await getAllTrackers(
-          config,
-          getRulesEngineComponentContract(rulesEngineContract, client),
-          result.policyId
-        );
-      } else {
-        break;
-      }
-    }
     expect(trAllRetrieve?.length).toEqual(1);
     var trRetrieve = await getTracker(
       config,
@@ -673,18 +709,26 @@ describe("Rules Engine Interactions", async () => {
       "0x0000000000000000000000000000000000000000000000000000000000000005"
     );
   });
-  test("Can retrieve a full policy", options, async () => {
+  test("Can retrieve a full policy", async () => {
     var policyJSON = `
           {
           "Policy": "Test Policy",
           "PolicyType": "open",
+          "CallingFunctions": [
+            {
+              "name": "transfer(address to, uint256 value)",
+              "functionSignature": "transfer(address to, uint256 value)",
+              "encodedValues": "address to, uint256 value"
+            }
+          ],
           "ForeignCalls": [
               {
                   "name": "testSig(address)",
                   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                   "function": "testSig(address)",
                   "returnType": "uint256",
-                  "valuesToPass": "0"
+                  "valuesToPass": "to",
+                  "callingFunction": "transfer(address to, uint256 value)"
               }
           ],
           "Trackers": [
@@ -699,11 +743,11 @@ describe("Rules Engine Interactions", async () => {
                   "condition": "TR:testTracker > 500",
                   "positiveEffects": ["emit Success"],
                   "negativeEffects": ["revert()"],
-                  "callingFunction": "transfer(address to, uint256 value)",
-                  "encodedValues": "address to, uint256 value"
+                  "callingFunction": "transfer(address to, uint256 value)"
               }
           ]
           }`;
+
     var result = await createPolicy(
       config,
       getRulesEnginePolicyContract(rulesEngineContract, client),
@@ -717,19 +761,6 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineComponentContract(rulesEngineContract, client),
       result.policyId
     );
-
-    while (true) {
-      if (resultFC!.length < 1) {
-        await sleep(1000);
-        resultFC = await getAllForeignCalls(
-          config,
-          getRulesEngineComponentContract(rulesEngineContract, client),
-          result.policyId
-        );
-      } else {
-        break;
-      }
-    }
 
     expect(resultFC?.length).toEqual(1);
     var resultTR = await getAllTrackers(
@@ -747,7 +778,7 @@ describe("Rules Engine Interactions", async () => {
     );
     console.log(retVal);
     expect(retVal).toEqual(
-      '{"Trackers":["testTracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256"],"Rules":[{"condition":"TR:testTracker > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"callingFunction":"transfer(address to, uint256 value)","encodedValues":"address to, uint256 value"}]}'
+      '{"Trackers":["testTracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256"],"Rules":[{"condition":"TR:testTracker > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"callingFunction":"transfer(address to, uint256 value)"}]}'
     );
   });
   test("Can check if a policy exists", async () => {
@@ -755,13 +786,28 @@ describe("Rules Engine Interactions", async () => {
       {
       "Policy": "Test Policy",
       "PolicyType": "open",
+      "CallingFunctions": [
+        {
+          "name": "transfer(address to, uint256 value)",
+          "functionSignature": "transfer(address to, uint256 value)",
+          "encodedValues": "address to, uint256 value"
+        }
+      ],
       "ForeignCalls": [
-          {
-              "name": "Simple Foreign Call",
+      {
+              "name": "testSigTwo(uint256)",
               "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-              "function": "testSig(address)",
+              "function": "testSigTwo(uint256)",
               "returnType": "uint256",
-              "valuesToPass": "0"
+              "valuesToPass": "value",
+              "callingFunction": "transfer(address to, uint256 value)"
+      },{
+              "name": "testSig(address)",
+              "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+              "function": "testSig(uint256)",
+              "returnType": "uint256",
+              "valuesToPass": "FC:testSigTwo",
+              "callingFunction": "transfer(address to, uint256 value)"
           }
       ],
       "Trackers": [
@@ -776,8 +822,7 @@ describe("Rules Engine Interactions", async () => {
               "condition": "value > 500",
               "positiveEffects": ["emit Success"],
               "negativeEffects": ["revert()"],
-              "callingFunction": "transfer(address to, uint256 value)",
-              "encodedValues": "address to, uint256 value"
+              "callingFunction": "transfer(address to, uint256 value)"
           }
           ]
           }`;
@@ -802,13 +847,21 @@ describe("Rules Engine Interactions", async () => {
           {
           "Policy": "Test Policy",
           "PolicyType": "open",
+          "CallingFunctions": [
+            {
+              "name": "transfer(address to, uint256 value)",
+              "functionSignature": "transfer(address to, uint256 value)",
+              "encodedValues": "address to, uint256 value"
+            }
+          ],
           "ForeignCalls": [
               {
                   "name": "Simple Foreign Call",
                   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                   "function": "testSig(address)",
                   "returnType": "uint256",
-                  "valuesToPass": "0"
+                  "valuesToPass": "to",
+                  "callingFunction": "transfer(address to, uint256 value)"
               }
           ],
           "Trackers": [
@@ -823,8 +876,7 @@ describe("Rules Engine Interactions", async () => {
                   "condition": "value > 500",
                   "positiveEffects": ["emit Success"],
                   "negativeEffects": ["revert()"],
-                  "callingFunction": "transfer(address to, uint256 value)",
-                  "encodedValues": "address to, uint256 value"
+                  "callingFunction": "transfer(address to, uint256 value)"
               }
           ]
           }`;
@@ -868,19 +920,26 @@ describe("Rules Engine Interactions", async () => {
     },
     { timeout: 15000 }
   );
-
   test("Can check if address is admin", async () => {
     var policyJSON = `
       {
       "Policy": "Test Policy",
       "PolicyType": "open",
+      "CallingFunctions": [
+          {
+            "name": "transfer(address to, uint256 value)",
+            "functionSignature": "transfer(address to, uint256 value)",
+            "encodedValues": "address to, uint256 value"
+          }
+      ],
       "ForeignCalls": [
           {
               "name": "Simple Foreign Call",
               "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
               "function": "testSig(address)",
               "returnType": "uint256",
-              "valuesToPass": "0"
+              "valuesToPass": "to",
+              "callingFunction": "transfer(address to, uint256 value)"
           }
       ],
       "Trackers": [
@@ -895,8 +954,7 @@ describe("Rules Engine Interactions", async () => {
               "condition": "value > 500",
               "positiveEffects": ["emit Success"],
               "negativeEffects": ["revert()"],
-              "callingFunction": "transfer(address to, uint256 value)",
-              "encodedValues": "address to, uint256 value"
+              "callingFunction": "transfer(address to, uint256 value)"
           }
           ]
           }`;
@@ -920,13 +978,21 @@ describe("Rules Engine Interactions", async () => {
       {
       "Policy": "Test Policy",
       "PolicyType": "open",
+      "CallingFunctions": [
+          {
+            "name": "transfer(address to, uint256 value)",
+            "functionSignature": "transfer(address to, uint256 value)",
+            "encodedValues": "address to, uint256 value"
+          }
+      ],
       "ForeignCalls": [
           {
               "name": "Simple Foreign Call",
               "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
               "function": "testSig(address)",
               "returnType": "uint256",
-              "valuesToPass": "0"
+              "valuesToPass": "to",
+              "callingFunction": "transfer(address to, uint256 value)"
           }
       ],
       "Trackers": [
@@ -941,8 +1007,7 @@ describe("Rules Engine Interactions", async () => {
               "condition": "value > 500",
               "positiveEffects": ["emit Success"],
               "negativeEffects": ["revert()"],
-              "callingFunction": "transfer(address to, uint256 value)",
-              "encodedValues": "address to, uint256 value"
+              "callingFunction": "transfer(address to, uint256 value)"
           }
           ]
           }`;
@@ -974,59 +1039,26 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(admin).toEqual(true);
   });
-
-  test(
-    "Can set, poll and update the calling contract admin",
-    options,
-    async () => {
-      await grantCallingContractRole_Utility(
-        config,
-        getRulesEngineAdminContract(rulesEngineContract, client),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
-      );
-      await sleep(5000);
-      var admin = await isCallingContractAdmin(
-        config,
-        getRulesEngineAdminContract(rulesEngineContract, client),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-        getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")
-      );
-      expect(admin).toEqual(true);
-      proposeNewCallingContractAdmin(
-        secondUserConfig,
-        getRulesEngineAdminContract(rulesEngineContract, client),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
-      );
-      await sleep(5000);
-      await confirmNewCallingContractAdmin(
-        config,
-        getRulesEngineAdminContract(rulesEngineContract, secondUserClient),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
-      );
-      await sleep(5000);
-      var admin = await isCallingContractAdmin(
-        config,
-        getRulesEngineAdminContract(rulesEngineContract, client),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-        getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
-      );
-      expect(admin).toEqual(true);
-    }
-  );
   test("Can cement a policy", options, async () => {
     var policyJSON = `
     {
     "Policy": "Test Policy",
     "PolicyType": "open",
+    "CallingFunctions": [
+      {
+        "name": "transfer(address to, uint256 value)",
+        "functionSignature": "transfer(address to, uint256 value)",
+        "encodedValues": "address to, uint256 value"
+      }
+    ],
     "ForeignCalls": [
         {
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address)",
             "returnType": "uint256",
-            "valuesToPass": "0"
+            "valuesToPass": "to",
+            "callingFunction": "transfer(address to, uint256 value)"
         }
     ],
     "Trackers": [
@@ -1041,8 +1073,7 @@ describe("Rules Engine Interactions", async () => {
             "condition": "value > 500",
             "positiveEffects": ["emit Success"],
             "negativeEffects": ["revert()"],
-            "callingFunction": "transfer(address to, uint256 value)",
-            "encodedValues": "address to, uint256 value"
+            "callingFunction": "transfer(address to, uint256 value)"
         }
         ]
         }`;
@@ -1079,7 +1110,6 @@ describe("Rules Engine Interactions", async () => {
       result.policyId
     );
   });
-
   test(
     "Can manipulate closed subscriber list for a policy",
     options,
@@ -1088,13 +1118,21 @@ describe("Rules Engine Interactions", async () => {
     {
     "Policy": "Test Policy",
     "PolicyType": "open",
+    "CallingFunctions": [
+        {
+          "name": "transfer(address to, uint256 value)",
+          "functionSignature": "transfer(address to, uint256 value)",
+          "encodedValues": "address to, uint256 value"
+        }
+    ],
     "ForeignCalls": [
         {
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address)",
             "returnType": "uint256",
-            "valuesToPass": "0"
+            "valuesToPass": "to",
+            "callingFunction": "transfer(address to, uint256 value)"
         }
     ],
     "Trackers": [
@@ -1109,8 +1147,7 @@ describe("Rules Engine Interactions", async () => {
             "condition": "value > 500",
             "positiveEffects": ["emit Success"],
             "negativeEffects": ["revert()"],
-            "callingFunction": "transfer(address to, uint256 value)",
-            "encodedValues": "address to, uint256 value"
+            "callingFunction": "transfer(address to, uint256 value)"
         }
         ]
         }`;

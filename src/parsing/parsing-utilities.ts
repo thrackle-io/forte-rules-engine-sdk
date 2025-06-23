@@ -18,6 +18,7 @@ import {
   FunctionArgument,
   ForeignCall,
   Tracker,
+  RuleComponent,
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 import { getRandom } from "../modules/utils";
@@ -114,7 +115,7 @@ export function parseFunctionArguments(
  * @param condition - The rule condition string.
  * @param names - An array of argument placeholders.
  * @param indexMap - A mapping of tracker IDs to their names and types.
- * 
+ *
  * @returns an array of created Tracker objects.
  */
 export function parseTrackers(
@@ -182,7 +183,7 @@ export function parseTrackers(
     }
   }
 
-  return trackers
+  return trackers;
 }
 
 /**
@@ -202,59 +203,165 @@ export function parseTrackers(
  * - If an FC expression is already present in the `names` array, its existing placeholder
  *   is reused.
  * - Each new FC expression is assigned a unique placeholder in the format `FC:<getRandom()>`.
-  */
+ */
 export function parseForeignCalls(
   condition: string,
   names: any[],
-  foreignCallNameToID: FCNameToID[]
-): [string, ForeignCall[]] {
+  foreignCallNameToID: FCNameToID[],
+  indexMap: FCNameToID[],
+  additionalForeignCalls: string[]
+): [string, RuleComponent[]] {
   // Use a regular expression to find all FC expressions
   const fcRegex = /FC:[a-zA-Z]+[^\s]+/g;
-  const matches = condition.matchAll(fcRegex);
+  // const matches = condition.matchAll(fcRegex);
   let processedCondition = condition;
-  const foreignCalls: ForeignCall[] = [];
 
-  // Convert matches iterator to array to process all at once
-  for (const match of matches) {
-    const fullFcExpr = match[0];
-    if (names.indexOf(match) !== -1) {
-      let ph = names[names.indexOf(match)].fcPlaceholder;
-      processedCondition = processedCondition.replace(fullFcExpr, ph);
-      continue;
-    }
-    // Create a unique placeholder for this FC expression
-    var placeholder = `FC:${getRandom()}`;
-    for (var existing of names) {
-      if (existing.name == fullFcExpr) {
-        placeholder = existing.fcPlaceholder;
-      }
-    }
+  let components: RuleComponent[] = [];
 
-    processedCondition = processedCondition.replace(fullFcExpr, placeholder);
-    var alreadyFound = false;
-    for (var existing of names) {
-      if (existing.name == fullFcExpr) {
-        alreadyFound = true;
-        break;
-      }
-    }
-    if (!alreadyFound) {
-      var index = 0;
-      for (var fcMap of foreignCallNameToID) {
-        if ("FC:" + fcMap.name.trim() == fullFcExpr.trim()) {
-          index = fcMap.id;
+  for (var additional of additionalForeignCalls) {
+    var found = false;
+    // Convert matches iterator to array to process all at once
+    const matches = condition.matchAll(fcRegex);
+    for (const match of matches) {
+      const fullFcExpr = match[0];
+      if (fullFcExpr.trim() == additional.trim()) {
+        found = true;
+        if (names.indexOf(match) !== -1) {
+          let ph = names[names.indexOf(match)].fcPlaceholder;
+          processedCondition = processedCondition.replace(fullFcExpr, ph);
+          continue;
+        }
+        // Create a unique placeholder for this FC expression
+        var placeholder = `FC:${getRandom()}`;
+        for (var existing of names) {
+          if (existing.name == fullFcExpr) {
+            placeholder = existing.fcPlaceholder;
+          }
+        }
+
+        processedCondition = processedCondition.replace(
+          fullFcExpr,
+          placeholder
+        );
+        var alreadyFound = false;
+        for (var existing of names) {
+          if (existing.name == fullFcExpr) {
+            alreadyFound = true;
+            break;
+          }
+        }
+        if (!alreadyFound) {
+          var index = 0;
+
+          for (var fcMap of foreignCallNameToID) {
+            if ("FC:" + fcMap.name.trim() == fullFcExpr.trim()) {
+              index = fcMap.id;
+            }
+          }
+          components.push({
+            name: fullFcExpr,
+            tIndex: index,
+            rawType: "foreign call",
+            fcPlaceholder: placeholder,
+          });
         }
       }
-      foreignCalls.push({
-        name: match[0],
-        tIndex: index,
-        rawType: "foreign call",
-        fcPlaceholder: placeholder,
-      });
+    }
+    if (!found) {
+      var alreadyFound = false;
+      for (var existing of names) {
+        if (existing.name == additional.trim().split("(")[0]) {
+          alreadyFound = true;
+          break;
+        }
+      }
+      if (!alreadyFound) {
+        var index = 0;
+        for (var fcMap of foreignCallNameToID) {
+          if ("FC:" + fcMap.name.trim() == additional.trim().split("(")[0]) {
+            index = fcMap.id;
+          }
+        }
+        if (additional.includes("TR:")) {
+          const trackers = parseTrackers(
+            " " + additional + " ",
+            names,
+            indexMap
+          );
+          components = [...components, ...trackers];
+        } else {
+          components.push({
+            name: additional.trim().split("(")[0],
+            tIndex: index,
+            rawType: "foreign call",
+            fcPlaceholder: "noPH",
+          });
+        }
+      }
     }
   }
 
-  return [processedCondition, foreignCalls];
+  return [processedCondition, components];
+}
+
+export function cleanseForeignCallLists(doubleArray: any[]): any[] {
+  var iterToSkip = 0;
+  for (var innerArray of doubleArray) {
+    for (var value of innerArray) {
+      if (value.fcPlaceholder != "noPH" && value.rawType == "foreign call") {
+        var secondLoopIter = 0;
+        for (var secondLoopArray of doubleArray) {
+          if (secondLoopIter == iterToSkip) {
+            secondLoopIter += 1;
+            continue;
+          } else {
+            var thirdLoopIter = 0;
+            var itersToRemove = [];
+            for (var innerValue of secondLoopArray) {
+              if (
+                innerValue.fcPlaceholder == "noPH" &&
+                innerValue.name == value.name
+              ) {
+                itersToRemove.push(thirdLoopIter);
+              }
+              thirdLoopIter += 1;
+            }
+            for (var fourthLoopIter of itersToRemove)
+              doubleArray[secondLoopIter].splice(fourthLoopIter, 1);
+          }
+          secondLoopIter += 1;
+        }
+      }
+    }
+    iterToSkip += 1;
+  }
+  var finalizedArray = [];
+  for (var innerArray of doubleArray) {
+    for (var value of innerArray) {
+      finalizedArray.push(value);
+    }
+  }
+
+  var toRemove = [];
+  var iterToSkip = 0;
+  for (var passOne of finalizedArray) {
+    var secondIter = 0;
+    for (var passTwo of finalizedArray) {
+      if (secondIter > iterToSkip) {
+        if (passOne.name == passTwo.name) {
+          toRemove.push(secondIter);
+        }
+      }
+      secondIter += 1;
+    }
+    iterToSkip += 1;
+  }
+
+  toRemove = [...new Set(toRemove)];
+  for (var secondRemoval of toRemove) {
+    finalizedArray.splice(secondRemoval, 1);
+  }
+  return finalizedArray;
 }
 
 /**
@@ -296,8 +403,10 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
     var placeHolder: PlaceholderStruct = {
       pType: placeHolderEnum,
       typeSpecificIndex: name.tIndex,
-      trackerValue: tracker,
-      foreignCall: name.rawType == "foreign call",
+      mappedTrackerKey: encodeAbiParameters(parseAbiParameters("uint256"), [
+        BigInt(1),
+      ]),
+      flags: name.rawType == "foreign call" ? 0x01 : tracker ? 0x02 : 0x00,
     };
     placeHolders.push(placeHolder);
   }
@@ -392,7 +501,6 @@ export function buildRawData(
   excludeArray: string[]
 ): number[] {
   return instructionSet.map((instruction) => {
-
     // Only capture values that aren't naturally numbers
     if (!isNaN(Number(instruction))) {
       return BigInt(instruction);
@@ -407,7 +515,9 @@ export function buildRawData(
         return BigInt(
           keccak256(
             encodeAbiParameters(
-              parseAbiParameters(instruction.startsWith("0x") ? "bytes" : "string"),
+              parseAbiParameters(
+                instruction.startsWith("0x") ? "bytes" : "string"
+              ),
               [instruction]
             )
           )

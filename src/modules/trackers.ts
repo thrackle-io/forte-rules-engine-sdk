@@ -61,6 +61,8 @@ export const createTracker = async (
     var transactionTracker = {
       set: true,
       pType: tracker.type,
+      mapped: false,
+      trackerKeyType: tracker.type,
       trackerValue: tracker.initialValue,
       trackerIndex: 0,
     };
@@ -75,6 +77,7 @@ export const createTracker = async (
         });
         break;
       } catch (err) {
+        console.log(err);
         // TODO: Look into replacing this loop/sleep with setTimeout
         await sleep(1000);
       }
@@ -123,6 +126,8 @@ export const updateTracker = async (
     var transactionTracker = {
       set: true,
       pType: tracker.type,
+      mapped: false,
+      trackerKeyType: tracker.type,
       trackerValue: tracker.initialValue,
       trackerIndex: trackerId,
     };
@@ -137,6 +142,7 @@ export const updateTracker = async (
         });
         break;
       } catch (err) {
+        console.log(err);
         // TODO: Look into replacing this loop/sleep with setTimeout
         await sleep(1000);
       }

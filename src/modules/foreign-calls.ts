@@ -8,13 +8,23 @@ import {
   Config,
 } from "@wagmi/core";
 import { sleep } from "./contract-interaction-utils";
-import { parseForeignCallDefinition } from "../parsing/parser";
+import {
+  parseCallingFunction,
+  parseForeignCallDefinition,
+} from "../parsing/parser";
 import {
   ForeignCallOnChain,
   RulesEngineComponentContract,
   Maybe,
+  TrackerOnChain,
+  FCNameToID,
+  RulesEnginePolicyContract,
+  foreignCallJSON,
+  callingFunctionJSON,
 } from "./types";
 import { isRight, unwrapEither } from "./utils";
+import { getAllTrackers, getTrackerMetadata } from "./trackers";
+import { getCallingFunctionMetadata } from "./calling-functions";
 
 /**
  * @file ForeignCalls.ts
@@ -57,11 +67,79 @@ import { isRight, unwrapEither } from "./utils";
 export const createForeignCall = async (
   config: Config,
   rulesEngineComponentContract: RulesEngineComponentContract,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
   policyId: number,
   fcSyntax: string
 ): Promise<number> => {
-  const json = JSON.parse(fcSyntax);
-  const parsedForeignCall = parseForeignCallDefinition(json);
+  const json: foreignCallJSON = JSON.parse(fcSyntax);
+
+  var trackers: TrackerOnChain[] = await getAllTrackers(
+    config,
+    rulesEngineComponentContract,
+    policyId
+  );
+  var indexMap: FCNameToID[] = [];
+  for (var tracker of trackers) {
+    var id = tracker.trackerIndex;
+    var name = await getTrackerMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      id
+    );
+    indexMap.push({ name: name, id: id, type: 0 });
+  }
+
+  var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(
+    config,
+    rulesEngineComponentContract,
+    policyId
+  );
+  var fcMap: FCNameToID[] = [];
+  for (var fcall of foreignCalls) {
+    var id = fcall.foreignCallIndex;
+    var name = await getForeignCallMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      id
+    );
+    fcMap.push({ name: name, id: id, type: 0 });
+  }
+  const retrievePolicy = await simulateContract(config, {
+    address: rulesEnginePolicyContract.address,
+    abi: rulesEnginePolicyContract.abi,
+    functionName: "getPolicy",
+    args: [policyId],
+  });
+
+  let policyResult = retrievePolicy.result;
+  let callingFunctions: any = policyResult[0];
+  var iter = 1;
+  var encodedValues: string[] = [];
+  for (var cfId in callingFunctions) {
+    var mapp = await getCallingFunctionMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      iter
+    );
+    if (mapp.callingFunction.trim() == json.callingFunction.trim()) {
+      var builtJSON: callingFunctionJSON = {
+        name: json.callingFunction,
+        functionSignature: json.callingFunction,
+        encodedValues: mapp.encodedValues,
+      };
+      encodedValues = parseCallingFunction(builtJSON);
+    }
+    iter += 1;
+  }
+  const parsedForeignCall = parseForeignCallDefinition(
+    json,
+    fcMap,
+    indexMap,
+    encodedValues
+  );
   if (isRight(parsedForeignCall)) {
     const foreignCall = unwrapEither(parsedForeignCall);
     var fc = {
@@ -71,7 +149,7 @@ export const createForeignCall = async (
       foreignCallIndex: 0,
       returnType: foreignCall.returnType,
       parameterTypes: foreignCall.parameterTypes,
-      typeSpecificIndices: foreignCall.valuesToPass,
+      encodedIndices: foreignCall.encodedIndices,
     };
     var addFC;
     while (true) {
@@ -86,6 +164,7 @@ export const createForeignCall = async (
       } catch (err) {
         // TODO: Look into replacing this loop/sleep with setTimeout
         await sleep(1000);
+        return -1;
       }
     }
     if (addFC != null) {
@@ -123,13 +202,84 @@ export const createForeignCall = async (
  */
 export const updateForeignCall = async (
   config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
   policyId: number,
   foreignCallId: number,
   fcSyntax: string
 ): Promise<number> => {
   const json = JSON.parse(fcSyntax);
-  const parsedForeignCall = parseForeignCallDefinition(json);
+
+  var trackers: TrackerOnChain[] = await getAllTrackers(
+    config,
+    rulesEngineComponentContract,
+    policyId
+  );
+  var indexMap: FCNameToID[] = [];
+  for (var tracker of trackers) {
+    var id = tracker.trackerIndex;
+    var name = await getTrackerMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      id
+    );
+    indexMap.push({ name: name, id: id, type: 0 });
+  }
+
+  var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(
+    config,
+    rulesEngineComponentContract,
+    policyId
+  );
+  var fcMap: FCNameToID[] = [];
+  for (var fcall of foreignCalls) {
+    var id = fcall.foreignCallIndex;
+    var name = await getForeignCallMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      id
+    );
+    fcMap.push({ name: name, id: id, type: 0 });
+  }
+
+  const retrievePolicy = await simulateContract(config, {
+    address: rulesEnginePolicyContract.address,
+    abi: rulesEnginePolicyContract.abi,
+    functionName: "getPolicy",
+    args: [policyId],
+  });
+
+  let policyResult = retrievePolicy.result;
+  let callingFunctions: any = policyResult[0];
+
+  var iter = 1;
+  var encodedValues: string[] = [];
+  for (var cfId in callingFunctions) {
+    var mapp = await getCallingFunctionMetadata(
+      config,
+      rulesEngineComponentContract,
+      policyId,
+      iter
+    );
+    if (mapp.callingFunction.trim() == json.callingFunction.trim()) {
+      var builtJSON: callingFunctionJSON = {
+        name: json.callingFunction,
+        functionSignature: json.callingFunction,
+        encodedValues: mapp.encodedValues,
+      };
+      encodedValues = parseCallingFunction(builtJSON);
+    }
+    iter += 1;
+  }
+
+  const parsedForeignCall = parseForeignCallDefinition(
+    json,
+    fcMap,
+    indexMap,
+    encodedValues
+  );
   if (isRight(parsedForeignCall)) {
     const foreignCall = unwrapEither(parsedForeignCall);
     var fc = {
@@ -139,9 +289,10 @@ export const updateForeignCall = async (
       foreignCallIndex: 0,
       returnType: foreignCall.returnType,
       parameterTypes: foreignCall.parameterTypes,
-      typeSpecificIndices: foreignCall.valuesToPass,
+      encodedIndices: foreignCall.encodedIndices,
     };
     var addFC;
+
     while (true) {
       try {
         addFC = await simulateContract(config, {
