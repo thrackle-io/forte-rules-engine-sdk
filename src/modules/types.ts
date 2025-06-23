@@ -1,10 +1,10 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { Abi, Address, ByteArray, GetContractReturnType, Hex } from "viem";
 
-import RulesEnginePolicyLogicArtifact from "../abis/RulesEnginePolicyFacet.json";
-import RulesEngineComponentLogicArtifact from "../abis/RulesEngineComponentFacet.json";
-import RulesEngineRuleLogicArtifact from "../abis/RulesEngineRuleFacet.json";
-import RulesEngineAdminLogicArtifact from "../abis/RulesEngineAdminRolesFacet.json";
+import RulesEnginePolicyLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEnginePolicyFacet.sol/RulesEnginePolicyFacet.json";
+import RulesEngineComponentLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineComponentFacet.sol/RulesEngineComponentFacet.json";
+import RulesEngineRuleLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json";
+import RulesEngineAdminLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineAdminRolesFacet.sol/RulesEngineAdminRolesFacet.json";
 
 /**
  * @file types.ts
