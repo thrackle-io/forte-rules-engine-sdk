@@ -91,6 +91,7 @@ export const createForeignCall = async (
     if (addFC != null) {
       const returnHash = await writeContract(config, {
         ...addFC.request,
+        account: config.getClient().account,
       });
       await waitForTransactionReceipt(config, {
         hash: returnHash,
@@ -158,6 +159,7 @@ export const updateForeignCall = async (
     if (addFC != null) {
       const returnHash = await writeContract(config, {
         ...addFC.request,
+        account: config.getClient().account,
       });
       await waitForTransactionReceipt(config, {
         hash: returnHash,
@@ -205,6 +207,7 @@ export const deleteForeignCall = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
