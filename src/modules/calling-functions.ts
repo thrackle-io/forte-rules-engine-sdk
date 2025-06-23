@@ -93,6 +93,7 @@ export const createCallingFunction = async (
   if (addRule != null) {
     const returnHash = await writeContract(config, {
       ...addRule.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -134,6 +135,7 @@ export const deleteCallingFunction = async (
   if (addRule != null) {
     const returnHash = await writeContract(config, {
       ...addRule.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,

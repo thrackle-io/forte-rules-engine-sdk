@@ -66,6 +66,7 @@ export const proposeNewPolicyAdmin = async (
   if (proposeAdmin != null) {
     const returnHash = await writeContract(config, {
       ...proposeAdmin.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -107,6 +108,7 @@ export const confirmNewPolicyAdmin = async (
   if (confirmAdmin != null) {
     const returnHash = await writeContract(config, {
       ...confirmAdmin.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -175,6 +177,7 @@ export const grantCallingContractRole_Utility = async (
   if (confirmAdmin != null) {
     const returnHash = await writeContract(config, {
       ...confirmAdmin.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -217,6 +220,7 @@ export const proposeNewCallingContractAdmin = async (
   if (proposeAdmin != null) {
     const returnHash = await writeContract(config, {
       ...proposeAdmin.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
@@ -258,6 +262,7 @@ export const confirmNewCallingContractAdmin = async (
   if (confirmAdmin != null) {
     const returnHash = await writeContract(config, {
       ...confirmAdmin.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,

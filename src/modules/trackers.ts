@@ -81,6 +81,7 @@ export const createTracker = async (
     if (addTR != null) {
       const returnHash = await writeContract(config, {
         ...addTR.request,
+        account: config.getClient().account,
       });
       await waitForTransactionReceipt(config, {
         hash: returnHash,
@@ -141,6 +142,7 @@ export const updateTracker = async (
     if (addTR != null) {
       const returnHash = await writeContract(config, {
         ...addTR.request,
+        account: config.getClient().account,
       });
       await waitForTransactionReceipt(config, {
         hash: returnHash,
@@ -186,6 +188,7 @@ export const deleteTracker = async (
   if (addFC != null) {
     const returnHash = await writeContract(config, {
       ...addFC.request,
+      account: config.getClient().account,
     });
     await waitForTransactionReceipt(config, {
       hash: returnHash,
