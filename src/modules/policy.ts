@@ -514,7 +514,10 @@ export const getPolicy = async (
       callingFunctionMappings.push(newMapping);
     }
 
-    const trackerStrings = convertTrackerStructsToStrings(trackers, trackerNames);
+    const trackerStrings = convertTrackerStructsToStrings(
+      trackers,
+      trackerNames
+    );
 
     var iter = 0;
     var ruleJSONObjs = [];
@@ -538,8 +541,6 @@ export const getPolicy = async (
         );
         var plhArray: string[] = [];
         if (ruleS != null) {
-          console.log("encodedValues", encodedValues);
-          console.log("ruleS", ruleS);
           ruleJSONObjs.push(
             convertRuleStructToString(
               functionString,

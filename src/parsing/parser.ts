@@ -91,7 +91,6 @@ export function parseRuleSyntax(
   let ruleComponents: RuleComponent[] = [
     ...parseFunctionArguments(encodedValues, condition),
   ];
-  console.log("ruleCOMP", ruleComponents);
   var effectNames: any[] = [];
   var effectNamesMega: any[] = [];
   const [fcCondition, fcNames] = parseForeignCalls(
@@ -105,7 +104,6 @@ export function parseRuleSyntax(
   const trackers = parseTrackers(fcCondition, ruleComponents, indexMap);
   ruleComponents = [...ruleComponents, ...trackers];
   var placeHolders = buildPlaceholderList(ruleComponents);
-  console.log("ruleCOMP two", ruleComponents);
   for (var effectP in syntax.positiveEffects) {
     var effectNamesInternal: any[] = [];
 

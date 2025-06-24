@@ -238,12 +238,10 @@ export function parseForeignCalls(
             placeholder = existing.fcPlaceholder;
           }
         }
-        console.log("before", processedCondition);
         processedCondition = processedCondition.replace(
           fullFcExpr,
           placeholder
         );
-        console.log("afer", processedCondition);
         var alreadyFound = false;
         for (var existing of names) {
           if (existing.name == fullFcExpr) {

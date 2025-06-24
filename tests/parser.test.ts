@@ -1823,8 +1823,6 @@ test("Evaluate a simple syntax string that contains multiple positive and negati
   expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
   expect(retVal.negativeEffects[1].type).toBe(EffectType.EXPRESSION);
   expect(retVal.negativeEffects[1].text).toEqual("");
-  console.log(retVal.effectPlaceHolders);
-  console.log("ITS RIGHT HERE", retVal.negativeEffects[1].instructionSet);
   expect(retVal.negativeEffects[1].instructionSet).toEqual([
     "PLH",
     0,

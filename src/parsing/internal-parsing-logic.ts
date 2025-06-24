@@ -160,7 +160,6 @@ function convertASTToInstructionSet(
   placeHolders: PlaceholderStruct[],
   indexMap: trackerIndexNameMapping[]
 ): ASTAccumulator {
-  console.log(expression);
   // If it's a number add it directly to the instruction set and store its memory location in mem
   if (typeof expression == "number" || typeof expression == "bigint") {
     acc.instructionSet.push("N");
@@ -173,8 +172,6 @@ function convertASTToInstructionSet(
     var foundMatch = false;
     var plhIndex = 0;
     for (var parameter of parameterNames) {
-      console.log("WTF One", parameter);
-      console.log("WTF two", expression[0].trim());
       if (parameter.name == expression[0].trim()) {
         foundMatch = true;
         var plhIter = 0;
@@ -224,11 +221,7 @@ function convertASTToInstructionSet(
 
         // Check if the expression is a foreign call
       } else if (parameter.fcPlaceholder) {
-        console.log("parameter.fcPlaceholder", parameter.fcPlaceholder);
-        console.log("expression[0].trim()", expression[0].trim());
         if (parameter.fcPlaceholder == expression[0].trim()) {
-          console.log("found match", parameter.fcPlaceholder);
-          console.log(plhIndex);
           foundMatch = true;
           acc.instructionSet.push("PLH");
           acc.instructionSet.push(plhIndex);
