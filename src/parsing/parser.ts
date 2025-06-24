@@ -19,6 +19,7 @@ import {
   PlaceholderStruct,
   PT,
   pTypeEnum,
+  RuleComponent,
   RuleDefinition,
   ruleJSON,
   RulesError,
@@ -90,6 +91,7 @@ export function parseRuleSyntax(
   let ruleComponents: RuleComponent[] = [
     ...parseFunctionArguments(encodedValues, condition),
   ];
+  console.log("ruleCOMP", ruleComponents);
   var effectNames: any[] = [];
   var effectNamesMega: any[] = [];
   const [fcCondition, fcNames] = parseForeignCalls(
@@ -103,7 +105,7 @@ export function parseRuleSyntax(
   const trackers = parseTrackers(fcCondition, ruleComponents, indexMap);
   ruleComponents = [...ruleComponents, ...trackers];
   var placeHolders = buildPlaceholderList(ruleComponents);
-
+  console.log("ruleCOMP two", ruleComponents);
   for (var effectP in syntax.positiveEffects) {
     var effectNamesInternal: any[] = [];
 
@@ -178,7 +180,7 @@ export function parseRuleSyntax(
   }
 
   var retVal = convertHumanReadableToInstructionSet(
-    condition,
+    fcCondition,
     ruleComponents,
     indexMap,
     placeHolders
@@ -191,9 +193,9 @@ export function parseRuleSyntax(
   excludeArray.push(...matchArray);
   excludeArray.push(...operandArray);
   var raw = buildRawData(retVal, excludeArray);
+
   return {
-    instructionSet: retVal,
-    rawData: raw,
+    instructionSet: raw,
     positiveEffects: positiveEffectsFinal,
     negativeEffects: negativeEffectsFinal,
     placeHolders: placeHolders,

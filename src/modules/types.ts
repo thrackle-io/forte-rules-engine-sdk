@@ -140,7 +140,6 @@ export type EffectStructs = {
 
 export type RuleBase = {
   instructionSet: any[];
-  rawData: any[];
   placeHolders: any[];
   effectPlaceHolders: any[];
 };
