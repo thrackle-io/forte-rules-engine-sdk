@@ -358,13 +358,12 @@ export function convertRuleStructToString(
     positiveEffects: [],
     negativeEffects: [],
     callingFunction: "",
-    encodedValues: "",
   };
 
   var names = parseFunctionArguments(encodedValues);
 
   for (var plh of ruleS!.placeHolders) {
-    if (plh.foreignCall) {
+    if (plh.flags == 0x01) {
       for (var call of foreignCalls) {
         if (call.foreignCallIndex == plh.typeSpecificIndex) {
           for (var map of mappings) {
@@ -374,7 +373,7 @@ export function convertRuleStructToString(
           }
         }
       }
-    } else if (plh.trackerValue) {
+    } else if (plh.flags == 0x02) {
       for (var tracker of trackers) {
         if (tracker.trackerIndex == plh.typeSpecificIndex) {
           for (var map of mappings) {
@@ -417,7 +416,6 @@ export function convertRuleStructToString(
   }
   rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, []);
   rJSON.callingFunction = functionString;
-  rJSON.encodedValues = encodedValues;
   return rJSON;
 }
 

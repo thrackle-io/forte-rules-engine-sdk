@@ -68,6 +68,7 @@ export type CallingFunctionHashMapping = {
 export interface PolicyJSON {
   Policy: string;
   PolicyType: string;
+  CallingFunctions: callingFunctionJSON[];
   ForeignCalls: foreignCallJSON[];
   Trackers: trackerJSON[];
   Rules: ruleJSON[];
@@ -79,6 +80,7 @@ export interface foreignCallJSON {
   address: string;
   returnType: string;
   valuesToPass: string;
+  callingFunction: string;
 }
 
 export interface trackerJSON {
@@ -92,6 +94,11 @@ export interface ruleJSON {
   positiveEffects: string[];
   negativeEffects: string[];
   callingFunction: string;
+}
+
+export interface callingFunctionJSON {
+  name: string;
+  functionSignature: string;
   encodedValues: string;
 }
 
@@ -118,9 +125,9 @@ export type EffectStruct = {
   valid: boolean;
   dynamicParam: boolean;
   effectType: EffectType;
-  text: Hex;
   pType: number;
   param: any;
+  text: Hex;
   errorMessage: string;
   instructionSet: any[];
 };
@@ -151,7 +158,7 @@ export type ForeignCallOnChain = {
   returnType: number;
   foreignCallIndex: number;
   parameterTypes: number[];
-  typeSpecificIndices: number[];
+  encodedIndices: ForeignCallEncodedIndex[];
 };
 
 export type TrackerOnChain = {
@@ -167,14 +174,19 @@ export type ForeignCallDefinition = {
   function: string;
   returnType: number;
   parameterTypes: number[];
-  valuesToPass: number[];
+  encodedIndices: ForeignCallEncodedIndex[];
+};
+
+export type ForeignCallEncodedIndex = {
+  eType: number;
+  index: number;
 };
 
 export type PlaceholderStruct = {
   pType: number;
   typeSpecificIndex: number;
-  trackerValue: boolean;
-  foreignCall: boolean;
+  mappedTrackerKey: any;
+  flags: number;
 };
 
 export type IndividualArugmentMapping = {
@@ -195,18 +207,18 @@ export type FunctionArgument = {
 };
 
 export type ForeignCall = {
-  name: string,
-  tIndex: number,
-  rawType: "foreign call",
-  fcPlaceholder: string,
-}
+  name: string;
+  tIndex: number;
+  rawType: "foreign call";
+  fcPlaceholder: string;
+};
 
 export type Tracker = {
-  name: string,
-  tIndex: number,
-  rawType: "tracker",
-  rawTypeTwo?: string,
-}
+  name: string;
+  tIndex: number;
+  rawType: "tracker";
+  rawTypeTwo?: string;
+};
 
 export type RuleComponent = FunctionArgument | ForeignCall | Tracker;
 
@@ -281,13 +293,17 @@ export const PT = [
   { name: "bytes", enumeration: pTypeEnum.BYTES },
 ];
 
-export type ErrorType = "INPUT" | "CONTRACT_READ" | "CONTRACT_WRITE" | "COMPILATION";
+export type ErrorType =
+  | "INPUT"
+  | "CONTRACT_READ"
+  | "CONTRACT_WRITE"
+  | "COMPILATION";
 
 export type RulesError = {
   errorType: ErrorType;
   state: any;
   message: string;
-}
+};
 
 export type Left<T> = {
   left: T;
@@ -306,7 +322,7 @@ export type UnwrapEither = <T, U>(e: Either<T, U>) => NonNullable<T | U>;
 export type Maybe<T> = NonNullable<T> | null;
 
 export type ASTAccumulator = {
-  instructionSet: any[],
-  mem: any[],
+  instructionSet: any[];
+  mem: any[];
   iterator: { value: number };
-}
+};

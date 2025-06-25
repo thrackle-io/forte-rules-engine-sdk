@@ -10,6 +10,7 @@ import {
 } from "@wagmi/core";
 
 import {
+  parseCallingFunction,
   parseForeignCallDefinition,
   parseTrackerSyntax,
 } from "../parsing/parser";
@@ -88,6 +89,7 @@ export const createPolicy = async (
   let ruleIds = [];
   let ruleToCallingFunction = new Map<string, number[]>();
   let callingFunctions: string[] = [];
+  let callingFunctionParamSets = [];
   let callingFunctionIds: number[] = [];
   let rulesDoubleMapping = [];
   let callingFunctionSelectors = [];
@@ -97,7 +99,7 @@ export const createPolicy = async (
     address: rulesEnginePolicyContract.address,
     abi: rulesEnginePolicyContract.abi,
     functionName: "createPolicy",
-    args: [[], [], 1],
+    args: [1],
   });
   const returnHash = await writeContract(config, {
     ...addPolicy.request,
@@ -111,26 +113,37 @@ export const createPolicy = async (
 
   if (policySyntax !== undefined) {
     let policyJSON: PolicyJSON = JSON.parse(policySyntax);
-    if (policyJSON.ForeignCalls != null) {
-      for (var foreignCall of policyJSON.ForeignCalls) {
-        const parsedFC = parseForeignCallDefinition(foreignCall);
-        if (isRight(parsedFC)) {
-          const fcStruct = unwrapEither(parsedFC);
-          const fcId = await createForeignCall(
-            config,
-            rulesEngineComponentContract,
-            policyId,
-            JSON.stringify(foreignCall)
-          );
-          var struc: FCNameToID = {
-            id: fcId,
-            name: fcStruct.name.split("(")[0],
-            type: 0,
-          };
-          fcIds.push(struc);
-        } else {
-          throw new Error(unwrapEither(parsedFC).message);
-        }
+
+    for (var callingFunctionJSON of policyJSON.CallingFunctions) {
+      var callingFunction = callingFunctionJSON.functionSignature;
+      if (!callingFunctions.includes(callingFunction)) {
+        callingFunctions.push(callingFunction);
+        const fsId = await createCallingFunction(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          callingFunction,
+          callingFunctionJSON.encodedValues
+        );
+        callingFunctionIds.push(fsId);
+        callingFunctionParamSets.push(
+          parseCallingFunction(callingFunctionJSON)
+        );
+        callingFunctionMappings.push({
+          hex: toFunctionSelector(callingFunction),
+          functionString: callingFunction,
+          encodedValues: callingFunctionJSON.encodedValues,
+          index: -1,
+        });
+        var selector = toFunctionSelector(callingFunction);
+        await updatePolicy(
+          config,
+          rulesEnginePolicyContract,
+          policyId,
+          [selector],
+          [fsId],
+          [[]]
+        );
       }
     }
 
@@ -158,29 +171,50 @@ export const createPolicy = async (
       }
     }
 
-    for (var rule of policyJSON.Rules) {
-      var callingFunction = rule.callingFunction.trim();
-      if (!callingFunctions.includes(callingFunction)) {
-        callingFunctions.push(callingFunction);
-        const fsId = await createCallingFunction(
-          config,
-          rulesEngineComponentContract,
-          policyId,
-          callingFunction,
-          rule.encodedValues
+    if (policyJSON.ForeignCalls != null) {
+      for (var foreignCall of policyJSON.ForeignCalls) {
+        var encodedValues: string[] = [];
+        var iter = 0;
+        for (var calling of callingFunctions) {
+          if (foreignCall.callingFunction.trim() == calling.trim()) {
+            encodedValues = callingFunctionParamSets[iter];
+            break;
+          }
+          iter += 1;
+        }
+        const parsedFC = parseForeignCallDefinition(
+          foreignCall,
+          fcIds,
+          trackerIds,
+          encodedValues
         );
-        callingFunctionIds.push(fsId);
-        callingFunctionMappings.push({
-          hex: toFunctionSelector(callingFunction),
-          functionString: callingFunction,
-          encodedValues: rule.encodedValues,
-          index: -1,
-        });
+        if (isRight(parsedFC)) {
+          const fcStruct = unwrapEither(parsedFC);
+          const fcId = await createForeignCall(
+            config,
+            rulesEngineComponentContract,
+            rulesEnginePolicyContract,
+            policyId,
+            JSON.stringify(foreignCall)
+          );
+          var struc: FCNameToID = {
+            id: fcId,
+            name: fcStruct.name.split("(")[0],
+            type: 0,
+          };
+          fcIds.push(struc);
+        } else {
+          throw new Error(unwrapEither(parsedFC).message);
+        }
       }
+    }
 
+    for (var rule of policyJSON.Rules) {
       const ruleId = await createRule(
         config,
+        rulesEnginePolicyContract,
         rulesEngineRulesContract,
+        rulesEngineComponentContract,
         policyId,
         JSON.stringify(rule),
         fcIds,
@@ -190,10 +224,10 @@ export const createPolicy = async (
         return { policyId: -1 };
       }
       ruleIds.push(ruleId);
-      if (ruleToCallingFunction.has(callingFunction)) {
-        ruleToCallingFunction.get(callingFunction)?.push(ruleId);
+      if (ruleToCallingFunction.has(rule.callingFunction)) {
+        ruleToCallingFunction.get(rule.callingFunction)?.push(ruleId);
       } else {
-        ruleToCallingFunction.set(callingFunction, [ruleId]);
+        ruleToCallingFunction.set(rule.callingFunction, [ruleId]);
       }
     }
 
@@ -480,7 +514,10 @@ export const getPolicy = async (
       callingFunctionMappings.push(newMapping);
     }
 
-    const trackerStrings = convertTrackerStructsToStrings(trackers, trackerNames);
+    const trackerStrings = convertTrackerStructsToStrings(
+      trackers,
+      trackerNames
+    );
 
     var iter = 0;
     var ruleJSONObjs = [];

@@ -20,6 +20,7 @@ import {
   EffectStruct,
   EffectStructs,
   FCNameToID,
+  ForeignCallOnChain,
   ruleJSON,
   RulesEngineAdminABI,
   RulesEngineAdminContract,
@@ -31,6 +32,8 @@ import {
   RulesEngineRulesContract,
   RuleStruct,
 } from "./types";
+import { getForeignCall } from "./foreign-calls";
+import { config } from "dotenv";
 
 /**
  * @file ContractInteractionUtils.ts
@@ -131,9 +134,13 @@ export function buildARuleStruct(
   ruleSyntax: ruleJSON,
   foreignCallNameToID: FCNameToID[],
   effect: EffectStructs,
-  trackerNameToID: FCNameToID[]
+  trackerNameToID: FCNameToID[],
+  encodedValues: string,
+  additionalForeignCalls: string[],
+  additionalEffectForeignCalls: string[]
 ): RuleStruct {
   var fcList = buildForeignCallList(ruleSyntax.condition);
+
   if (ruleSyntax.positiveEffects != null) {
     for (var eff of ruleSyntax.positiveEffects) {
       fcList.push(...buildForeignCallList(eff));
@@ -148,7 +155,10 @@ export function buildARuleStruct(
   var output = parseRuleSyntax(
     ruleSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues,
+    additionalForeignCalls,
+    additionalEffectForeignCalls
   );
   var trList = buildTrackerList(ruleSyntax.condition);
   if (ruleSyntax.positiveEffects != null) {
@@ -248,12 +258,18 @@ export function buildARuleStruct(
 export function buildAnEffectStruct(
   ruleSyntax: ruleJSON,
   trackerNameToID: FCNameToID[],
-  foreignCallNameToID: FCNameToID[]
+  foreignCallNameToID: FCNameToID[],
+  encodedValues: string,
+  additionalForeignCalls: string[],
+  additionalEffectForeignCalls: string[]
 ): EffectStructs {
   var output = parseRuleSyntax(
     ruleSyntax,
     trackerNameToID,
-    foreignCallNameToID
+    foreignCallNameToID,
+    encodedValues,
+    additionalForeignCalls,
+    additionalEffectForeignCalls
   );
   var pEffects: EffectStruct[] = [];
   var nEffects: EffectStruct[] = [];
