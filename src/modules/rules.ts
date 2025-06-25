@@ -101,19 +101,26 @@ export const createRule = async (
   });
 
   let policyResult = retrievePolicy.result;
-  let callingFunctions: any = policyResult[0];
 
-  var iter = 1;
-  var encodedValues: string = "";
-  for (var cfId in callingFunctions) {
-    var mapp = await getCallingFunctionMetadata(
+  let callingFunctionIds: number[] = policyResult[1];
+  const callingFunctionsMetadataCalls = callingFunctionIds.map((cfId) =>
+    getCallingFunctionMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      iter
-    );
+      cfId
+    )
+  );
+  const callingFunctionMetadata = await Promise.all(
+    callingFunctionsMetadataCalls
+  );
+
+  var iter = 1;
+  var encodedValues: string = "";
+  for (var mapp of callingFunctionMetadata) {
     if (mapp.callingFunction.trim() == ruleSyntax.callingFunction.trim()) {
       encodedValues = mapp.encodedValues;
+      break;
     }
     iter += 1;
   }
@@ -239,7 +246,6 @@ export const createRule = async (
       });
       break;
     } catch (err) {
-      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -292,19 +298,25 @@ export const updateRule = async (
   });
 
   let policyResult = retrievePolicy.result;
-  let callingFunctions: any = policyResult[0];
-
-  var iter = 1;
-  var encodedValues: string = "";
-  for (var cfId in callingFunctions) {
-    var mapp = await getCallingFunctionMetadata(
+  let callingFunctionIds: number[] = policyResult[1];
+  const callingFunctionsMetadataCalls = callingFunctionIds.map((cfId) =>
+    getCallingFunctionMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      iter
-    );
+      cfId
+    )
+  );
+  const callingFunctionMetadata = await Promise.all(
+    callingFunctionsMetadataCalls
+  );
+
+  var iter = 1;
+  var encodedValues: string = "";
+  for (var mapp of callingFunctionMetadata) {
     if (mapp.callingFunction.trim() == ruleSyntax.callingFunction.trim()) {
       encodedValues = mapp.encodedValues;
+      break;
     }
     iter += 1;
   }
@@ -349,19 +361,13 @@ export const updateRule = async (
       }
     }
   }
-
-  var fcListEff = [];
+  const fcListEff = [
+    ...ruleSyntax.positiveEffects,
+    ...ruleSyntax.negativeEffects,
+  ]
+    .map(buildForeignCallList)
+    .flat();
   var fullFCListEff = [];
-  if (ruleSyntax.positiveEffects != null) {
-    for (var eff of ruleSyntax.positiveEffects) {
-      fcListEff.push(...buildForeignCallList(eff));
-    }
-  }
-  if (ruleSyntax.negativeEffects != null) {
-    for (var eff of ruleSyntax.negativeEffects) {
-      fcListEff.push(...buildForeignCallList(eff));
-    }
-  }
 
   for (var fc of fcListEff) {
     for (var id of foreignCallNameToID) {
@@ -430,7 +436,6 @@ export const updateRule = async (
       });
       break;
     } catch (err) {
-      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }

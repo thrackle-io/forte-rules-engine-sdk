@@ -167,7 +167,7 @@ function convertASTToInstructionSet(
     acc.mem.push(acc.iterator.value);
     acc.iterator.value += 1;
     // If it's an array with a string as the first index, recursively run starting at the next index
-    // Then add the the string and the two memory addresses generated from the recusive run to the instruction set
+    // Then add the the string and the two memory addresses generated from the recursive run to the instruction set
   } else if (typeof expression[0] == "string") {
     var foundMatch = false;
     var plhIndex = 0;

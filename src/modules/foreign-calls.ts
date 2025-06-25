@@ -79,33 +79,44 @@ export const createForeignCall = async (
     policyId
   );
   var indexMap: FCNameToID[] = [];
-  for (var tracker of trackers) {
-    var id = tracker.trackerIndex;
-    var name = await getTrackerMetadata(
+  const trackerMetadataCalls = trackers.map((tracker) =>
+    getTrackerMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      id
-    );
-    indexMap.push({ name: name, id: id, type: 0 });
-  }
+      tracker.trackerIndex
+    )
+  );
+  const trackerMetadata = await Promise.all(trackerMetadataCalls);
+  const indexMapAdditions: FCNameToID[] = trackerMetadata.map(
+    (name: string, index: number) => {
+      return { name: name, id: trackers[index].trackerIndex, type: 0 };
+    }
+  );
+  indexMap = [...indexMap, ...indexMapAdditions];
 
   var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(
     config,
     rulesEngineComponentContract,
     policyId
   );
-  var fcMap: FCNameToID[] = [];
-  for (var fcall of foreignCalls) {
-    var id = fcall.foreignCallIndex;
-    var name = await getForeignCallMetadata(
+  const foreignCallMetadataCalls = foreignCalls.map((fc) =>
+    getForeignCallMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      id
-    );
-    fcMap.push({ name: name, id: id, type: 0 });
-  }
+      fc.foreignCallIndex
+    )
+  );
+  var fcMap: FCNameToID[] = [];
+  const foreignCallMetadata = await Promise.all(foreignCallMetadataCalls);
+  const fcMapAdditions: FCNameToID[] = foreignCallMetadata.map(
+    (name: string, index: number) => {
+      return { name: name, id: foreignCalls[index].foreignCallIndex, type: 0 };
+    }
+  );
+  fcMap = [...fcMap, ...fcMapAdditions];
+
   const retrievePolicy = await simulateContract(config, {
     address: rulesEnginePolicyContract.address,
     abi: rulesEnginePolicyContract.abi,
@@ -114,16 +125,22 @@ export const createForeignCall = async (
   });
 
   let policyResult = retrievePolicy.result;
-  let callingFunctions: any = policyResult[0];
-  var iter = 1;
-  var encodedValues: string[] = [];
-  for (var cfId in callingFunctions) {
-    var mapp = await getCallingFunctionMetadata(
+  let callingFunctionIds: number[] = policyResult[1];
+  const callingFunctionsMetadataCalls = callingFunctionIds.map((cfId) =>
+    getCallingFunctionMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      iter
-    );
+      cfId
+    )
+  );
+  const callingFunctionMetadata = await Promise.all(
+    callingFunctionsMetadataCalls
+  );
+
+  var iter = 1;
+  var encodedValues: string[] = [];
+  for (var mapp of callingFunctionMetadata) {
     if (mapp.callingFunction.trim() == json.callingFunction.trim()) {
       var builtJSON: callingFunctionJSON = {
         name: json.callingFunction,
@@ -131,6 +148,7 @@ export const createForeignCall = async (
         encodedValues: mapp.encodedValues,
       };
       encodedValues = parseCallingFunction(builtJSON);
+      break;
     }
     iter += 1;
   }
@@ -216,33 +234,43 @@ export const updateForeignCall = async (
     policyId
   );
   var indexMap: FCNameToID[] = [];
-  for (var tracker of trackers) {
-    var id = tracker.trackerIndex;
-    var name = await getTrackerMetadata(
+  const trackerMetadataCalls = trackers.map((tracker) =>
+    getTrackerMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      id
-    );
-    indexMap.push({ name: name, id: id, type: 0 });
-  }
+      tracker.trackerIndex
+    )
+  );
+  const trackerMetadata = await Promise.all(trackerMetadataCalls);
+  const indexMapAdditions: FCNameToID[] = trackerMetadata.map(
+    (name: string, index: number) => {
+      return { name: name, id: trackers[index].trackerIndex, type: 0 };
+    }
+  );
+  indexMap = [...indexMap, ...indexMapAdditions];
 
   var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(
     config,
     rulesEngineComponentContract,
     policyId
   );
-  var fcMap: FCNameToID[] = [];
-  for (var fcall of foreignCalls) {
-    var id = fcall.foreignCallIndex;
-    var name = await getForeignCallMetadata(
+  const foreignCallMetadataCalls = foreignCalls.map((fc) =>
+    getForeignCallMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      id
-    );
-    fcMap.push({ name: name, id: id, type: 0 });
-  }
+      fc.foreignCallIndex
+    )
+  );
+  var fcMap: FCNameToID[] = [];
+  const foreignCallMetadata = await Promise.all(foreignCallMetadataCalls);
+  const fcMapAdditions: FCNameToID[] = foreignCallMetadata.map(
+    (name: string, index: number) => {
+      return { name: name, id: foreignCalls[index].foreignCallIndex, type: 0 };
+    }
+  );
+  fcMap = [...fcMap, ...fcMapAdditions];
 
   const retrievePolicy = await simulateContract(config, {
     address: rulesEnginePolicyContract.address,
@@ -252,17 +280,22 @@ export const updateForeignCall = async (
   });
 
   let policyResult = retrievePolicy.result;
-  let callingFunctions: any = policyResult[0];
-
-  var iter = 1;
-  var encodedValues: string[] = [];
-  for (var cfId in callingFunctions) {
-    var mapp = await getCallingFunctionMetadata(
+  let callingFunctionIds: number[] = policyResult[1];
+  const callingFunctionsMetadataCalls = callingFunctionIds.map((cfId) =>
+    getCallingFunctionMetadata(
       config,
       rulesEngineComponentContract,
       policyId,
-      iter
-    );
+      cfId
+    )
+  );
+  const callingFunctionMetadata = await Promise.all(
+    callingFunctionsMetadataCalls
+  );
+
+  var iter = 1;
+  var encodedValues: string[] = [];
+  for (var mapp of callingFunctionMetadata) {
     if (mapp.callingFunction.trim() == json.callingFunction.trim()) {
       var builtJSON: callingFunctionJSON = {
         name: json.callingFunction,
@@ -270,6 +303,7 @@ export const updateForeignCall = async (
         encodedValues: mapp.encodedValues,
       };
       encodedValues = parseCallingFunction(builtJSON);
+      break;
     }
     iter += 1;
   }
