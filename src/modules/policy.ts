@@ -19,7 +19,6 @@ import {
   RulesEngineComponentContract,
   FCNameToID,
   TrackerDefinition,
-  PolicyJSON,
   ForeignCallOnChain,
   TrackerOnChain,
   hexToFunctionString,
@@ -44,7 +43,7 @@ import {
   convertForeignCallStructsToStrings,
   convertTrackerStructsToStrings,
 } from "../parsing/reverse-parsing-logic";
-import { isRight, unwrapEither } from "./utils";
+import { validatePolicyJSON } from "./validation";
 
 /**
  * @file policy.ts
@@ -112,7 +111,7 @@ export const createPolicy = async (
   let policyId: number = addPolicy.result;
 
   if (policySyntax !== undefined) {
-    let policyJSON: PolicyJSON = JSON.parse(policySyntax);
+    let policyJSON = validatePolicyJSON(policySyntax);
 
     for (var callingFunctionJSON of policyJSON.CallingFunctions) {
       var callingFunction = callingFunctionJSON.functionSignature;
@@ -150,24 +149,21 @@ export const createPolicy = async (
     if (policyJSON.Trackers != null) {
       for (var tracker of policyJSON.Trackers) {
         const parsedTracker = parseTrackerSyntax(tracker);
-        if (isRight(parsedTracker)) {
-          const trackerStruct = unwrapEither(parsedTracker);
-          const trId = await createTracker(
-            config,
-            rulesEngineComponentContract,
-            policyId,
-            JSON.stringify(tracker)
-          );
-          var struc: FCNameToID = {
-            id: trId,
-            name: trackerStruct.name,
-            type: trackerStruct.type,
-          };
-          trackerIds.push(struc);
-          trackers.push(trackerStruct);
-        } else {
-          throw new Error(unwrapEither(parsedTracker).message);
-        }
+
+        const trId = await createTracker(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          JSON.stringify(tracker)
+        );
+        var struc: FCNameToID = {
+          id: trId,
+          name: parsedTracker.name,
+          type: parsedTracker.type,
+        };
+        trackerIds.push(struc);
+        trackers.push(parsedTracker);
+
       }
     }
 
@@ -182,30 +178,26 @@ export const createPolicy = async (
           }
           iter += 1;
         }
-        const parsedFC = parseForeignCallDefinition(
+        const fcStruct = parseForeignCallDefinition(
           foreignCall,
           fcIds,
           trackerIds,
           encodedValues
         );
-        if (isRight(parsedFC)) {
-          const fcStruct = unwrapEither(parsedFC);
-          const fcId = await createForeignCall(
-            config,
-            rulesEngineComponentContract,
-            rulesEnginePolicyContract,
-            policyId,
-            JSON.stringify(foreignCall)
-          );
-          var struc: FCNameToID = {
-            id: fcId,
-            name: fcStruct.name.split("(")[0],
-            type: 0,
-          };
-          fcIds.push(struc);
-        } else {
-          throw new Error(unwrapEither(parsedFC).message);
-        }
+
+        const fcId = await createForeignCall(
+          config,
+          rulesEngineComponentContract,
+          rulesEnginePolicyContract,
+          policyId,
+          JSON.stringify(foreignCall)
+        );
+        var struc: FCNameToID = {
+          id: fcId,
+          name: fcStruct.name.split("(")[0],
+          type: 0,
+        };
+        fcIds.push(struc);
       }
     }
 

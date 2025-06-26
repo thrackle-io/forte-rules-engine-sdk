@@ -20,8 +20,6 @@ import {
   EffectStruct,
   EffectStructs,
   FCNameToID,
-  ForeignCallOnChain,
-  ruleJSON,
   RulesEngineAdminABI,
   RulesEngineAdminContract,
   RulesEngineComponentABI,
@@ -32,8 +30,7 @@ import {
   RulesEngineRulesContract,
   RuleStruct,
 } from "./types";
-import { getForeignCall } from "./foreign-calls";
-import { config } from "dotenv";
+import { RuleJSON } from "./validation";
 
 /**
  * @file ContractInteractionUtils.ts
@@ -131,7 +128,7 @@ export async function sleep(ms: number): Promise<void> {
  *          effect placeholders, and associated effects.
  */
 export function buildARuleStruct(
-  ruleSyntax: ruleJSON,
+  ruleSyntax: RuleJSON,
   foreignCallNameToID: FCNameToID[],
   effect: EffectStructs,
   trackerNameToID: FCNameToID[],
@@ -256,7 +253,7 @@ export function buildARuleStruct(
  * - `instructionSet`: The cleaned instruction set for the effect.
  */
 export function buildAnEffectStruct(
-  ruleSyntax: ruleJSON,
+  ruleSyntax: RuleJSON,
   trackerNameToID: FCNameToID[],
   foreignCallNameToID: FCNameToID[],
   encodedValues: string,

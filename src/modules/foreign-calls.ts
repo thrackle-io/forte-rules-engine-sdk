@@ -25,6 +25,8 @@ import {
 import { isRight, unwrapEither } from "./utils";
 import { getAllTrackers, getTrackerMetadata } from "./trackers";
 import { getCallingFunctionMetadata } from "./calling-functions";
+import { isLeft, isRight, unwrapEither } from "./utils";
+import { getRulesErrorMessages, validateForeignCallJSON } from "./validation";
 
 /**
  * @file ForeignCalls.ts
@@ -71,8 +73,6 @@ export const createForeignCall = async (
   policyId: number,
   fcSyntax: string
 ): Promise<number> => {
-  const json: foreignCallJSON = JSON.parse(fcSyntax);
-
   var trackers: TrackerOnChain[] = await getAllTrackers(
     config,
     rulesEngineComponentContract,
@@ -138,13 +138,18 @@ export const createForeignCall = async (
     callingFunctionsMetadataCalls
   );
 
+  const json = validateForeignCallJSON(fcSyntax);
+  if (isLeft(json)) {
+    throw new Error(getRulesErrorMessages(unwrapEither(json)));
+  }
+  const fcJSJON: foreignCallJSON = unwrapEither(json);
   var iter = 1;
   var encodedValues: string[] = [];
   for (var mapp of callingFunctionMetadata) {
-    if (mapp.callingFunction.trim() == json.callingFunction.trim()) {
+    if (mapp.callingFunction.trim() == fcJSJON.callingFunction.trim()) {
       var builtJSON: callingFunctionJSON = {
-        name: json.callingFunction,
-        functionSignature: json.callingFunction,
+        name: fcJSJON.callingFunction,
+        functionSignature: fcJSJON.callingFunction,
         encodedValues: mapp.encodedValues,
       };
       encodedValues = parseCallingFunction(builtJSON);
@@ -152,53 +157,50 @@ export const createForeignCall = async (
     }
     iter += 1;
   }
-  const parsedForeignCall = parseForeignCallDefinition(
-    json,
+  const foreignCall = parseForeignCallDefinition(
+    fcJSJON,
     fcMap,
     indexMap,
     encodedValues
   );
-  if (isRight(parsedForeignCall)) {
-    const foreignCall = unwrapEither(parsedForeignCall);
-    var fc = {
-      set: true,
-      foreignCallAddress: foreignCall.address,
-      signature: toFunctionSelector(foreignCall.function),
-      foreignCallIndex: 0,
-      returnType: foreignCall.returnType,
-      parameterTypes: foreignCall.parameterTypes,
-      encodedIndices: foreignCall.encodedIndices,
-    };
-    var addFC;
-    while (true) {
-      try {
-        addFC = await simulateContract(config, {
-          address: rulesEngineComponentContract.address,
-          abi: rulesEngineComponentContract.abi,
-          functionName: "createForeignCall",
-          args: [policyId, fc, foreignCall.name],
-        });
-        break;
-      } catch (err) {
-        // TODO: Look into replacing this loop/sleep with setTimeout
-        await sleep(1000);
-        return -1;
-      }
-    }
-    if (addFC != null) {
-      const returnHash = await writeContract(config, {
-        ...addFC.request,
-        account: config.getClient().account,
+
+  var fc = {
+    set: true,
+    foreignCallAddress: foreignCall.address,
+    signature: toFunctionSelector(foreignCall.function),
+    foreignCallIndex: 0,
+    returnType: foreignCall.returnType,
+    parameterTypes: foreignCall.parameterTypes,
+    encodedIndices: foreignCall.encodedIndices,
+  };
+  var addFC;
+  while (true) {
+    try {
+      addFC = await simulateContract(config, {
+        address: rulesEngineComponentContract.address,
+        abi: rulesEngineComponentContract.abi,
+        functionName: "createForeignCall",
+        args: [policyId, fc, foreignCall.name],
       });
-      await waitForTransactionReceipt(config, {
-        hash: returnHash,
-      });
-      return addFC.result;
+      break;
+    } catch (err) {
+      // TODO: Look into replacing this loop/sleep with setTimeout
+      await sleep(1000);
+      return -1;
     }
-    return -1;
-  } else {
-    throw new Error(unwrapEither(parsedForeignCall).message);
   }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+    return addFC.result;
+  }
+  return -1;
 };
 /**
  * Updates a foreign call in the rules engine component contract.
@@ -226,7 +228,6 @@ export const updateForeignCall = async (
   foreignCallId: number,
   fcSyntax: string
 ): Promise<number> => {
-  const json = JSON.parse(fcSyntax);
 
   var trackers: TrackerOnChain[] = await getAllTrackers(
     config,
@@ -293,13 +294,18 @@ export const updateForeignCall = async (
     callingFunctionsMetadataCalls
   );
 
+  const json = validateForeignCallJSON(fcSyntax);
+  if (isLeft(json)) {
+    throw new Error(getRulesErrorMessages(unwrapEither(json)));
+  }
+  const fcJSON: foreignCallJSON = unwrapEither(json);
   var iter = 1;
   var encodedValues: string[] = [];
   for (var mapp of callingFunctionMetadata) {
-    if (mapp.callingFunction.trim() == json.callingFunction.trim()) {
+    if (mapp.callingFunction.trim() == fcJSON.callingFunction.trim()) {
       var builtJSON: callingFunctionJSON = {
-        name: json.callingFunction,
-        functionSignature: json.callingFunction,
+        name: fcJSON.callingFunction,
+        functionSignature: fcJSON.callingFunction,
         encodedValues: mapp.encodedValues,
       };
       encodedValues = parseCallingFunction(builtJSON);
@@ -308,54 +314,50 @@ export const updateForeignCall = async (
     iter += 1;
   }
 
-  const parsedForeignCall = parseForeignCallDefinition(
-    json,
+  const foreignCall = parseForeignCallDefinition(
+    fcJSON,
     fcMap,
     indexMap,
     encodedValues
   );
-  if (isRight(parsedForeignCall)) {
-    const foreignCall = unwrapEither(parsedForeignCall);
-    var fc = {
-      set: true,
-      foreignCallAddress: foreignCall.address,
-      signature: toFunctionSelector(foreignCall.function),
-      foreignCallIndex: 0,
-      returnType: foreignCall.returnType,
-      parameterTypes: foreignCall.parameterTypes,
-      encodedIndices: foreignCall.encodedIndices,
-    };
-    var addFC;
 
-    while (true) {
-      try {
-        addFC = await simulateContract(config, {
-          address: rulesEngineComponentContract.address,
-          abi: rulesEngineComponentContract.abi,
-          functionName: "updateForeignCall",
-          args: [policyId, foreignCallId, fc],
-        });
-        break;
-      } catch (err) {
-        // TODO: Look into replacing this loop/sleep with setTimeout
-        await sleep(1000);
-      }
-    }
-    if (addFC != null) {
-      const returnHash = await writeContract(config, {
-        ...addFC.request,
-        account: config.getClient().account,
+  var fc = {
+    set: true,
+    foreignCallAddress: foreignCall.address,
+    signature: toFunctionSelector(foreignCall.function),
+    foreignCallIndex: 0,
+    returnType: foreignCall.returnType,
+    parameterTypes: foreignCall.parameterTypes,
+    encodedIndices: foreignCall.encodedIndices,
+  };
+  var addFC;
+
+  while (true) {
+    try {
+      addFC = await simulateContract(config, {
+        address: rulesEngineComponentContract.address,
+        abi: rulesEngineComponentContract.abi,
+        functionName: "updateForeignCall",
+        args: [policyId, foreignCallId, fc],
       });
-      await waitForTransactionReceipt(config, {
-        hash: returnHash,
-      });
-      let foreignCallResult = addFC.result as any;
-      return foreignCallResult.foreignCallIndex;
+      break;
+    } catch (err) {
+      // TODO: Look into replacing this loop/sleep with setTimeout
+      await sleep(1000);
     }
-    return -1;
-  } else {
-    throw new Error(unwrapEither(parsedForeignCall).message);
   }
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+    let foreignCallResult = addFC.result as any;
+    return foreignCallResult.foreignCallIndex;
+  }
+  return -1;
 };
 
 /**

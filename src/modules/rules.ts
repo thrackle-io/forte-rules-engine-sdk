@@ -15,20 +15,19 @@ import {
 } from "./contract-interaction-utils";
 import {
   FCNameToID,
-  ruleJSON,
   RuleStruct,
   RuleStorageSet,
   Maybe,
   RulesEngineRulesContract,
   RulesEngineComponentContract,
   RulesEnginePolicyContract,
-  callingFunctionJSON,
 } from "./types";
 import { getCallingFunctionMetadata } from "./calling-functions";
-import { encode } from "punycode";
 import { buildForeignCallList } from "../parsing/parser";
 import { getForeignCall, getForeignCallMetadata } from "./foreign-calls";
 import { getTrackerMetadata } from "./trackers";
+import { isLeft, unwrapEither } from "./utils";
+import { validateRuleJSON } from "./validation";
 
 /**
  * @file Rules.ts
@@ -80,8 +79,16 @@ export const createRule = async (
   foreignCallNameToID: FCNameToID[],
   trackerNameToID: FCNameToID[]
 ): Promise<number> => {
-  let ruleSyntax: ruleJSON = JSON.parse(ruleS);
-  let effectSyntax: ruleJSON = JSON.parse(ruleS);
+  const validatedRuleSyntax = validateRuleJSON(ruleS);
+  const validatedEffectSyntax = validateRuleJSON(ruleS);
+  if (isLeft(validatedRuleSyntax)) {
+    return -1;
+  }
+  if (isLeft(validatedEffectSyntax)) {
+    return -1;
+  }
+  const ruleSyntax = unwrapEither(validatedRuleSyntax);
+  const effectSyntax = unwrapEither(validatedEffectSyntax);
   if (
     !(
       (effectSyntax.positiveEffects != null &&
@@ -288,7 +295,12 @@ export const updateRule = async (
   foreignCallNameToID: FCNameToID[],
   trackerNameToID: FCNameToID[]
 ): Promise<number> => {
-  let ruleSyntax: ruleJSON = JSON.parse(ruleS);
+  const validatedRuleSyntax = validateRuleJSON(ruleS);
+  if (isLeft(validatedRuleSyntax)) {
+    return -1;
+  }
+
+  const ruleSyntax = unwrapEither(validatedRuleSyntax);
 
   const retrievePolicy = await simulateContract(config, {
     address: rulesEnginePolicyContract.address,
