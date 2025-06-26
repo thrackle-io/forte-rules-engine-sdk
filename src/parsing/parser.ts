@@ -8,6 +8,7 @@ import {
   getAddress,
 } from "viem";
 import {
+  callingFunctionJSON,
   FCNameToID,
   ForeignCallDefinition,
   ForeignCallEncodedIndex,
