@@ -914,7 +914,24 @@ test("Creates a simple foreign call", () => {
   "valuesToPass": "to, FC:testSigTwo, TR:thisTracker"
   }`;
 
-  var retVal = parseForeignCallDefinition(JSON.parse(str))
+  var retVal = parseForeignCallDefinition(
+    JSON.parse(str),
+    [
+      {
+        id: 1,
+        name: "testSigTwo",
+        type: 1,
+      },
+    ],
+    [
+      {
+        id: 1,
+        name: "thisTracker",
+        type: 1,
+      },
+    ],
+    ["to", "someString", "value"]
+  )
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
@@ -2353,7 +2370,12 @@ test("Creates a simple foreign call with a boolean return", () => {
   "callingFunction": "someFunction(address to, string someString, uint256 value)"
   }`;
 
-  var retVal = parseForeignCallDefinition(JSON.parse(str))
+  var retVal = parseForeignCallDefinition(
+    JSON.parse(str),
+    [],
+    [],
+    ["to", "someString", "value"]
+  );
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")

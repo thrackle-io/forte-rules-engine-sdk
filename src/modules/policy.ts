@@ -43,7 +43,8 @@ import {
   convertForeignCallStructsToStrings,
   convertTrackerStructsToStrings,
 } from "../parsing/reverse-parsing-logic";
-import { validatePolicyJSON } from "./validation";
+import { getRulesErrorMessages, validatePolicyJSON } from "./validation";
+import { isLeft, unwrapEither } from "./utils";
 
 /**
  * @file policy.ts
@@ -111,7 +112,11 @@ export const createPolicy = async (
   let policyId: number = addPolicy.result;
 
   if (policySyntax !== undefined) {
-    let policyJSON = validatePolicyJSON(policySyntax);
+    const validatedPolicyJSON = validatePolicyJSON(policySyntax);
+    if (isLeft(validatedPolicyJSON)) {
+      throw new Error(getRulesErrorMessages(unwrapEither(validatedPolicyJSON)));
+    }
+    const policyJSON = unwrapEither(validatedPolicyJSON);
 
     for (var callingFunctionJSON of policyJSON.CallingFunctions) {
       var callingFunction = callingFunctionJSON.functionSignature;

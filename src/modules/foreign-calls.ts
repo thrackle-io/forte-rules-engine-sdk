@@ -19,14 +19,11 @@ import {
   TrackerOnChain,
   FCNameToID,
   RulesEnginePolicyContract,
-  foreignCallJSON,
-  callingFunctionJSON,
 } from "./types";
-import { isRight, unwrapEither } from "./utils";
 import { getAllTrackers, getTrackerMetadata } from "./trackers";
 import { getCallingFunctionMetadata } from "./calling-functions";
-import { isLeft, isRight, unwrapEither } from "./utils";
-import { getRulesErrorMessages, validateForeignCallJSON } from "./validation";
+import { isLeft, unwrapEither } from "./utils";
+import { CallingFunctionJSON, getRulesErrorMessages, validateForeignCallJSON } from "./validation";
 
 /**
  * @file ForeignCalls.ts
@@ -142,14 +139,14 @@ export const createForeignCall = async (
   if (isLeft(json)) {
     throw new Error(getRulesErrorMessages(unwrapEither(json)));
   }
-  const fcJSJON: foreignCallJSON = unwrapEither(json);
+  const fcJSON = unwrapEither(json);
   var iter = 1;
   var encodedValues: string[] = [];
   for (var mapp of callingFunctionMetadata) {
-    if (mapp.callingFunction.trim() == fcJSJON.callingFunction.trim()) {
-      var builtJSON: callingFunctionJSON = {
-        name: fcJSJON.callingFunction,
-        functionSignature: fcJSJON.callingFunction,
+    if (mapp.callingFunction.trim() == fcJSON.callingFunction) {
+      var builtJSON = {
+        name: fcJSON.callingFunction,
+        functionSignature: fcJSON.callingFunction,
         encodedValues: mapp.encodedValues,
       };
       encodedValues = parseCallingFunction(builtJSON);
@@ -158,7 +155,7 @@ export const createForeignCall = async (
     iter += 1;
   }
   const foreignCall = parseForeignCallDefinition(
-    fcJSJON,
+    fcJSON,
     fcMap,
     indexMap,
     encodedValues
@@ -298,12 +295,12 @@ export const updateForeignCall = async (
   if (isLeft(json)) {
     throw new Error(getRulesErrorMessages(unwrapEither(json)));
   }
-  const fcJSON: foreignCallJSON = unwrapEither(json);
+  const fcJSON = unwrapEither(json);
   var iter = 1;
   var encodedValues: string[] = [];
   for (var mapp of callingFunctionMetadata) {
     if (mapp.callingFunction.trim() == fcJSON.callingFunction.trim()) {
-      var builtJSON: callingFunctionJSON = {
+      var builtJSON: CallingFunctionJSON = {
         name: fcJSON.callingFunction,
         functionSignature: fcJSON.callingFunction,
         encodedValues: mapp.encodedValues,

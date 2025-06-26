@@ -4,38 +4,46 @@ import { isLeft, isRight, unwrapEither } from "../src/modules/utils";
 import { RulesError } from "../src/modules/types";
 
 const ruleJSON = `{
-        "condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
-        "positiveEffects": ["revert"],
-        "negativeEffects": [],
-        "callingFunction": "addValue(uint256 value)",
-        "encodedValues": "uint256 value"
-        }`;
+				"condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
+				"positiveEffects": ["revert"],
+				"negativeEffects": [],
+				"callingFunction": "addValue(uint256 value)"
+				}`;
 
 const fcJSON = `{
-          "name": "Simple Foreign Call",
-          "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-          "function": "testSig(address,string,uint256)",
-          "returnType": "uint256",
-          "valuesToPass": "0, 1, 2"
-          }`;
+					"name": "Simple Foreign Call",
+					"address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+					"function": "testSig(address,string,uint256)",
+					"returnType": "uint256",
+					"valuesToPass": "0, 1, 2",
+					"callingFunction": "transfer(address to, uint256 value)"
+					}`;
 
 const trackerJSON = `{
-              "name": "Simple String Tracker",
-              "type": "uint256",
-              "initialValue": "4"
-          }`;
+							"name": "Simple String Tracker",
+							"type": "uint256",
+							"initialValue": "4"
+					}`;
 
-const policyJSON = `
+var policyJSON = `
     {
     "Policy": "Test Policy",
     "PolicyType": "open",
+    "CallingFunctions": [
+      {
+        "name": "transfer(address to, uint256 value)",
+        "functionSignature": "transfer(address to, uint256 value)",
+        "encodedValues": "address to, uint256 value"
+      }
+    ],
     "ForeignCalls": [
         {
             "name": "Simple Foreign Call",
             "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
             "function": "testSig(address)",
             "returnType": "uint256",
-            "valuesToPass": "0"
+            "valuesToPass": "to",
+            "callingFunction": "transfer(address to, uint256 value)"
         }
     ],
     "Trackers": [
@@ -50,353 +58,356 @@ const policyJSON = `
             "condition": "value > 500",
             "positiveEffects": ["emit Success"],
             "negativeEffects": ["revert()"],
-            "callingFunction": "transfer(address to, uint256 value)",
-            "encodedValues": "address to, uint256 value"
+            "callingFunction": "transfer(address to, uint256 value)"
         }
         ]
-    }`;
+        }`;
 
 test("Can validate rule JSON", () => {
-    const parsedRule = validateRuleJSON(ruleJSON)
-    expect(isRight(parsedRule)).toBeTruthy();
-    if (isRight(parsedRule)) {
-        const rule = unwrapEither(parsedRule);
+	const parsedRule = validateRuleJSON(ruleJSON)
+	expect(isRight(parsedRule)).toBeTruthy();
+	if (isRight(parsedRule)) {
+		const rule = unwrapEither(parsedRule);
 
-        expect(rule.encodedValues).toEqual(JSON.parse(ruleJSON).encodedValues);
-    }
+		expect(rule.callingFunction).toEqual(JSON.parse(ruleJSON).callingFunction);
+	}
 });
 
 test("Can catch all missing required fields in rule JSON", () => {
-    const parsedRule = validateRuleJSON("{}")
-    expect(isLeft(parsedRule)).toBeTruthy();
-    if (isLeft(parsedRule)) {
-        const errors = unwrapEither(parsedRule);
+	const parsedRule = validateRuleJSON("{}")
+	expect(isLeft(parsedRule)).toBeTruthy();
+	if (isLeft(parsedRule)) {
+		const errors = unwrapEither(parsedRule);
 
-        expect(errors.length).toEqual(5);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field condition");
-        expect(errors[1].message).toEqual("Invalid input: expected array, received undefined: Field positiveEffects");
-        expect(errors[2].message).toEqual("Invalid input: expected array, received undefined: Field negativeEffects");
-        expect(errors[3].message).toEqual("Invalid input: expected string, received undefined: Field callingFunction");
-        expect(errors[4].message).toEqual("Invalid input: expected string, received undefined: Field encodedValues");
-    }
+		expect(errors.length).toEqual(4);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field condition");
+		expect(errors[1].message).toEqual("Invalid input: expected array, received undefined: Field positiveEffects");
+		expect(errors[2].message).toEqual("Invalid input: expected array, received undefined: Field negativeEffects");
+		expect(errors[3].message).toEqual("Invalid input: expected string, received undefined: Field callingFunction");
+	}
 });
 
 test("Can catch all wrong input types for fields in rule JSON", () => {
-    const invalidJSON = `{
-        "condition": 1,
-        "positiveEffects": "foo",
-        "negativeEffects": "bar",
-        "callingFunction": 1,
-        "encodedValues": 1
-        }`;
-    const parsedRule = validateRuleJSON(invalidJSON);
-    expect(isLeft(parsedRule)).toBeTruthy();
-    if (isLeft(parsedRule)) {
-        const errors = unwrapEither(parsedRule);
+	const invalidJSON = `{
+				"condition": 1,
+				"positiveEffects": "foo",
+				"negativeEffects": "bar",
+				"callingFunction": 1,
+				"encodedValues": 1
+				}`;
+	const parsedRule = validateRuleJSON(invalidJSON);
+	expect(isLeft(parsedRule)).toBeTruthy();
+	if (isLeft(parsedRule)) {
+		const errors = unwrapEither(parsedRule);
 
-        expect(errors.length).toEqual(5);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field condition");
-        expect(errors[1].message).toEqual("Invalid input: expected array, received string: Field positiveEffects");
-        expect(errors[2].message).toEqual("Invalid input: expected array, received string: Field negativeEffects");
-        expect(errors[3].message).toEqual("Invalid input: expected string, received number: Field callingFunction");
-        expect(errors[4].message).toEqual("Invalid input: expected string, received number: Field encodedValues");
-    }
+		expect(errors.length).toEqual(4);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field condition");
+		expect(errors[1].message).toEqual("Invalid input: expected array, received string: Field positiveEffects");
+		expect(errors[2].message).toEqual("Invalid input: expected array, received string: Field negativeEffects");
+		expect(errors[3].message).toEqual("Invalid input: expected string, received number: Field callingFunction");
+	}
 });
 
 test("Can return error if rule JSON is invalid", () => {
 
-    let invalidRuleJSON = JSON.parse(ruleJSON);
-    delete invalidRuleJSON.condition; // Remove condition to make it invalid
-    const parsedRule = validateRuleJSON(JSON.stringify(invalidRuleJSON))
-    expect(isLeft(parsedRule)).toBeTruthy();
-    if (isLeft(parsedRule)) {
-        const errors = unwrapEither(parsedRule);
-        expect(errors.length).toEqual(1);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field condition");
-    }
+	let invalidRuleJSON = JSON.parse(ruleJSON);
+	delete invalidRuleJSON.condition; // Remove condition to make it invalid
+	const parsedRule = validateRuleJSON(JSON.stringify(invalidRuleJSON))
+	expect(isLeft(parsedRule)).toBeTruthy();
+	if (isLeft(parsedRule)) {
+		const errors = unwrapEither(parsedRule);
+		expect(errors.length).toEqual(1);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field condition");
+	}
 });
 
 test("Can return multiple errors if rule JSON is invalid", () => {
 
-    let invalidRuleJSON = JSON.parse(ruleJSON);
-    delete invalidRuleJSON.condition; // Remove condition to make it invalid
-    delete invalidRuleJSON.encodedValues; // Remove encodedValues to make it invalid
-    const parsedRule = validateRuleJSON(JSON.stringify(invalidRuleJSON));
-    expect(isLeft(parsedRule)).toBeTruthy();
-    if (isLeft(parsedRule)) {
-        const errors = unwrapEither(parsedRule);
-        expect(errors.length).toEqual(2);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field condition");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field encodedValues");
+	let invalidRuleJSON = JSON.parse(ruleJSON);
+	delete invalidRuleJSON.condition; // Remove condition to make it invalid
+	delete invalidRuleJSON.callingFunction; // Remove callingFunction to make it invalid
+	const parsedRule = validateRuleJSON(JSON.stringify(invalidRuleJSON));
+	expect(isLeft(parsedRule)).toBeTruthy();
+	if (isLeft(parsedRule)) {
+		const errors = unwrapEither(parsedRule);
+		expect(errors.length).toEqual(2);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field condition");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field callingFunction");
 
-    }
+	}
 });
 
 test("Can validate foreign call JSON", () => {
-    const parsedFC = validateForeignCallJSON(fcJSON)
-    expect(isRight(parsedFC)).toBeTruthy();
-    if (isRight(parsedFC)) {
-        const fc = unwrapEither(parsedFC);
+	const parsedFC = validateForeignCallJSON(fcJSON)
+	expect(isRight(parsedFC)).toBeTruthy();
+	if (isRight(parsedFC)) {
+		const fc = unwrapEither(parsedFC);
 
-        expect(fc.valuesToPass).toEqual(JSON.parse(fcJSON).valuesToPass);
-    }
+		expect(fc.valuesToPass).toEqual(JSON.parse(fcJSON).valuesToPass);
+	}
 });
 
 test("Can catch all missing required fields in foreign call JSON", () => {
-    const parsedFC = validateForeignCallJSON("{}")
-    expect(isLeft(parsedFC)).toBeTruthy();
-    if (isLeft(parsedFC)) {
-        const errors = unwrapEither(parsedFC);
+	const parsedFC = validateForeignCallJSON("{}")
+	expect(isLeft(parsedFC)).toBeTruthy();
+	if (isLeft(parsedFC)) {
+		const errors = unwrapEither(parsedFC);
 
-        expect(errors.length).toEqual(5);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field name");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field function");
-        expect(errors[2].message).toEqual("Invalid input: expected string, received undefined: Field address");
-        expect(errors[3].message).toEqual("Unsupported return type: Field returnType");
-        expect(errors[4].message).toEqual("Invalid input: expected string, received undefined: Field valuesToPass");
+		expect(errors.length).toEqual(6);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field name");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field function");
+		expect(errors[2].message).toEqual("Invalid input: expected string, received undefined: Field address");
+		expect(errors[3].message).toEqual("Unsupported return type: Field returnType");
+		expect(errors[4].message).toEqual("Invalid input: expected string, received undefined: Field valuesToPass");
+		expect(errors[5].message).toEqual("Invalid input: expected string, received undefined: Field callingFunction");
 
-    }
+	}
 });
 
 test("Can catch all wrong inputs for fields in foreign call JSON", () => {
-    const invalidJSON = `{
-          "name": 1,
-          "address": 1,
-          "function": 1,
-          "returnType": 1,
-          "valuesToPass": 1
-          }`;
-    const parsedFC = validateForeignCallJSON(invalidJSON)
-    expect(isLeft(parsedFC)).toBeTruthy();
-    if (isLeft(parsedFC)) {
-        const errors = unwrapEither(parsedFC);
+	const invalidJSON = `{
+					"name": 1,
+					"address": 1,
+					"function": 1,
+					"returnType": 1,
+					"valuesToPass": 1,
+					"callingFunction": 1
+					}`;
+	const parsedFC = validateForeignCallJSON(invalidJSON)
+	expect(isLeft(parsedFC)).toBeTruthy();
+	if (isLeft(parsedFC)) {
+		const errors = unwrapEither(parsedFC);
 
-        expect(errors.length).toEqual(5);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received number: Field function");
-        expect(errors[2].message).toEqual("Invalid input: expected string, received number: Field address");
-        expect(errors[3].message).toEqual("Unsupported return type: Field returnType");
-        expect(errors[4].message).toEqual("Invalid input: expected string, received number: Field valuesToPass");
+		expect(errors.length).toEqual(6);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received number: Field function");
+		expect(errors[2].message).toEqual("Invalid input: expected string, received number: Field address");
+		expect(errors[3].message).toEqual("Unsupported return type: Field returnType");
+		expect(errors[4].message).toEqual("Invalid input: expected string, received number: Field valuesToPass");
+		expect(errors[5].message).toEqual("Invalid input: expected string, received number: Field callingFunction");
 
-    }
+	}
 });
 
 test("Can return errors if foreign call JSON is invalid", () => {
-    const invalidFCJSON = JSON.parse(fcJSON);
-    invalidFCJSON.name = 100; // Change name to a number to make it invalid
-    const parsedFC = validateForeignCallJSON(JSON.stringify(invalidFCJSON))
-    expect(isLeft(parsedFC)).toBeTruthy();
-    if (isLeft(parsedFC)) {
-        const errors = unwrapEither(parsedFC);
-        expect(errors.length).toEqual(1);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
+	const invalidFCJSON = JSON.parse(fcJSON);
+	invalidFCJSON.name = 100; // Change name to a number to make it invalid
+	const parsedFC = validateForeignCallJSON(JSON.stringify(invalidFCJSON))
+	expect(isLeft(parsedFC)).toBeTruthy();
+	if (isLeft(parsedFC)) {
+		const errors = unwrapEither(parsedFC);
+		expect(errors.length).toEqual(1);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
 
-    }
+	}
 });
 
 test("Can return multiple errors if foreign call JSON is invalid", () => {
-    const invalidFCJSON = JSON.parse(fcJSON);
-    invalidFCJSON.name = 100; // Change name to a number to make it invalid
-    delete invalidFCJSON.valuesToPass; // Remove valuesToPass to make it invalid
-    const parsedFC = validateForeignCallJSON(JSON.stringify(invalidFCJSON))
-    expect(isLeft(parsedFC)).toBeTruthy();
-    if (isLeft(parsedFC)) {
-        const errors = unwrapEither(parsedFC);
-        expect(errors.length).toEqual(2);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field valuesToPass");
+	const invalidFCJSON = JSON.parse(fcJSON);
+	invalidFCJSON.name = 100; // Change name to a number to make it invalid
+	delete invalidFCJSON.valuesToPass; // Remove valuesToPass to make it invalid
+	const parsedFC = validateForeignCallJSON(JSON.stringify(invalidFCJSON))
+	expect(isLeft(parsedFC)).toBeTruthy();
+	if (isLeft(parsedFC)) {
+		const errors = unwrapEither(parsedFC);
+		expect(errors.length).toEqual(2);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field valuesToPass");
 
-    }
+	}
 });
 
 test("Can validate tracker JSON", () => {
-    const parsedJSON = JSON.parse(trackerJSON);
-    const parsedTracker = validateTrackerJSON(trackerJSON)
-    expect(isRight(parsedTracker)).toBeTruthy();
-    if (isRight(parsedTracker)) {
-        const tracker = unwrapEither(parsedTracker);
+	const parsedJSON = JSON.parse(trackerJSON);
+	const parsedTracker = validateTrackerJSON(trackerJSON)
+	expect(isRight(parsedTracker)).toBeTruthy();
+	if (isRight(parsedTracker)) {
+		const tracker = unwrapEither(parsedTracker);
 
-        expect(tracker.name).toEqual(parsedJSON.name);
-    }
+		expect(tracker.name).toEqual(parsedJSON.name);
+	}
 });
 
 test("Can catch all missing required fields in tracker JSON", () => {
-    const parsedTracker = validateTrackerJSON("{}")
-    expect(isLeft(parsedTracker)).toBeTruthy();
-    if (isLeft(parsedTracker)) {
-        const errors = unwrapEither(parsedTracker);
+	const parsedTracker = validateTrackerJSON("{}")
+	expect(isLeft(parsedTracker)).toBeTruthy();
+	if (isLeft(parsedTracker)) {
+		const errors = unwrapEither(parsedTracker);
 
-        expect(errors.length).toEqual(3);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field name");
-        expect(errors[1].message).toEqual("Unsupported type: Field type");
-        expect(errors[2].message).toEqual("Invalid input: expected string, received undefined: Field initialValue");
-    }
+		expect(errors.length).toEqual(3);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field name");
+		expect(errors[1].message).toEqual("Unsupported type: Field type");
+		expect(errors[2].message).toEqual("Invalid input: expected string, received undefined: Field initialValue");
+	}
 });
 
 
 test("Can catch all wrong inputs for fields in tracker JSON", () => {
-    const invalidJSON = `{
-              "name": 1,
-              "type": 1,
-              "initialValue": 1
-          }`;
-    const parsedTracker = validateTrackerJSON(invalidJSON)
-    expect(isLeft(parsedTracker)).toBeTruthy();
-    if (isLeft(parsedTracker)) {
-        const errors = unwrapEither(parsedTracker);
+	const invalidJSON = `{
+							"name": 1,
+							"type": 1,
+							"initialValue": 1
+					}`;
+	const parsedTracker = validateTrackerJSON(invalidJSON)
+	expect(isLeft(parsedTracker)).toBeTruthy();
+	if (isLeft(parsedTracker)) {
+		const errors = unwrapEither(parsedTracker);
 
-        expect(errors.length).toEqual(3);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
-        expect(errors[1].message).toEqual("Unsupported type: Field type");
-        expect(errors[2].message).toEqual("Invalid input: expected string, received number: Field initialValue");
-    }
+		expect(errors.length).toEqual(3);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
+		expect(errors[1].message).toEqual("Unsupported type: Field type");
+		expect(errors[2].message).toEqual("Invalid input: expected string, received number: Field initialValue");
+	}
 });
 
 test("Can return error if tracker JSON is invalid", () => {
-    const invalidTrackerJSON = JSON.parse(trackerJSON);
-    invalidTrackerJSON.name = 23; // Change name to a number to make it invalid
-    const parsedTracker = validateTrackerJSON(JSON.stringify(invalidTrackerJSON))
-    expect(isLeft(parsedTracker)).toBeTruthy();
-    if (isLeft(parsedTracker)) {
-        const errors = unwrapEither(parsedTracker);
-        expect(errors.length).toEqual(1);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
+	const invalidTrackerJSON = JSON.parse(trackerJSON);
+	invalidTrackerJSON.name = 23; // Change name to a number to make it invalid
+	const parsedTracker = validateTrackerJSON(JSON.stringify(invalidTrackerJSON))
+	expect(isLeft(parsedTracker)).toBeTruthy();
+	if (isLeft(parsedTracker)) {
+		const errors = unwrapEither(parsedTracker);
+		expect(errors.length).toEqual(1);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
 
-    }
+	}
 });
 
 test("Can return multiple errors if tracker JSON is invalid", () => {
-    const invalidTrackerJSON = JSON.parse(trackerJSON);
-    invalidTrackerJSON.name = 23; // Change name to a number to make it invalid
-    delete invalidTrackerJSON.initialValue; // Remove initialValue to make it invalid
-    const parsedTracker = validateTrackerJSON(JSON.stringify(invalidTrackerJSON))
-    expect(isLeft(parsedTracker)).toBeTruthy();
-    if (isLeft(parsedTracker)) {
-        const errors = unwrapEither(parsedTracker);
-        expect(errors.length).toEqual(2);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field initialValue");
+	const invalidTrackerJSON = JSON.parse(trackerJSON);
+	invalidTrackerJSON.name = 23; // Change name to a number to make it invalid
+	delete invalidTrackerJSON.initialValue; // Remove initialValue to make it invalid
+	const parsedTracker = validateTrackerJSON(JSON.stringify(invalidTrackerJSON))
+	expect(isLeft(parsedTracker)).toBeTruthy();
+	if (isLeft(parsedTracker)) {
+		const errors = unwrapEither(parsedTracker);
+		expect(errors.length).toEqual(2);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field name");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field initialValue");
 
-    }
+	}
 });
 
 test("Can validate policy JSON", () => {
-    const parsedPolicy = validatePolicyJSON(policyJSON)
-    expect(isRight(parsedPolicy)).toBeTruthy();
-    if (isRight(parsedPolicy)) {
-        const policy = unwrapEither(parsedPolicy);
-        expect(policy.Policy).toEqual(JSON.parse(policyJSON).Policy);
-    }
+	const parsedPolicy = validatePolicyJSON(policyJSON)
+	expect(isRight(parsedPolicy)).toBeTruthy();
+	if (isRight(parsedPolicy)) {
+		const policy = unwrapEither(parsedPolicy);
+		expect(policy.Policy).toEqual(JSON.parse(policyJSON).Policy);
+	}
 });
 
 test("Can catch all missing required fields in policy JSON", () => {
-    const parsedPolicy = validatePolicyJSON("{}")
-    expect(isLeft(parsedPolicy)).toBeTruthy();
-    if (isLeft(parsedPolicy)) {
-        const errors = unwrapEither(parsedPolicy);
+	const parsedPolicy = validatePolicyJSON("{}")
+	expect(isLeft(parsedPolicy)).toBeTruthy();
+	if (isLeft(parsedPolicy)) {
+		const errors = unwrapEither(parsedPolicy);
 
-        expect(errors.length).toEqual(5);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field Policy");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field PolicyType");
-        expect(errors[2].message).toEqual("Invalid input: expected array, received undefined: Field ForeignCalls");
-        expect(errors[3].message).toEqual("Invalid input: expected array, received undefined: Field Trackers");
-        expect(errors[4].message).toEqual("Invalid input: expected array, received undefined: Field Rules");
-    }
+		expect(errors.length).toEqual(6);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received undefined: Field Policy");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field PolicyType");
+		expect(errors[2].message).toEqual("Invalid input: expected array, received undefined: Field CallingFunctions");
+		expect(errors[3].message).toEqual("Invalid input: expected array, received undefined: Field ForeignCalls");
+		expect(errors[4].message).toEqual("Invalid input: expected array, received undefined: Field Trackers");
+		expect(errors[5].message).toEqual("Invalid input: expected array, received undefined: Field Rules");
+	}
 });
 
 test("Can catch all wrong inputs for fields in policy JSON", () => {
-    const invalidJSON = `
-    {
-    "Policy": 1,
-    "PolicyType": 1,
-    "ForeignCalls": "foo",
-    "Trackers": "bar",
-    "Rules": "baz"
-    }`;
-    const parsedPolicy = validatePolicyJSON(invalidJSON)
-    expect(isLeft(parsedPolicy)).toBeTruthy();
-    if (isLeft(parsedPolicy)) {
-        const errors = unwrapEither(parsedPolicy);
+	const invalidJSON = `
+		{
+		"Policy": 1,
+		"PolicyType": 1,
+		"CallingFunctions": "mop",
+		"ForeignCalls": "foo",
+		"Trackers": "bar",
+		"Rules": "baz"
+		}`;
+	const parsedPolicy = validatePolicyJSON(invalidJSON)
+	expect(isLeft(parsedPolicy)).toBeTruthy();
+	if (isLeft(parsedPolicy)) {
+		const errors = unwrapEither(parsedPolicy);
 
-        expect(errors.length).toEqual(5);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field Policy");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received number: Field PolicyType");
-        expect(errors[2].message).toEqual("Invalid input: expected array, received string: Field ForeignCalls");
-        expect(errors[3].message).toEqual("Invalid input: expected array, received string: Field Trackers");
-        expect(errors[4].message).toEqual("Invalid input: expected array, received string: Field Rules");
-    }
+		expect(errors.length).toEqual(6);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field Policy");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received number: Field PolicyType");
+		expect(errors[2].message).toEqual("Invalid input: expected array, received string: Field CallingFunctions");
+		expect(errors[3].message).toEqual("Invalid input: expected array, received string: Field ForeignCalls");
+		expect(errors[4].message).toEqual("Invalid input: expected array, received string: Field Trackers");
+		expect(errors[5].message).toEqual("Invalid input: expected array, received string: Field Rules");
+	}
 });
 
 test("Can return error if policy JSON is invalid", () => {
-    const invalidPolicyJSON = JSON.parse(policyJSON);
-    invalidPolicyJSON.Policy = 123; // Change Policy to a number to make it invalid
-    const parsedPolicy = validatePolicyJSON(JSON.stringify(invalidPolicyJSON))
-    expect(isLeft(parsedPolicy)).toBeTruthy();
-    if (isLeft(parsedPolicy)) {
-        const errors = unwrapEither(parsedPolicy);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field Policy");
-    }
+	const invalidPolicyJSON = JSON.parse(policyJSON);
+	invalidPolicyJSON.Policy = 123; // Change Policy to a number to make it invalid
+	const parsedPolicy = validatePolicyJSON(JSON.stringify(invalidPolicyJSON))
+	expect(isLeft(parsedPolicy)).toBeTruthy();
+	if (isLeft(parsedPolicy)) {
+		const errors = unwrapEither(parsedPolicy);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field Policy");
+	}
 });
 
 test("Can return multiple errors if policy JSON is invalid", () => {
-    const invalidPolicyJSON = JSON.parse(policyJSON);
-    invalidPolicyJSON.Policy = 123; // Change Policy to a number to make it invalid
-    delete invalidPolicyJSON.PolicyType; // Remove PolicyType to make it invalid
-    const parsedPolicy = validatePolicyJSON(JSON.stringify(invalidPolicyJSON))
-    expect(isLeft(parsedPolicy)).toBeTruthy();
-    if (isLeft(parsedPolicy)) {
-        const errors = unwrapEither(parsedPolicy);
-        expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field Policy");
-        expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field PolicyType");
-    }
+	const invalidPolicyJSON = JSON.parse(policyJSON);
+	invalidPolicyJSON.Policy = 123; // Change Policy to a number to make it invalid
+	delete invalidPolicyJSON.PolicyType; // Remove PolicyType to make it invalid
+	const parsedPolicy = validatePolicyJSON(JSON.stringify(invalidPolicyJSON))
+	expect(isLeft(parsedPolicy)).toBeTruthy();
+	if (isLeft(parsedPolicy)) {
+		const errors = unwrapEither(parsedPolicy);
+		expect(errors[0].message).toEqual("Invalid input: expected string, received number: Field Policy");
+		expect(errors[1].message).toEqual("Invalid input: expected string, received undefined: Field PolicyType");
+	}
 });
 
 test("Tests incorrect format for address", () => {
-    var str = `{
-    "name": "Simple Foreign Call",
-    "address": "test",
-    "function": "testSig(address,string,uint256)",
-    "returnType": "uint256",
-    "valuesToPass": "0, 1, 2"
-    }`;
+	var str = `{
+		"name": "Simple Foreign Call",
+		"address": "test",
+		"function": "testSig(address,string,uint256)",
+		"returnType": "uint256",
+		"valuesToPass": "0, 1, 2"
+		}`;
 
-    var retVal = unwrapEither(validateForeignCallJSON(str)) as RulesError[]
-    expect(retVal[0].message).toEqual('Address is invalid: Field address');
+	var retVal = unwrapEither(validateForeignCallJSON(str)) as RulesError[]
+	expect(retVal[0].message).toEqual('Address is invalid: Field address');
 });
 
 test("Tests unsupported return type", () => {
-    var str = `{
-    "name": "Simple Foreign Call",
-    "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-    "function": "testSig(address,string,uint256)",
-    "returnType": "notAnInt",
-    "valuesToPass": "0, 1, 2"
-    }`;
-    var retVal = unwrapEither(validateForeignCallJSON(str)) as RulesError[]
-    expect(retVal[0].message).toEqual('Unsupported return type: Field returnType');
+	var str = `{
+		"name": "Simple Foreign Call",
+		"address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+		"function": "testSig(address,string,uint256)",
+		"returnType": "notAnInt",
+		"valuesToPass": "0, 1, 2"
+		}`;
+	var retVal = unwrapEither(validateForeignCallJSON(str)) as RulesError[]
+	expect(retVal[0].message).toEqual('Unsupported return type: Field returnType');
 });
 
 test("Tests unsupported argument type", () => {
-    var str = `{
-    "name": "Simple Foreign Call",
-    "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-    "function": "testSig(address,notAnInt,uint256)",
-    "returnType": "uint256",
-    "valuesToPass": "0, 1, 2"
-    }`;
+	var str = `{
+		"name": "Simple Foreign Call",
+		"address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+		"function": "testSig(address,notAnInt,uint256)",
+		"returnType": "uint256",
+		"valuesToPass": "0, 1, 2"
+		}`;
 
-    var retVal = unwrapEither(validateForeignCallJSON(str)) as RulesError[]
-    expect(retVal[0].message).toEqual('Unsupported argument type: Field function');
+	var retVal = unwrapEither(validateForeignCallJSON(str)) as RulesError[]
+	expect(retVal[0].message).toEqual('Unsupported argument type: Field function');
 });
 
 test("Tests unsupported type", () => {
-    var str = `{
-        "name": "Simple String Tracker",
-        "type": "book",
-        "initialValue": "test"
-        }`;
-    var retVal = unwrapEither(validateTrackerJSON(str)) as RulesError[]
-    expect(retVal[0].message).toEqual('Unsupported type: Field type');
+	var str = `{
+				"name": "Simple String Tracker",
+				"type": "book",
+				"initialValue": "test"
+				}`;
+	var retVal = unwrapEither(validateTrackerJSON(str)) as RulesError[]
+	expect(retVal[0].message).toEqual('Unsupported type: Field type');
 });
 
 

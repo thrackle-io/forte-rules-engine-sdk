@@ -8,7 +8,6 @@ import {
   getAddress,
 } from "viem";
 import {
-  callingFunctionJSON,
   FCNameToID,
   ForeignCallDefinition,
   ForeignCallEncodedIndex,
@@ -33,7 +32,7 @@ import {
   cleanseForeignCallLists
 } from './parsing-utilities';
 
-import { ForeignCallJSON, PType, RuleJSON, splitFunctionInput, TrackerJSON } from "../modules/validation";
+import { CallingFunctionJSON, ForeignCallJSON, PType, RuleJSON, splitFunctionInput, TrackerJSON } from "../modules/validation";
 
 /**
  * @file parser.ts
@@ -252,35 +251,31 @@ export function parseForeignCallDefinition(
 ): ForeignCallDefinition {
 
   var encodedIndices: ForeignCallEncodedIndex[] = syntax.valuesToPass.split(",")
-    .map((encodedIndex: string, iter: number) => {
+    .map((encodedIndex: string) => {
 
       if (encodedIndex.includes("FC:")) {
         for (var fcMap of foreignCallNameToID) {
           if ("FC:" + fcMap.name.trim() == encodedIndex.trim()) {
-            var val: ForeignCallEncodedIndex = { eType: 1, index: fcMap.id };
-            encodedIndices.push(val);
+            return { eType: 1, index: fcMap.id };
           }
         }
       } else if (encodedIndex.includes("TR:")) {
         for (var trMap of indexMap) {
           if ("TR:" + trMap.name.trim() == encodedIndex.trim()) {
-            var val: ForeignCallEncodedIndex = { eType: 2, index: trMap.id };
-            encodedIndices.push(val);
+            return { eType: 2, index: trMap.id };
           }
         }
       } else {
         var iter = 0;
         for (var functionArg of functionArguments) {
           if (functionArg.trim() == encodedIndex.trim()) {
-            var val: ForeignCallEncodedIndex = { eType: 0, index: iter };
-            encodedIndices.push(val);
-            break;
+            return { eType: 0, index: iter };
           } else {
             iter += 1;
           }
         }
       }
-    });
+    }) as ForeignCallEncodedIndex[];
 
   const returnType: number = PType.indexOf(syntax.returnType);
 
@@ -301,7 +296,7 @@ export function parseForeignCallDefinition(
   };
 }
 
-export function parseCallingFunction(syntax: callingFunctionJSON): string[] {
+export function parseCallingFunction(syntax: CallingFunctionJSON): string[] {
   var initialSplit = syntax.encodedValues.split(", ");
   var variableNames: string[] = [];
   for (var ind of initialSplit) {
