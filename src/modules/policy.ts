@@ -12,6 +12,7 @@ import {
 import {
   parseCallingFunction,
   parseForeignCallDefinition,
+  parseMappedTrackerSyntax,
   parseTrackerSyntax,
 } from "../parsing/parser";
 import {
@@ -31,7 +32,11 @@ import {
   getForeignCallMetadata,
 } from "./foreign-calls";
 import { createRule } from "./rules";
-import { getAllTrackers, getTrackerMetadata } from "./trackers";
+import {
+  createMappedTracker,
+  getAllTrackers,
+  getTrackerMetadata,
+} from "./trackers";
 import { sleep } from "./contract-interaction-utils";
 import {
   createCallingFunction,
@@ -85,7 +90,6 @@ export const createPolicy = async (
 ): Promise<{ policyId: number }> => {
   var fcIds: FCNameToID[] = [];
   var trackerIds: FCNameToID[] = [];
-  let trackers: TrackerDefinition[] = [];
   let ruleIds = [];
   let ruleToCallingFunction = new Map<string, number[]>();
   let callingFunctions: string[] = [];
@@ -164,7 +168,29 @@ export const createPolicy = async (
             type: trackerStruct.type,
           };
           trackerIds.push(struc);
-          trackers.push(trackerStruct);
+        } else {
+          throw new Error(unwrapEither(parsedTracker).message);
+        }
+      }
+    }
+
+    if (policyJSON.MappedTrackers != null) {
+      for (var mTracker of policyJSON.MappedTrackers) {
+        const parsedTracker = parseMappedTrackerSyntax(mTracker);
+        if (isRight(parsedTracker)) {
+          const trackerStruct = unwrapEither(parsedTracker);
+          const trId = await createMappedTracker(
+            config,
+            rulesEngineComponentContract,
+            policyId,
+            JSON.stringify(mTracker)
+          );
+          var struc: FCNameToID = {
+            id: trId,
+            name: trackerStruct.name,
+            type: trackerStruct.valueType,
+          };
+          trackerIds.push(struc);
         } else {
           throw new Error(unwrapEither(parsedTracker).message);
         }

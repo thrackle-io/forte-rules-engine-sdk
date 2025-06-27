@@ -14,6 +14,8 @@ import {
   ForeignCallDefinition,
   ForeignCallEncodedIndex,
   foreignCallJSON,
+  MappedTrackerDefinition,
+  mappedTrackerJSON,
   matchArray,
   operandArray,
   PlaceholderStruct,
@@ -86,14 +88,13 @@ export function parseRuleSyntax(
   additionalEffectForeignCalls: string[]
 ): RuleDefinition {
   var condition = syntax.condition;
-
   condition = removeExtraParenthesis(condition);
   let ruleComponents: RuleComponent[] = [
     ...parseFunctionArguments(encodedValues, condition),
   ];
   var effectNames: any[] = [];
   var effectNamesMega: any[] = [];
-  const [fcCondition, fcNames] = parseForeignCalls(
+  let [fcCondition, fcNames] = parseForeignCalls(
     condition,
     ruleComponents,
     foreignCallNameToID,
@@ -101,13 +102,19 @@ export function parseRuleSyntax(
     additionalForeignCalls
   );
   ruleComponents = [...ruleComponents, ...fcNames];
-  const trackers = parseTrackers(fcCondition, ruleComponents, indexMap);
+  const [trCondition, trackers] = parseTrackers(
+    fcCondition,
+    ruleComponents,
+    indexMap
+  );
+  fcCondition = trCondition;
   ruleComponents = [...ruleComponents, ...trackers];
+
   var placeHolders = buildPlaceholderList(ruleComponents);
   for (var effectP in syntax.positiveEffects) {
     var effectNamesInternal: any[] = [];
 
-    const [effectCondition, effectCalls] = parseForeignCalls(
+    let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.positiveEffects[effectP],
       effectNamesInternal,
       foreignCallNameToID,
@@ -116,12 +123,12 @@ export function parseRuleSyntax(
     );
     syntax.positiveEffects[effectP] = effectCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectCalls];
-    const effectTrackers = parseTrackers(
+    const [effectTrCondition, effectTrackers] = parseTrackers(
       syntax.positiveEffects[effectP],
       effectNamesInternal,
       indexMap
     );
-
+    effectCondition = effectTrCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
 
     effectNamesMega.push(effectNamesInternal);
@@ -129,7 +136,7 @@ export function parseRuleSyntax(
   for (var effectN in syntax.negativeEffects) {
     var effectNamesInternal: any[] = [];
 
-    const [effectCondition, effectCalls] = parseForeignCalls(
+    let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.negativeEffects[effectN],
       effectNamesInternal,
       foreignCallNameToID,
@@ -138,12 +145,12 @@ export function parseRuleSyntax(
     );
     syntax.negativeEffects[effectN] = effectCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectCalls];
-    const effectTrackers = parseTrackers(
+    const [effectTrackerCondition, effectTrackers] = parseTrackers(
       syntax.negativeEffects[effectN],
       effectNamesInternal,
       indexMap
     );
-
+    effectCondition = effectTrackerCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
 
     effectNamesMega.push(effectNamesInternal);
@@ -176,7 +183,6 @@ export function parseRuleSyntax(
       negativeEffectsFinal.push(effect);
     }
   }
-
   var retVal = convertHumanReadableToInstructionSet(
     fcCondition,
     ruleComponents,
@@ -199,6 +205,127 @@ export function parseRuleSyntax(
     placeHolders: placeHolders,
     effectPlaceHolders: effectPlaceHolders,
   };
+}
+
+export function parseMappedTrackerSyntax(
+  syntax: mappedTrackerJSON
+): Either<RulesError, MappedTrackerDefinition> {
+  let keyType = syntax.keyType.trim();
+  let valueType = syntax.valueType.trim();
+  if (
+    !supportedTrackerTypes.includes(keyType) ||
+    !supportedTrackerTypes.includes(valueType)
+  ) {
+    return makeLeft({
+      errorType: "INPUT",
+      state: { supportedTrackerTypes, keyType, valueType },
+      message: "Unsupported type",
+    });
+  }
+  var trackerInitialKeys: any[] = [];
+  var trackerInitialValues: any[] = [];
+  for (var pair of syntax.initialvalues) {
+    if (keyType == "uint256") {
+      if (!isNaN(Number(pair.key))) {
+        trackerInitialKeys.push(encodePacked(["uint256"], [BigInt(pair.key)]));
+      } else {
+        return makeLeft({
+          errorType: "INPUT",
+          state: { defaultValue: pair.key },
+          message: "Default Value doesn't match type",
+        });
+      }
+    } else if (keyType == "address") {
+      const validatedAddress = getAddress(pair.key as string);
+      if (isLeft(validatedAddress)) {
+        return validatedAddress;
+      } else {
+        var address = encodeAbiParameters(parseAbiParameters("address"), [
+          unwrapEither(validatedAddress),
+        ]);
+
+        trackerInitialKeys.push(address);
+      }
+    } else if (keyType == "bytes") {
+      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
+        toHex(stringToBytes(String(pair.key))),
+      ]);
+
+      trackerInitialKeys.push(bytes);
+    } else if (keyType == "bool") {
+      if (pair.key == "true") {
+        trackerInitialKeys.push(encodePacked(["uint256"], [1n]));
+      } else {
+        trackerInitialKeys.push(encodePacked(["uint256"], [0n]));
+      }
+    } else {
+      trackerInitialKeys.push(
+        encodeAbiParameters(parseAbiParameters("string"), [pair.key as string])
+      );
+    }
+
+    if (valueType == "uint256") {
+      if (!isNaN(Number(pair.value))) {
+        trackerInitialValues.push(
+          encodePacked(["uint256"], [BigInt(pair.value)])
+        );
+      } else {
+        return makeLeft({
+          errorType: "INPUT",
+          state: { defaultValue: pair.value },
+          message: "Default Value doesn't match type",
+        });
+      }
+    } else if (valueType == "address") {
+      const validatedAddress = getAddress(pair.value as string);
+      if (isLeft(validatedAddress)) {
+        return validatedAddress;
+      } else {
+        var address = encodeAbiParameters(parseAbiParameters("address"), [
+          unwrapEither(validatedAddress),
+        ]);
+
+        trackerInitialValues.push(address);
+      }
+    } else if (valueType == "bytes") {
+      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
+        toHex(stringToBytes(String(pair.value))),
+      ]);
+
+      trackerInitialValues.push(bytes);
+    } else if (valueType == "bool") {
+      if (pair.value == "true") {
+        trackerInitialValues.push(encodePacked(["uint256"], [1n]));
+      } else {
+        trackerInitialValues.push(encodePacked(["uint256"], [0n]));
+      }
+    } else {
+      trackerInitialValues.push(
+        encodeAbiParameters(parseAbiParameters("string"), [
+          pair.value as string,
+        ])
+      );
+    }
+  }
+  var keyTypeEnum = 0;
+  var valueTypeEnum = 0;
+
+  for (var parameterType of PT) {
+    if (parameterType.name == keyType) {
+      keyTypeEnum = parameterType.enumeration;
+    }
+    if (parameterType.name == valueType) {
+      valueTypeEnum = parameterType.enumeration;
+    }
+  }
+
+  return makeRight({
+    name: syntax.name.trim(),
+    keyType: keyTypeEnum,
+    valueType: valueTypeEnum,
+    initialKeys: trackerInitialKeys,
+    initialValues: trackerInitialValues,
+  });
 }
 
 /**
