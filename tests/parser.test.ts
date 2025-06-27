@@ -1913,6 +1913,7 @@ test("Extraneous paraenthesis", () => {
   "negativeEffects": [],
   "callingFunction": "addValue"
   }`;
+  console.log("HG");
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [{ id: 1, name: "testTwo", type: 0 }],
@@ -2357,6 +2358,53 @@ test("Evaluates a simple syntax string involving a boolean tracker", () => {
     [],
     []
   );
+  expect(retVal.instructionSet).toEqual(expectedArray);
+});
+
+test("Evaluates a simple syntax string involving a mapped tracker", () => {
+  /**
+   * Original Syntax:
+   * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+   *
+   * Abtract Tree Syntax:
+   * [AND,
+   *  [">",
+   *      ["+", "3", "4"],
+   *      "5"]
+   *  [AND,
+   *      ["==", "1", "1"],
+   *      ["==", "2", "2"]
+   *  ]
+   * ]
+   *
+   * Instruction Set Syntax:
+   * [ 'N', 3, 'N', 4, '+', 0,
+   *    1, 'N', 5, '>', 2, 3,
+   *   'N', 1, 'N', 1, '==', 5,
+   *    6, 'N', 2, 'N', 2, '==',
+   *    8, 9, 'AND', 7, 10, 'AND',
+   *    4, 11 ]
+   */
+  var expectedArray = ["PLH", 0n, "PLH", 1n, "N", 1n, "==", 1n, 2n];
+
+  var ruleStringA = `{
+    "condition": "TR:trackerOne(to) == true",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "functionSignature": "addValue"
+    }`;
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "trackerOne", type: 3 },
+      { id: 2, name: "trackerTwo", type: 0 },
+    ],
+    [],
+    "address to, uint256 sAND",
+    [],
+    []
+  );
+  // console.log("instruction set", retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 

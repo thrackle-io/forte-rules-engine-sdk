@@ -12,11 +12,11 @@ import { Address, checksumAddress, isAddress } from "viem";
  */
 const trimPossibleString = (input: any): any => {
   if (typeof input === "string") {
-    return input.trim()
+    return input.trim();
   } else {
-    return input
+    return input;
   }
-}
+};
 
 /**
  * Parses a JSON string and returns Either a successful result or an error.
@@ -29,22 +29,21 @@ export const safeParseJson = (input: string): Either<RulesError[], object> => {
     const result = JSON.parse(input);
     return makeRight(result);
   } catch (error) {
-    return makeLeft([{
-      errorType: "INPUT",
-      state: { input },
-      message: "Failed to parse JSON",
-    }]);
+    return makeLeft([
+      {
+        errorType: "INPUT",
+        state: { input },
+        message: "Failed to parse JSON",
+      },
+    ]);
   }
 };
 
 export const PType = PT.map((p) => p.name); // ["address", "string", "uint256", "bool", "void", "bytes"]
 
 export const splitFunctionInput = (input: string): string[] => {
-  return input
-    .split("(")[1]
-    .split(")")[0]
-    .split(",");
-}
+  return input.split("(")[1].split(")")[0].split(",");
+};
 
 /**
  * Accepts an array of RulesError objects and returns a formatted message string
@@ -53,10 +52,9 @@ export const splitFunctionInput = (input: string): string[] => {
  * @returns The errors messages concatenated into a single string
  */
 export const getRulesErrorMessages = (errors: RulesError[]): string => {
-  console.log(errors[0])
-  return errors.map(err => `${err.message}`).join("\n");
-}
-
+  console.log(errors[0]);
+  return errors.map((err) => `${err.message}`).join("\n");
+};
 
 const ruleValidator = z.object({
   condition: z.string(),
@@ -64,7 +62,7 @@ const ruleValidator = z.object({
   negativeEffects: z.array(z.string()),
   callingFunction: z.string(),
 });
-export interface RuleJSON extends z.infer<typeof ruleValidator> { }
+export interface RuleJSON extends z.infer<typeof ruleValidator> {}
 
 /**
  * Parses a JSON string and returns Either a RuleJSON object or an error.
@@ -72,7 +70,9 @@ export interface RuleJSON extends z.infer<typeof ruleValidator> { }
  * @param rule - string to be parsed.
  * @returns Either the parsed RuleJSON object or an error.
  */
-export const validateRuleJSON = (rule: string): Either<RulesError[], RuleJSON> => {
+export const validateRuleJSON = (
+  rule: string
+): Either<RulesError[], RuleJSON> => {
   const parsedJson = safeParseJson(rule);
 
   if (isLeft(parsedJson)) return parsedJson;
@@ -82,9 +82,9 @@ export const validateRuleJSON = (rule: string): Either<RulesError[], RuleJSON> =
   if (parsed.success) {
     return makeRight(parsed.data);
   } else {
-    const errors: RulesError[] = parsed.error.issues.map(err => ({
+    const errors: RulesError[] = parsed.error.issues.map((err) => ({
       errorType: "INPUT",
-      message: `${err.message}: Field ${err.path.join('.')}`,
+      message: `${err.message}: Field ${err.path.join(".")}`,
       state: { input: rule },
     }));
     return makeLeft(errors);
@@ -100,34 +100,34 @@ export const validateRuleJSON = (rule: string): Either<RulesError[], RuleJSON> =
 export const validateFCFunctionInput = (input: string): boolean => {
   const parameterSplit = splitFunctionInput(input);
 
-  return parameterSplit.filter(
-    (parameter) => !PType.includes(parameter.trim())
-  ).length === 0;
-}
+  return (
+    parameterSplit.filter((parameter) => !PType.includes(parameter.trim()))
+      .length === 0
+  );
+};
 
 export const foreignCallValidator = z.object({
   name: z.string(),
-  function: z.string()
+  function: z
+    .string()
     .trim()
-    .refine(
-      validateFCFunctionInput,
-      { message: "Unsupported argument type" }
-    ),
-  address: z.string()
+    .refine(validateFCFunctionInput, { message: "Unsupported argument type" }),
+  address: z
+    .string()
     .trim()
     .refine((input) => isAddress(input), {
       message: `Address is invalid`,
     })
     .transform((input) => checksumAddress(input.trim() as Address)),
-  returnType: z.preprocess(trimPossibleString, z.literal(PType, "Unsupported return type")),
-  valuesToPass: z.string()
-    .trim(),
-  callingFunction: z.string()
-    .trim()
-
+  returnType: z.preprocess(
+    trimPossibleString,
+    z.literal(PType, "Unsupported return type")
+  ),
+  valuesToPass: z.string().trim(),
+  callingFunction: z.string().trim(),
 });
 
-export interface ForeignCallJSON extends z.infer<typeof foreignCallValidator> { }
+export interface ForeignCallJSON extends z.infer<typeof foreignCallValidator> {}
 
 /**
  * Parses a JSON string and returns Either a ForeignCallJSON object or an error.
@@ -135,7 +135,9 @@ export interface ForeignCallJSON extends z.infer<typeof foreignCallValidator> { 
  * @param foreignCall - string to be parsed.
  * @returns Either the parsed ForeignCallJSON object or an error.
  */
-export const validateForeignCallJSON = (foreignCall: string): Either<RulesError[], ForeignCallJSON> => {
+export const validateForeignCallJSON = (
+  foreignCall: string
+): Either<RulesError[], ForeignCallJSON> => {
   const parsedJson = safeParseJson(foreignCall);
 
   if (isLeft(parsedJson)) return parsedJson;
@@ -145,9 +147,9 @@ export const validateForeignCallJSON = (foreignCall: string): Either<RulesError[
   if (parsed.success) {
     return makeRight(parsed.data);
   } else {
-    const errors: RulesError[] = parsed.error.issues.map(err => ({
+    const errors: RulesError[] = parsed.error.issues.map((err) => ({
       errorType: "INPUT",
-      message: `${err.message}: Field ${err.path.join('.')}`,
+      message: `${err.message}: Field ${err.path.join(".")}`,
       state: { input: foreignCall },
     }));
     return makeLeft(errors);
@@ -184,19 +186,35 @@ const validateTrackerValue = (data: any) => {
     default:
       return false; // Should never happen due to z.literal
   }
-}
+};
 
-export const trackerValidator = z.object({
-  name: z.string()
-    .trim(),
-  type: z.preprocess(trimPossibleString, z.literal(supportedTrackerTypes, "Unsupported type")),
-  initialValue: z.string()
-    .trim()
-}).refine(validateTrackerValue, {
-  message: "Initial Value doesn't match type",
+export const trackerValidator = z
+  .object({
+    name: z.string().trim(),
+    type: z.preprocess(
+      trimPossibleString,
+      z.literal(supportedTrackerTypes, "Unsupported type")
+    ),
+    initialValue: z.string().trim(),
+  })
+  .refine(validateTrackerValue, {
+    message: "Initial Value doesn't match type",
+  });
+
+export interface TrackerJSON extends z.infer<typeof trackerValidator> {}
+
+export const mappedTrackerValidator = z.object({
+  name: z.string().trim(),
+  keyType: z.preprocess(
+    trimPossibleString,
+    z.literal(supportedTrackerTypes, "Unsupported type")
+  ),
+  valueType: z.preprocess(
+    trimPossibleString,
+    z.literal(supportedTrackerTypes, "Unsupported type")
+  ),
+  initialvalues: z.array(z.any()),
 });
-
-export interface TrackerJSON extends z.infer<typeof trackerValidator> { }
 
 /**
  * Parses a JSON string and returns Either a TrackerJSON object or an error.
@@ -204,7 +222,9 @@ export interface TrackerJSON extends z.infer<typeof trackerValidator> { }
  * @param tracker - string to be parsed.
  * @returns Either the parsed TrackerJSON object or an error.
  */
-export const validateTrackerJSON = (tracker: string): Either<RulesError[], TrackerJSON> => {
+export const validateTrackerJSON = (
+  tracker: string
+): Either<RulesError[], TrackerJSON> => {
   const parsedJson = safeParseJson(tracker);
 
   if (isLeft(parsedJson)) return parsedJson;
@@ -214,9 +234,9 @@ export const validateTrackerJSON = (tracker: string): Either<RulesError[], Track
   if (parsed.success) {
     return makeRight(parsed.data);
   } else {
-    const errors: RulesError[] = parsed.error.issues.map(err => ({
+    const errors: RulesError[] = parsed.error.issues.map((err) => ({
       errorType: "INPUT",
-      message: `${err.message}: Field ${err.path.join('.')}`,
+      message: `${err.message}: Field ${err.path.join(".")}`,
       state: { input: tracker },
     }));
     return makeLeft(errors);
@@ -224,15 +244,13 @@ export const validateTrackerJSON = (tracker: string): Either<RulesError[], Track
 };
 
 export const callingFunctionValidator = z.object({
-  name: z.string()
-    .trim(),
-  functionSignature: z.string()
-    .trim(),
-  encodedValues: z.string()
-    .trim()
+  name: z.string().trim(),
+  functionSignature: z.string().trim(),
+  encodedValues: z.string().trim(),
 });
 
-export interface CallingFunctionJSON extends z.infer<typeof callingFunctionValidator> { }
+export interface CallingFunctionJSON
+  extends z.infer<typeof callingFunctionValidator> {}
 
 /**
  * Parses a JSON string and returns Either a CallingFunctionJSON object or an error.
@@ -240,16 +258,18 @@ export interface CallingFunctionJSON extends z.infer<typeof callingFunctionValid
  * @param callingFunction - string to be parsed.
  * @returns Either the parsed CallingFunctionJSON object or an error.
  */
-export const validateCallingFunctionJSON = (callingFunction: string): Either<RulesError[], CallingFunctionJSON> => {
+export const validateCallingFunctionJSON = (
+  callingFunction: string
+): Either<RulesError[], CallingFunctionJSON> => {
   const parsedJson = safeParseJson(callingFunction);
   if (isLeft(parsedJson)) return parsedJson;
   const parsed = callingFunctionValidator.safeParse(unwrapEither(parsedJson));
   if (parsed.success) {
     return makeRight(parsed.data);
   } else {
-    const errors: RulesError[] = parsed.error.issues.map(err => ({
+    const errors: RulesError[] = parsed.error.issues.map((err) => ({
       errorType: "INPUT",
-      message: `${err.message}: Field ${err.path.join('.')}`,
+      message: `${err.message}: Field ${err.path.join(".")}`,
       state: { input: callingFunction },
     }));
     return makeLeft(errors);
@@ -262,9 +282,10 @@ export const policyJSONValidator = z.object({
   CallingFunctions: z.array(callingFunctionValidator),
   ForeignCalls: z.array(foreignCallValidator),
   Trackers: z.array(trackerValidator),
+  MappedTrackers: z.array(mappedTrackerValidator),
   Rules: z.array(ruleValidator),
 });
-export interface PolicyJSON extends z.infer<typeof policyJSONValidator> { }
+export interface PolicyJSON extends z.infer<typeof policyJSONValidator> {}
 
 /**
  * Parses a JSON string and returns Either a PolicyJSON object or an error.
@@ -272,7 +293,9 @@ export interface PolicyJSON extends z.infer<typeof policyJSONValidator> { }
  * @param policy - string to be parsed.
  * @returns Either the parsed PolicyJSON object or an error.
  */
-export const validatePolicyJSON = (policy: string): Either<RulesError[], PolicyJSON> => {
+export const validatePolicyJSON = (
+  policy: string
+): Either<RulesError[], PolicyJSON> => {
   const parsedJson = safeParseJson(policy);
 
   if (isLeft(parsedJson)) return parsedJson;
@@ -282,9 +305,9 @@ export const validatePolicyJSON = (policy: string): Either<RulesError[], PolicyJ
   if (parsed.success) {
     return makeRight(parsed.data);
   } else {
-    const errors: RulesError[] = parsed.error.issues.map(err => ({
+    const errors: RulesError[] = parsed.error.issues.map((err) => ({
       errorType: "INPUT",
-      message: `${err.message}: Field ${err.path.join('.')}`,
+      message: `${err.message}: Field ${err.path.join(".")}`,
       state: { input: policy },
     }));
     return makeLeft(errors);

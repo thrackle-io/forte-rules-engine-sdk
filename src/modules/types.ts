@@ -65,6 +65,18 @@ export type CallingFunctionHashMapping = {
   encodedValues: string;
 };
 
+export interface mappedTrackerKeyValuePair {
+  key: number | string;
+  value: number | string;
+}
+
+export interface mappedTrackerJSON {
+  name: string;
+  keyType: string;
+  valueType: string;
+  initialvalues: mappedTrackerKeyValuePair[];
+}
+
 export type Tuple = {
   i: string;
   s: string;
@@ -200,6 +212,14 @@ export type TrackerDefinition = {
   name: string;
   type: number;
   initialValue: any;
+};
+
+export type MappedTrackerDefinition = {
+  name: string;
+  keyType: number;
+  valueType: number;
+  initialKeys: any[];
+  initialValues: any[];
 };
 
 export type InstructionSet = (number | string | BigInt)[];

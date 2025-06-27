@@ -7,10 +7,14 @@ import {
   Config,
 } from "@wagmi/core";
 import { sleep } from "./contract-interaction-utils";
-import { parseTrackerSyntax } from "../parsing/parser";
+import {
+  parseMappedTrackerSyntax,
+  parseTrackerSyntax,
+} from "../parsing/parser";
 import {
   RulesEngineComponentContract,
   TrackerOnChain,
+  mappedTrackerJSON,
 } from "./types";
 import { isLeft, unwrapEither } from "./utils";
 import { getRulesErrorMessages, validateTrackerJSON } from "./validation";
@@ -34,6 +38,64 @@ import { getRulesErrorMessages, validateTrackerJSON } from "./validation";
  *
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
+
+export const createMappedTracker = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  policyId: number,
+  mappedTrackerSyntax: string
+): Promise<number> => {
+  const json: mappedTrackerJSON = JSON.parse(mappedTrackerSyntax);
+  const parsedTracker = parseMappedTrackerSyntax(json);
+  if (isRight(parsedTracker)) {
+    const tracker = unwrapEither(parsedTracker);
+    var transactionTracker = {
+      set: true,
+      pType: tracker.valueType,
+      mapped: true,
+      trackerKeyType: tracker.keyType,
+      trackerValue: 0,
+      trackerIndex: 0,
+    };
+    var addTR;
+    while (true) {
+      try {
+        addTR = await simulateContract(config, {
+          address: rulesEngineComponentContract.address,
+          abi: rulesEngineComponentContract.abi,
+          functionName: "createTracker",
+          args: [
+            policyId,
+            transactionTracker,
+            tracker.name,
+            tracker.initialKeys,
+            tracker.initialValues,
+          ],
+        });
+        break;
+      } catch (err) {
+        console.log(err);
+        // TODO: Look into replacing this loop/sleep with setTimeout
+        await sleep(1000);
+      }
+    }
+    if (addTR != null) {
+      const returnHash = await writeContract(config, {
+        ...addTR.request,
+        account: config.getClient().account,
+      });
+      await waitForTransactionReceipt(config, {
+        hash: returnHash,
+      });
+
+      let trackerResult = addTR.result;
+      return trackerResult;
+    }
+    return -1;
+  } else {
+    throw new Error(unwrapEither(parsedTracker).message);
+  }
+};
 
 /**
  * Asynchronously creates a tracker in the rules engine component contract.

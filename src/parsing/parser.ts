@@ -8,17 +8,20 @@ import {
   getAddress,
 } from "viem";
 import {
+  Either,
   FCNameToID,
   ForeignCallDefinition,
   ForeignCallEncodedIndex,
+  MappedTrackerDefinition,
+  mappedTrackerJSON,
   matchArray,
   operandArray,
   PT,
   RuleComponent,
   RuleDefinition,
+  RulesError,
   TrackerDefinition,
   trackerIndexNameMapping,
-
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 import {
@@ -29,10 +32,19 @@ import {
   parseForeignCalls,
   buildPlaceholderList,
   parseEffect,
-  cleanseForeignCallLists
-} from './parsing-utilities';
+  cleanseForeignCallLists,
+} from "./parsing-utilities";
 
-import { CallingFunctionJSON, ForeignCallJSON, PType, RuleJSON, splitFunctionInput, TrackerJSON } from "../modules/validation";
+import {
+  CallingFunctionJSON,
+  ForeignCallJSON,
+  PType,
+  RuleJSON,
+  splitFunctionInput,
+  supportedTrackerTypes,
+  TrackerJSON,
+} from "../modules/validation";
+import { isLeft, makeLeft, makeRight, unwrapEither } from "../modules/utils";
 
 /**
  * @file parser.ts
@@ -73,14 +85,13 @@ export function parseRuleSyntax(
   additionalEffectForeignCalls: string[]
 ): RuleDefinition {
   var condition = syntax.condition;
-
   condition = removeExtraParenthesis(condition);
   let ruleComponents: RuleComponent[] = [
     ...parseFunctionArguments(encodedValues, condition),
   ];
   var effectNames: any[] = [];
   var effectNamesMega: any[] = [];
-  const [fcCondition, fcNames] = parseForeignCalls(
+  let [fcCondition, fcNames] = parseForeignCalls(
     condition,
     ruleComponents,
     foreignCallNameToID,
@@ -88,13 +99,19 @@ export function parseRuleSyntax(
     additionalForeignCalls
   );
   ruleComponents = [...ruleComponents, ...fcNames];
-  const trackers = parseTrackers(fcCondition, ruleComponents, indexMap);
+  const [trCondition, trackers] = parseTrackers(
+    fcCondition,
+    ruleComponents,
+    indexMap
+  );
+  fcCondition = trCondition;
   ruleComponents = [...ruleComponents, ...trackers];
+
   var placeHolders = buildPlaceholderList(ruleComponents);
   for (var effectP in syntax.positiveEffects) {
     var effectNamesInternal: any[] = [];
 
-    const [effectCondition, effectCalls] = parseForeignCalls(
+    let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.positiveEffects[effectP],
       effectNamesInternal,
       foreignCallNameToID,
@@ -103,12 +120,12 @@ export function parseRuleSyntax(
     );
     syntax.positiveEffects[effectP] = effectCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectCalls];
-    const effectTrackers = parseTrackers(
+    const [effectTrCondition, effectTrackers] = parseTrackers(
       syntax.positiveEffects[effectP],
       effectNamesInternal,
       indexMap
     );
-
+    effectCondition = effectTrCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
 
     effectNamesMega.push(effectNamesInternal);
@@ -116,7 +133,7 @@ export function parseRuleSyntax(
   for (var effectN in syntax.negativeEffects) {
     var effectNamesInternal: any[] = [];
 
-    const [effectCondition, effectCalls] = parseForeignCalls(
+    let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.negativeEffects[effectN],
       effectNamesInternal,
       foreignCallNameToID,
@@ -125,12 +142,12 @@ export function parseRuleSyntax(
     );
     syntax.negativeEffects[effectN] = effectCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectCalls];
-    const effectTrackers = parseTrackers(
+    const [effectTrackerCondition, effectTrackers] = parseTrackers(
       syntax.negativeEffects[effectN],
       effectNamesInternal,
       indexMap
     );
-
+    effectCondition = effectTrackerCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
 
     effectNamesMega.push(effectNamesInternal);
@@ -163,7 +180,6 @@ export function parseRuleSyntax(
       negativeEffectsFinal.push(effect);
     }
   }
-
   var retVal = convertHumanReadableToInstructionSet(
     fcCondition,
     ruleComponents,
@@ -188,6 +204,119 @@ export function parseRuleSyntax(
   };
 }
 
+export function parseMappedTrackerSyntax(
+  syntax: mappedTrackerJSON
+): Either<RulesError, MappedTrackerDefinition> {
+  let keyType = syntax.keyType.trim();
+  let valueType = syntax.valueType.trim();
+  if (
+    !supportedTrackerTypes.includes(keyType) ||
+    !supportedTrackerTypes.includes(valueType)
+  ) {
+    return makeLeft({
+      errorType: "INPUT",
+      state: { supportedTrackerTypes, keyType, valueType },
+      message: "Unsupported type",
+    });
+  }
+  var trackerInitialKeys: any[] = [];
+  var trackerInitialValues: any[] = [];
+  for (var pair of syntax.initialvalues) {
+    if (keyType == "uint256") {
+      if (!isNaN(Number(pair.key))) {
+        trackerInitialKeys.push(encodePacked(["uint256"], [BigInt(pair.key)]));
+      } else {
+        return makeLeft({
+          errorType: "INPUT",
+          state: { defaultValue: pair.key },
+          message: "Default Value doesn't match type",
+        });
+      }
+    } else if (keyType == "address") {
+      const validatedAddress = getAddress(pair.key as string);
+      var address = encodeAbiParameters(parseAbiParameters("address"), [
+        validatedAddress,
+      ]);
+
+      trackerInitialKeys.push(address);
+    } else if (keyType == "bytes") {
+      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
+        toHex(stringToBytes(String(pair.key))),
+      ]);
+
+      trackerInitialKeys.push(bytes);
+    } else if (keyType == "bool") {
+      if (pair.key == "true") {
+        trackerInitialKeys.push(encodePacked(["uint256"], [1n]));
+      } else {
+        trackerInitialKeys.push(encodePacked(["uint256"], [0n]));
+      }
+    } else {
+      trackerInitialKeys.push(
+        encodeAbiParameters(parseAbiParameters("string"), [pair.key as string])
+      );
+    }
+
+    if (valueType == "uint256") {
+      if (!isNaN(Number(pair.value))) {
+        trackerInitialValues.push(
+          encodePacked(["uint256"], [BigInt(pair.value)])
+        );
+      } else {
+        return makeLeft({
+          errorType: "INPUT",
+          state: { defaultValue: pair.value },
+          message: "Default Value doesn't match type",
+        });
+      }
+    } else if (valueType == "address") {
+      const validatedAddress = getAddress(pair.value as string);
+      var address = encodeAbiParameters(parseAbiParameters("address"), [
+        validatedAddress,
+      ]);
+
+      trackerInitialValues.push(address);
+    } else if (valueType == "bytes") {
+      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
+        toHex(stringToBytes(String(pair.value))),
+      ]);
+
+      trackerInitialValues.push(bytes);
+    } else if (valueType == "bool") {
+      if (pair.value == "true") {
+        trackerInitialValues.push(encodePacked(["uint256"], [1n]));
+      } else {
+        trackerInitialValues.push(encodePacked(["uint256"], [0n]));
+      }
+    } else {
+      trackerInitialValues.push(
+        encodeAbiParameters(parseAbiParameters("string"), [
+          pair.value as string,
+        ])
+      );
+    }
+  }
+  var keyTypeEnum = 0;
+  var valueTypeEnum = 0;
+
+  for (var parameterType of PT) {
+    if (parameterType.name == keyType) {
+      keyTypeEnum = parameterType.enumeration;
+    }
+    if (parameterType.name == valueType) {
+      valueTypeEnum = parameterType.enumeration;
+    }
+  }
+
+  return makeRight({
+    name: syntax.name.trim(),
+    keyType: keyTypeEnum,
+    valueType: valueTypeEnum,
+    initialKeys: trackerInitialKeys,
+    initialValues: trackerInitialValues,
+  });
+}
+
 /**
  * Parses the tracker syntax and validates its type and default value.
  *
@@ -205,10 +334,9 @@ export function parseTrackerSyntax(syntax: TrackerJSON): TrackerDefinition {
     );
   } else if (trackerType == "address") {
     const validatedAddress = getAddress(syntax.initialValue);
-    trackerInitialValue = encodeAbiParameters(
-      parseAbiParameters('address'),
-      [validatedAddress]
-    )
+    trackerInitialValue = encodeAbiParameters(parseAbiParameters("address"), [
+      validatedAddress,
+    ]);
   } else if (trackerType == "bytes") {
     trackerInitialValue = encodeAbiParameters(parseAbiParameters("bytes"), [
       toHex(stringToBytes(String(syntax.initialValue))),
@@ -249,10 +377,9 @@ export function parseForeignCallDefinition(
   indexMap: FCNameToID[],
   functionArguments: string[]
 ): ForeignCallDefinition {
-
-  var encodedIndices: ForeignCallEncodedIndex[] = syntax.valuesToPass.split(",")
+  var encodedIndices: ForeignCallEncodedIndex[] = syntax.valuesToPass
+    .split(",")
     .map((encodedIndex: string) => {
-
       if (encodedIndex.includes("FC:")) {
         for (var fcMap of foreignCallNameToID) {
           if ("FC:" + fcMap.name.trim() == encodedIndex.trim()) {
@@ -279,14 +406,14 @@ export function parseForeignCallDefinition(
 
   const returnType: number = PType.indexOf(syntax.returnType);
 
-  const parameterTypes: number[] = splitFunctionInput(syntax.function)
-    .map((param) => PType.indexOf(param));
+  const parameterTypes: number[] = splitFunctionInput(syntax.function).map(
+    (param) => PType.indexOf(param)
+  );
 
-  var valuesToPass: number[] = syntax.valuesToPass.split(",")
+  var valuesToPass: number[] = syntax.valuesToPass
+    .split(",")
     .filter((input: string) => !isNaN(Number(input)))
     .map((input: string) => Number(input));
-
-
 
   return {
     ...syntax,

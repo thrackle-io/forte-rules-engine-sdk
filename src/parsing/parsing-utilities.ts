@@ -54,7 +54,6 @@ export function parseFunctionArguments(
   var params = encodedValues.split(", ");
   var names = [];
   var typeIndex = 0;
-
   for (var param of params) {
     var typeName = param.split(" ");
     if (
@@ -122,12 +121,25 @@ export function parseTrackers(
   condition: string,
   names: any[],
   indexMap: trackerIndexNameMapping[]
-): Tracker[] {
+): [string, Tracker[]] {
   const trRegex = /TR:[a-zA-Z]+/g;
   const truRegex = /TRU:[a-zA-Z]+/g;
+  const trMappedRegex = /TR:[a-zA-Z]+\([^()]+\)/g;
   var matches = condition.match(trRegex);
   const trackers: Tracker[] = [];
-
+  var trCondition = condition;
+  var mappedMatches = condition.match(trMappedRegex);
+  if (mappedMatches != null) {
+    var uniq = [...new Set(mappedMatches)];
+    for (var match of uniq!) {
+      var initialSplit = match.split("(")[1];
+      initialSplit = initialSplit.substring(0, initialSplit.length - 1);
+      trCondition = trCondition.replace(
+        match,
+        initialSplit + " | " + match.split("(")[0]
+      );
+    }
+  }
   if (matches != null) {
     var uniq = [...new Set(matches)];
     for (var match of uniq!) {
@@ -183,7 +195,7 @@ export function parseTrackers(
     }
   }
 
-  return trackers;
+  return [trCondition, trackers];
 }
 
 /**
@@ -561,8 +573,9 @@ export function cleanString(str: string): string {
 export function removeExtraParenthesis(strToClean: string): string {
   var holders: string[] = [];
   var fcHolder: string[] = [];
+  var trHolder: string[] = [];
   var iter = 0;
-
+  var trIter = 0;
   while (strToClean.includes("FC:")) {
     var initialIndex = strToClean.lastIndexOf("FC:");
     var closingIndex = strToClean.indexOf(" ", initialIndex);
@@ -571,6 +584,19 @@ export function removeExtraParenthesis(strToClean: string): string {
     var replacement = "fcRep:" + iter;
     iter += 1;
     strToClean = strToClean.replace(sub, replacement);
+  }
+
+  const trMappedRegex = /TR:[a-zA-Z]+\([^()]+\)/g;
+
+  var mappedMatches = strToClean.match(trMappedRegex);
+  if (mappedMatches != null) {
+    var uniq = [...new Set(mappedMatches)];
+    for (var match of uniq!) {
+      trHolder.push(match);
+      var replacement = "trRep:" + trIter;
+      trIter += 1;
+      strToClean = strToClean.replace(match, replacement);
+    }
   }
 
   iter = 0;
@@ -614,6 +640,12 @@ export function removeExtraParenthesis(strToClean: string): string {
   for (var hold of fcHolder) {
     var str = "fcRep:" + iter;
     strToClean = strToClean.replace(str, fcHolder[iter]);
+    iter += 1;
+  }
+  iter = 0;
+  for (var hold of trHolder) {
+    var str = "trRep:" + iter;
+    strToClean = strToClean.replace(str, trHolder[iter]);
     iter += 1;
   }
   return strToClean;
