@@ -107,6 +107,7 @@ describe("Rules Engine Interactions", async () => {
   beforeEach(async () => {
     await revertToSnapshot(snapshotId);
   });
+
   const options = {
     timeout: 999999,
   };
