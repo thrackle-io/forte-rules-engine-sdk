@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
-import { validateRuleJSON, validateForeignCallJSON, validateTrackerJSON, validatePolicyJSON } from "../src/modules/validation";
+import { validateRuleJSON, validateForeignCallJSON, validateTrackerJSON, validatePolicyJSON, safeParseJson } from "../src/modules/validation";
 import { isLeft, isRight, unwrapEither } from "../src/modules/utils";
 import { RulesError } from "../src/modules/types";
+import { safeParse } from "zod/v4/core";
 
 const ruleJSON = `{
 				"condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
@@ -408,6 +409,30 @@ test("Tests unsupported type", () => {
 				}`;
 	var retVal = unwrapEither(validateTrackerJSON(str)) as RulesError[]
 	expect(retVal[0].message).toEqual('Unsupported type: Field type');
+});
+
+test("Tests can safely parse json", () => {
+	const str = `{
+				"type": 1,
+				"name": "foo"
+				}`;
+	const retVal = safeParseJson(str);
+	expect(isRight(retVal)).toBeTruthy();
+	const parsed = unwrapEither(retVal) as any;
+	expect(parsed.type).toEqual(1);
+	expect(parsed.name).toEqual("foo");
+});
+
+test("Tests can return error when parsing invalid json", () => {
+	const str = `{
+				"type": 1,
+				"name": "foo",
+				}`;
+	const retVal = safeParseJson(str);
+	expect(isLeft(retVal)).toBeTruthy();
+	const parsed = unwrapEither(retVal) as RulesError[];
+	expect(parsed[0].message).toEqual("Failed to parse JSON");
+
 });
 
 
