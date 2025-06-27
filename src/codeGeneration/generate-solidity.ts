@@ -1,7 +1,9 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import * as fs from "fs";
 import * as path from "path";
-import { PolicyJSON, ruleJSON } from "../modules/types";
+import { getRulesErrorMessages, validatePolicyJSON } from "../modules/validation";
+import { isLeft, unwrapEither } from "../modules/utils";
+
 
 /**
  * @file generateSolidity.ts
@@ -55,7 +57,11 @@ export function generateModifier(
   outputFileName: string
 ): void {
   var functionNames: String[] = [];
-  let policySyntax: PolicyJSON = JSON.parse(policyS);
+  const validatedPolicySyntax = validatePolicyJSON(policyS);
+  if (isLeft(validatedPolicySyntax)) {
+    throw new Error(getRulesErrorMessages(unwrapEither(validatedPolicySyntax)));
+  }
+  const policySyntax = unwrapEither(validatedPolicySyntax);
 
   var iter = 0;
   var count = 0;

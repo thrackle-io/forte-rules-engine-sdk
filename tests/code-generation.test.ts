@@ -30,7 +30,7 @@ test("Code Generation test)", () => {
         {
             "name": "Simple String Tracker",
             "type": "string",
-            "defaultValue": "test" 
+            "initialValue": "test" 
         }
         ],
         "Rules": [

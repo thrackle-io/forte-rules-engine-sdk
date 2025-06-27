@@ -3,12 +3,12 @@
 import {
   stringReplacement,
   RuleStruct,
-  ruleJSON,
   PT,
   ForeignCallOnChain,
   TrackerOnChain,
   hexToFunctionString,
 } from "../modules/types";
+import { RuleJSON } from "../modules/validation";
 import { parseFunctionArguments } from "./parsing-utilities";
 
 /**
@@ -352,8 +352,8 @@ export function convertRuleStructToString(
   foreignCalls: ForeignCallOnChain[],
   trackers: TrackerOnChain[],
   mappings: hexToFunctionString[]
-): ruleJSON {
-  var rJSON: ruleJSON = {
+): RuleJSON {
+  var rJSON: RuleJSON = {
     condition: "",
     positiveEffects: [],
     negativeEffects: [],

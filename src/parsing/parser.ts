@@ -1,32 +1,24 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import {
   encodePacked,
-  Address,
   toHex,
   encodeAbiParameters,
   parseAbiParameters,
   stringToBytes,
+  getAddress,
 } from "viem";
 import {
-  callingFunctionJSON,
-  Either,
   FCNameToID,
   ForeignCallDefinition,
   ForeignCallEncodedIndex,
-  foreignCallJSON,
   matchArray,
   operandArray,
-  PlaceholderStruct,
   PT,
-  pTypeEnum,
   RuleComponent,
   RuleDefinition,
-  ruleJSON,
-  RulesError,
-  supportedTrackerTypes,
   TrackerDefinition,
   trackerIndexNameMapping,
-  trackerJSON,
+
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 import {
@@ -37,15 +29,10 @@ import {
   parseForeignCalls,
   buildPlaceholderList,
   parseEffect,
-  cleanseForeignCallLists,
-} from "./parsing-utilities";
-import {
-  getAddress,
-  isLeft,
-  makeLeft,
-  makeRight,
-  unwrapEither,
-} from "../modules/utils";
+  cleanseForeignCallLists
+} from './parsing-utilities';
+
+import { CallingFunctionJSON, ForeignCallJSON, PType, RuleJSON, splitFunctionInput, TrackerJSON } from "../modules/validation";
 
 /**
  * @file parser.ts
@@ -78,7 +65,7 @@ import {
  */
 
 export function parseRuleSyntax(
-  syntax: ruleJSON,
+  syntax: RuleJSON,
   indexMap: trackerIndexNameMapping[],
   foreignCallNameToID: FCNameToID[],
   encodedValues: string,
@@ -207,48 +194,25 @@ export function parseRuleSyntax(
  * @param syntax - The JSON representation of the tracker syntax.
  * @returns Either an object containing the tracker's name, type, and encoded default value if successful or an error
  */
-export function parseTrackerSyntax(
-  syntax: trackerJSON
-): Either<RulesError, TrackerDefinition> {
-  let trackerType = syntax.type.trim();
-  if (!supportedTrackerTypes.includes(trackerType)) {
-    return makeLeft({
-      errorType: "INPUT",
-      state: { supportedTrackerTypes, trackerType },
-      message: "Unsupported type",
-    });
-  }
+export function parseTrackerSyntax(syntax: TrackerJSON): TrackerDefinition {
+  let trackerType = syntax.type;
+
   var trackerInitialValue: any;
   if (trackerType == "uint256") {
-    if (!isNaN(Number(syntax.initialValue))) {
-      trackerInitialValue = encodePacked(
-        ["uint256"],
-        [BigInt(syntax.initialValue)]
-      );
-    } else {
-      return makeLeft({
-        errorType: "INPUT",
-        state: { defaultValue: syntax.initialValue },
-        message: "Default Value doesn't match type",
-      });
-    }
+    trackerInitialValue = encodePacked(
+      ["uint256"],
+      [BigInt(syntax.initialValue)]
+    );
   } else if (trackerType == "address") {
-    const validatedAddress = getAddress(syntax.initialValue.trim());
-    if (isLeft(validatedAddress)) {
-      return validatedAddress;
-    } else {
-      var address = encodeAbiParameters(parseAbiParameters("address"), [
-        unwrapEither(validatedAddress),
-      ]);
-
-      trackerInitialValue = address;
-    }
+    const validatedAddress = getAddress(syntax.initialValue);
+    trackerInitialValue = encodeAbiParameters(
+      parseAbiParameters('address'),
+      [validatedAddress]
+    )
   } else if (trackerType == "bytes") {
-    var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
-      toHex(stringToBytes(String(syntax.initialValue.trim()))),
+    trackerInitialValue = encodeAbiParameters(parseAbiParameters("bytes"), [
+      toHex(stringToBytes(String(syntax.initialValue))),
     ]);
-
-    trackerInitialValue = bytes;
   } else if (trackerType == "bool") {
     if (syntax.initialValue == "true") {
       trackerInitialValue = encodePacked(["uint256"], [1n]);
@@ -257,7 +221,7 @@ export function parseTrackerSyntax(
     }
   } else {
     trackerInitialValue = encodeAbiParameters(parseAbiParameters("string"), [
-      syntax.initialValue.trim(),
+      syntax.initialValue,
     ]);
   }
   var trackerTypeEnum = 0;
@@ -266,11 +230,11 @@ export function parseTrackerSyntax(
       trackerTypeEnum = parameterType.enumeration;
     }
   }
-  return makeRight({
-    name: syntax.name.trim(),
+  return {
+    name: syntax.name,
     type: trackerTypeEnum,
     initialValue: trackerInitialValue,
-  });
+  };
 }
 
 /**
@@ -280,94 +244,59 @@ export function parseTrackerSyntax(
  * @returns Either an object containing the foreign call's name, address, function, return type, parameter types, and encoded indices if successful or an error.
  */
 export function parseForeignCallDefinition(
-  syntax: foreignCallJSON,
+  syntax: ForeignCallJSON,
   foreignCallNameToID: FCNameToID[],
   indexMap: FCNameToID[],
   functionArguments: string[]
-): Either<RulesError, ForeignCallDefinition> {
-  const validatedAddress = getAddress(syntax.address.trim());
-  if (isLeft(validatedAddress)) {
-    return validatedAddress;
-  } else {
-    const address = unwrapEither(validatedAddress);
-    var func = syntax.function.trim();
-    var returnType = pTypeEnum.VOID; // default to void
-    if (!PT.some((parameter) => parameter.name === syntax.returnType)) {
-      return makeLeft({
-        errorType: "INPUT",
-        state: { PT, syntax },
-        message: "Unsupported return type",
-      });
-    }
-    for (var parameterType of PT) {
-      if (parameterType.name == syntax.returnType) {
-        returnType = parameterType.enumeration;
-      }
-    }
-    var parameterTypes: number[] = [];
-    var parameterSplit = syntax.function
-      .trim()
-      .split("(")[1]
-      .split(")")[0]
-      .split(",");
-    for (var fcParameter of parameterSplit) {
-      if (!PT.some((parameter) => parameter.name === fcParameter.trim())) {
-        return makeLeft({
-          errorType: "INPUT",
-          state: { PT, syntax },
-          message: "Unsupported argument type",
-        });
-      }
-      for (var parameterType of PT) {
-        if (fcParameter.trim() == parameterType.name) {
-          parameterTypes.push(parameterType.enumeration);
-        }
-      }
-    }
+): ForeignCallDefinition {
 
-    var encodedIndices: ForeignCallEncodedIndex[] = [];
-    var encodedIndecesSplit = syntax.valuesToPass.trim().split(",");
-    for (var encodedIndex of encodedIndecesSplit) {
+  var encodedIndices: ForeignCallEncodedIndex[] = syntax.valuesToPass.split(",")
+    .map((encodedIndex: string) => {
+
       if (encodedIndex.includes("FC:")) {
         for (var fcMap of foreignCallNameToID) {
           if ("FC:" + fcMap.name.trim() == encodedIndex.trim()) {
-            var val: ForeignCallEncodedIndex = { eType: 1, index: fcMap.id };
-            encodedIndices.push(val);
+            return { eType: 1, index: fcMap.id };
           }
         }
       } else if (encodedIndex.includes("TR:")) {
         for (var trMap of indexMap) {
           if ("TR:" + trMap.name.trim() == encodedIndex.trim()) {
-            var val: ForeignCallEncodedIndex = { eType: 2, index: trMap.id };
-            encodedIndices.push(val);
+            return { eType: 2, index: trMap.id };
           }
         }
       } else {
         var iter = 0;
         for (var functionArg of functionArguments) {
           if (functionArg.trim() == encodedIndex.trim()) {
-            var val: ForeignCallEncodedIndex = { eType: 0, index: iter };
-            encodedIndices.push(val);
-            break;
+            return { eType: 0, index: iter };
           } else {
             iter += 1;
           }
         }
       }
-    }
+    }) as ForeignCallEncodedIndex[];
 
-    return makeRight({
-      name: syntax.name.trim(),
-      address: address,
-      function: func,
-      returnType: returnType,
-      parameterTypes: parameterTypes,
-      encodedIndices: encodedIndices,
-    });
-  }
+  const returnType: number = PType.indexOf(syntax.returnType);
+
+  const parameterTypes: number[] = splitFunctionInput(syntax.function)
+    .map((param) => PType.indexOf(param));
+
+  var valuesToPass: number[] = syntax.valuesToPass.split(",")
+    .filter((input: string) => !isNaN(Number(input)))
+    .map((input: string) => Number(input));
+
+
+
+  return {
+    ...syntax,
+    returnType,
+    parameterTypes,
+    encodedIndices,
+  };
 }
 
-export function parseCallingFunction(syntax: callingFunctionJSON): string[] {
+export function parseCallingFunction(syntax: CallingFunctionJSON): string[] {
   var initialSplit = syntax.encodedValues.split(", ");
   var variableNames: string[] = [];
   for (var ind of initialSplit) {

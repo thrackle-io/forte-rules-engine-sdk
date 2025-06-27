@@ -65,43 +65,6 @@ export type CallingFunctionHashMapping = {
   encodedValues: string;
 };
 
-export interface PolicyJSON {
-  Policy: string;
-  PolicyType: string;
-  CallingFunctions: callingFunctionJSON[];
-  ForeignCalls: foreignCallJSON[];
-  Trackers: trackerJSON[];
-  Rules: ruleJSON[];
-}
-
-export interface foreignCallJSON {
-  name: string;
-  function: string;
-  address: string;
-  returnType: string;
-  valuesToPass: string;
-  callingFunction: string;
-}
-
-export interface trackerJSON {
-  name: string;
-  type: string;
-  initialValue: string;
-}
-
-export interface ruleJSON {
-  condition: string;
-  positiveEffects: string[];
-  negativeEffects: string[];
-  callingFunction: string;
-}
-
-export interface callingFunctionJSON {
-  name: string;
-  functionSignature: string;
-  encodedValues: string;
-}
-
 export type Tuple = {
   i: string;
   s: string;
@@ -269,13 +232,7 @@ export const matchArray: string[] = [
 ];
 export const truMatchArray: string[] = ["+=", "-=", "*=", "/=", "="];
 export const operandArray: string[] = ["PLH", "N"];
-export const supportedTrackerTypes: string[] = [
-  "uint256",
-  "string",
-  "address",
-  "bytes",
-  "bool",
-];
+
 export enum pTypeEnum {
   ADDRESS = 0,
   STRING = 1,

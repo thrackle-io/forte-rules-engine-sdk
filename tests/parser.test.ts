@@ -799,10 +799,8 @@ test("Creates a simple uint256 tracker", () => {
         "name": "Simple Int Tracker",
         "type": "uint256",
         "initialValue": "14"
-        }`;
-  var retVal = unwrapEither(
-    parseTrackerSyntax(JSON.parse(str))
-  ) as TrackerDefinition;
+        }`
+  var retVal = parseTrackerSyntax(JSON.parse(str))
 
   expect(retVal.name).toEqual("Simple Int Tracker");
   expect(retVal.type).toEqual(pTypeEnum.UINT256);
@@ -816,15 +814,12 @@ test("Creates a simple bool tracker", () => {
         "name": "Simple bool Tracker",
         "type": "bool",
         "initialValue": "true"
-        }`;
-  var retVal = unwrapEither(
-    parseTrackerSyntax(JSON.parse(str))
-  ) as TrackerDefinition;
-  expect(retVal.name).toEqual("Simple bool Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.BOOL);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
-  );
+        }`
+  var retVal = parseTrackerSyntax(JSON.parse(str))
+  expect(retVal.name).toEqual("Simple bool Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.BOOL)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('uint256'), [BigInt(1)]))
 });
 
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
@@ -889,17 +884,12 @@ test("Creates a simple address tracker", () => {
   "name": "Simple Address Tracker",
   "type": "address",
   "initialValue": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"
-  }`;
-  var retVal = unwrapEither(
-    parseTrackerSyntax(JSON.parse(str))
-  ) as TrackerDefinition;
-  expect(retVal.name).toEqual("Simple Address Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.ADDRESS);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("address"), [
-      "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-    ])
-  );
+  }`
+  var retVal = parseTrackerSyntax(JSON.parse(str))
+  expect(retVal.name).toEqual("Simple Address Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.ADDRESS)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('address'), ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']))
 });
 
 test("Creates a simple string tracker", () => {
@@ -907,25 +897,12 @@ test("Creates a simple string tracker", () => {
   "name": "Simple String Tracker",
   "type": "string",
   "initialValue": "test"
-  }`;
-  var retVal = unwrapEither(
-    parseTrackerSyntax(JSON.parse(str))
-  ) as TrackerDefinition;
-  expect(retVal.name).toEqual("Simple String Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.STRING);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("string"), ["test"])
-  );
-});
-
-test("Tests unsupported type", () => {
-  var str = `{
-  "name": "Simple String Tracker",
-  "type": "book",
-  "initialValue": "test"
-  }`;
-  var retVal = unwrapEither(parseTrackerSyntax(JSON.parse(str))) as RulesError;
-  expect(retVal.message).toEqual("Unsupported type");
+  }`
+  var retVal = parseTrackerSyntax(JSON.parse(str))
+  expect(retVal.name).toEqual("Simple String Tracker")
+  expect(retVal.type).toEqual(pTypeEnum.STRING)
+  expect(retVal.initialValue).toEqual(encodeAbiParameters(
+    parseAbiParameters('string'), ['test']))
 });
 
 test("Creates a simple foreign call", () => {
@@ -937,26 +914,24 @@ test("Creates a simple foreign call", () => {
   "valuesToPass": "to, FC:testSigTwo, TR:thisTracker"
   }`;
 
-  var retVal = unwrapEither(
-    parseForeignCallDefinition(
-      JSON.parse(str),
-      [
-        {
-          id: 1,
-          name: "testSigTwo",
-          type: 1,
-        },
-      ],
-      [
-        {
-          id: 1,
-          name: "thisTracker",
-          type: 1,
-        },
-      ],
-      ["to", "someString", "value"]
-    )
-  ) as ForeignCallDefinition;
+  var retVal = parseForeignCallDefinition(
+    JSON.parse(str),
+    [
+      {
+        id: 1,
+        name: "testSigTwo",
+        type: 1,
+      },
+    ],
+    [
+      {
+        id: 1,
+        name: "thisTracker",
+        type: 1,
+      },
+    ],
+    ["to", "someString", "value"]
+  )
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
@@ -965,65 +940,6 @@ test("Creates a simple foreign call", () => {
   expect(retVal.returnType).toEqual(2);
   console.log(retVal.encodedIndices);
   expect(retVal.encodedIndices[1].eType).toEqual(1);
-});
-
-test("Tests incorrect format for address", () => {
-  var str = `{
-  "name": "Simple Foreign Call",
-  "address": "test",
-  "function": "testSig(address,string,uint256)",
-  "returnType": "uint256",
-  "valuesToPass": "to, someString, value"
-  }`;
-
-  var retVal = unwrapEither(
-    parseForeignCallDefinition(
-      JSON.parse(str),
-      [],
-      [],
-      ["to", "someString", "value"]
-    )
-  ) as RulesError;
-  expect(retVal.message).toEqual('Address "test" is invalid');
-});
-
-test("Tests unsupported return type", () => {
-  var str = `{
-  "name": "Simple Foreign Call",
-  "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-  "function": "testSig(address,string,uint256)",
-  "returnType": "notAnInt",
-  "valuesToPass": "to, someString, value"
-  }`;
-  var retVal = unwrapEither(
-    parseForeignCallDefinition(
-      JSON.parse(str),
-      [],
-      [],
-      ["to", "someString", "value"]
-    )
-  ) as RulesError;
-  expect(retVal.message).toEqual("Unsupported return type");
-});
-
-test("Tests unsupported argument type", () => {
-  var str = `{
-    "name": "Simple Foreign Call",
-    "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-    "function": "testSig(address,notAnInt,uint256)",
-    "returnType": "uint256",
-    "valuesToPass": "to, value, otherValue"
-    }`;
-
-  var retVal = unwrapEither(
-    parseForeignCallDefinition(
-      JSON.parse(str),
-      [],
-      [],
-      ["to", "value", "otherValue"]
-    )
-  ) as RulesError;
-  expect(retVal.message).toEqual("Unsupported argument type");
 });
 
 test("Evaluates a simple syntax string with a Foreign Call", () => {
@@ -2454,14 +2370,12 @@ test("Creates a simple foreign call with a boolean return", () => {
   "callingFunction": "someFunction(address to, string someString, uint256 value)"
   }`;
 
-  var retVal = unwrapEither(
-    parseForeignCallDefinition(
-      JSON.parse(str),
-      [],
-      [],
-      ["to", "someString", "value"]
-    )
-  ) as ForeignCallDefinition;
+  var retVal = parseForeignCallDefinition(
+    JSON.parse(str),
+    [],
+    [],
+    ["to", "someString", "value"]
+  );
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
