@@ -33,6 +33,7 @@ test("Code Generation test)", () => {
             "initialValue": "test" 
         }
         ],
+        "MappedTrackers": [],
         "Rules": [
             {
                 "condition": "value > 500",

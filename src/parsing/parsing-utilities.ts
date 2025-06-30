@@ -294,7 +294,7 @@ export function parseForeignCalls(
           }
         }
         if (additional.includes("TR:")) {
-          const trackers = parseTrackers(
+          const [updatedSyntax, trackers] = parseTrackers(
             " " + additional + " ",
             names,
             indexMap

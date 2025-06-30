@@ -739,6 +739,7 @@ describe("Rules Engine Interactions", async () => {
               "initialValue": "test"
           }
           ],
+          "MappedTrackers": [],
           "Rules": [
               {
                   "condition": "TR:testTracker > 500",
@@ -818,6 +819,7 @@ describe("Rules Engine Interactions", async () => {
           "initialValue": "test"
       }
       ],
+      "MappedTrackers": [],
       "Rules": [
           {
               "condition": "value > 500",
@@ -872,6 +874,7 @@ describe("Rules Engine Interactions", async () => {
               "initialValue": "test"
           }
           ],
+          "MappedTrackers": [],
           "Rules": [
               {
                   "condition": "value > 500",
@@ -950,6 +953,7 @@ describe("Rules Engine Interactions", async () => {
           "initialValue": "test"
       }
       ],
+      "MappedTrackers": [],
       "Rules": [
           {
               "condition": "value > 500",
@@ -1003,6 +1007,7 @@ describe("Rules Engine Interactions", async () => {
           "initialValue": "test"
       }
       ],
+      "MappedTrackers": [],
       "Rules": [
           {
               "condition": "value > 500",
@@ -1069,6 +1074,7 @@ describe("Rules Engine Interactions", async () => {
         "initialValue": "test"
     }
     ],
+    "MappedTrackers": [],
     "Rules": [
         {
             "condition": "value > 500",
@@ -1143,6 +1149,7 @@ describe("Rules Engine Interactions", async () => {
         "initialValue": "test"
     }
     ],
+    "MappedTrackers": [],
     "Rules": [
         {
             "condition": "value > 500",

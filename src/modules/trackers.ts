@@ -16,7 +16,7 @@ import {
   TrackerOnChain,
   mappedTrackerJSON,
 } from "./types";
-import { isLeft, unwrapEither } from "./utils";
+import { isLeft, isRight, unwrapEither } from "./utils";
 import { getRulesErrorMessages, validateTrackerJSON } from "./validation";
 
 /**
@@ -157,7 +157,6 @@ export const createTracker = async (
     return trackerResult;
   }
   return -1;
-
 };
 /**
  * Asynchronously updates a tracker in the rules engine component contract.
