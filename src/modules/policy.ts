@@ -178,25 +178,18 @@ export const createPolicy = async (
     if (policyJSON.MappedTrackers != null) {
       for (var mTracker of policyJSON.MappedTrackers) {
         const parsedTracker = parseMappedTrackerSyntax(mTracker);
-        if (isRight(parsedTracker)) {
-          const trackerStruct: MappedTrackerDefinition = unwrapEither(
-            parsedTracker
-          ) as MappedTrackerDefinition;
-          const trId = await createMappedTracker(
-            config,
-            rulesEngineComponentContract,
-            policyId,
-            JSON.stringify(mTracker)
-          );
-          var struc: FCNameToID = {
-            id: trId,
-            name: trackerStruct.name,
-            type: trackerStruct.valueType,
-          };
-          trackerIds.push(struc);
-        } else {
-          throw new Error(unwrapEither(parsedTracker).message);
-        }
+        const trId = await createMappedTracker(
+          config,
+          rulesEngineComponentContract,
+          policyId,
+          JSON.stringify(mTracker)
+        );
+        var struc: FCNameToID = {
+          id: trId,
+          name: parsedTracker.name,
+          type: parsedTracker.valueType,
+        };
+        trackerIds.push(struc);
       }
     }
 

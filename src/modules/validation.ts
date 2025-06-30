@@ -203,6 +203,14 @@ export const trackerValidator = z
 
 export interface TrackerJSON extends z.infer<typeof trackerValidator> {}
 
+export interface MappedTrackerJSON
+  extends z.infer<typeof mappedTrackerValidator> {}
+
+export const mappedTrackerKeyValuePairValidator = z.object({
+  key: z.union([z.string(), z.number()]),
+  value: z.union([z.string(), z.number()]),
+});
+
 export const mappedTrackerValidator = z.object({
   name: z.string().trim(),
   keyType: z.preprocess(
@@ -213,7 +221,7 @@ export const mappedTrackerValidator = z.object({
     trimPossibleString,
     z.literal(supportedTrackerTypes, "Unsupported type")
   ),
-  initialvalues: z.array(z.any()),
+  initialvalues: z.array(mappedTrackerKeyValuePairValidator),
 });
 
 /**
@@ -230,6 +238,33 @@ export const validateTrackerJSON = (
   if (isLeft(parsedJson)) return parsedJson;
 
   const parsed = trackerValidator.safeParse(unwrapEither(parsedJson));
+
+  if (parsed.success) {
+    return makeRight(parsed.data);
+  } else {
+    const errors: RulesError[] = parsed.error.issues.map((err) => ({
+      errorType: "INPUT",
+      message: `${err.message}: Field ${err.path.join(".")}`,
+      state: { input: tracker },
+    }));
+    return makeLeft(errors);
+  }
+};
+
+/**
+ * Parses a JSON string and returns Either a MappedTrackerJSON object or an error.
+ *
+ * @param tracker - string to be parsed.
+ * @returns Either the parsed MappedTrackerJSON object or an error.
+ */
+export const validateMappedTrackerJSON = (
+  tracker: string
+): Either<RulesError[], MappedTrackerJSON> => {
+  const parsedJson = safeParseJson(tracker);
+
+  if (isLeft(parsedJson)) return parsedJson;
+
+  const parsed = mappedTrackerValidator.safeParse(unwrapEither(parsedJson));
 
   if (parsed.success) {
     return makeRight(parsed.data);

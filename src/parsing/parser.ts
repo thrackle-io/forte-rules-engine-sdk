@@ -13,7 +13,6 @@ import {
   ForeignCallDefinition,
   ForeignCallEncodedIndex,
   MappedTrackerDefinition,
-  mappedTrackerJSON,
   matchArray,
   operandArray,
   PT,
@@ -38,6 +37,7 @@ import {
 import {
   CallingFunctionJSON,
   ForeignCallJSON,
+  MappedTrackerJSON,
   PType,
   RuleJSON,
   splitFunctionInput,
@@ -205,33 +205,15 @@ export function parseRuleSyntax(
 }
 
 export function parseMappedTrackerSyntax(
-  syntax: mappedTrackerJSON
-): Either<RulesError, MappedTrackerDefinition> {
+  syntax: MappedTrackerJSON
+): MappedTrackerDefinition {
   let keyType = syntax.keyType.trim();
   let valueType = syntax.valueType.trim();
-  if (
-    !supportedTrackerTypes.includes(keyType) ||
-    !supportedTrackerTypes.includes(valueType)
-  ) {
-    return makeLeft({
-      errorType: "INPUT",
-      state: { supportedTrackerTypes, keyType, valueType },
-      message: "Unsupported type",
-    });
-  }
   var trackerInitialKeys: any[] = [];
   var trackerInitialValues: any[] = [];
   for (var pair of syntax.initialvalues) {
     if (keyType == "uint256") {
-      if (!isNaN(Number(pair.key))) {
-        trackerInitialKeys.push(encodePacked(["uint256"], [BigInt(pair.key)]));
-      } else {
-        return makeLeft({
-          errorType: "INPUT",
-          state: { defaultValue: pair.key },
-          message: "Default Value doesn't match type",
-        });
-      }
+      trackerInitialKeys.push(encodePacked(["uint256"], [BigInt(pair.key)]));
     } else if (keyType == "address") {
       const validatedAddress = getAddress(pair.key as string);
       var address = encodeAbiParameters(parseAbiParameters("address"), [
@@ -258,17 +240,9 @@ export function parseMappedTrackerSyntax(
     }
 
     if (valueType == "uint256") {
-      if (!isNaN(Number(pair.value))) {
-        trackerInitialValues.push(
-          encodePacked(["uint256"], [BigInt(pair.value)])
-        );
-      } else {
-        return makeLeft({
-          errorType: "INPUT",
-          state: { defaultValue: pair.value },
-          message: "Default Value doesn't match type",
-        });
-      }
+      trackerInitialValues.push(
+        encodePacked(["uint256"], [BigInt(pair.value)])
+      );
     } else if (valueType == "address") {
       const validatedAddress = getAddress(pair.value as string);
       var address = encodeAbiParameters(parseAbiParameters("address"), [
@@ -308,13 +282,13 @@ export function parseMappedTrackerSyntax(
     }
   }
 
-  return makeRight({
+  return {
     name: syntax.name.trim(),
     keyType: keyTypeEnum,
     valueType: valueTypeEnum,
     initialKeys: trackerInitialKeys,
     initialValues: trackerInitialValues,
-  });
+  };
 }
 
 /**
