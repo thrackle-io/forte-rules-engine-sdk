@@ -198,6 +198,39 @@ export function parseTrackers(
   return [trCondition, trackers];
 }
 
+export function parseGlobalVariables(
+  condition: string,
+  names: any[]
+): RuleComponent[] {
+  const fcRegex = /GV:[a-zA-Z]+[^\s]+/g;
+  // const matches = condition.matchAll(fcRegex);
+  let processedCondition = condition;
+
+  let components: RuleComponent[] = [];
+
+  var found = false;
+  // Convert matches iterator to array to process all at once
+  const matches = condition.matchAll(fcRegex);
+  for (const match of matches) {
+    const fullFcExpr = match[0];
+    if (
+      fullFcExpr.trim() == "GV:MSG_SENDER" ||
+      fullFcExpr.trim() == "GV:BLOCK_TIMESTAMP" ||
+      fullFcExpr.trim() == "GV:MSG_DATA" ||
+      fullFcExpr.trim() == "GV:BLOCK_NUMBER" ||
+      fullFcExpr.trim() == "GV:TX_ORIGIN"
+    ) {
+      components.push({
+        name: fullFcExpr,
+        tIndex: 0,
+        rawType: "Global",
+      });
+    }
+  }
+
+  return components;
+}
+
 /**
  * Parses a condition string to identify and process foreign call (FC) expressions.
  * Replaces each FC expression with a unique placeholder and updates the `names` array
@@ -383,6 +416,7 @@ export function cleanseForeignCallLists(doubleArray: any[]): any[] {
  */
 export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
   var placeHolders: PlaceholderStruct[] = [];
+  var flags = 0x0;
   for (var name of names) {
     var placeHolderEnum = 0;
     var tracker = false;
@@ -409,6 +443,22 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
         placeHolderEnum = 2;
       }
       tracker = true;
+    } else if (name.rawType == "Global") {
+      if (name.name == "GV:MSG_SENDER") {
+        flags = 0x04;
+      } else if (name.name == "GV:BLOCK_TIMESTAMP") {
+        flags = 0x08;
+      } else if (name.name == "GV:MSG_DATA") {
+        flags = 0x0c;
+      } else if (name.name == "GV:BLOCK_NUMBER") {
+        flags = 0x10;
+      } else if (name.name == "GV:TX_ORIGIN") {
+        flags = 0x14;
+      }
+    }
+
+    if (flags == 0x00) {
+      flags = name.rawType == "foreign call" ? 0x01 : tracker ? 0x02 : 0x00;
     }
 
     var placeHolder: PlaceholderStruct = {
@@ -417,7 +467,7 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
       mappedTrackerKey: encodeAbiParameters(parseAbiParameters("uint256"), [
         BigInt(1),
       ]),
-      flags: name.rawType == "foreign call" ? 0x01 : tracker ? 0x02 : 0x00,
+      flags: flags,
     };
     placeHolders.push(placeHolder);
   }

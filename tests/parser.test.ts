@@ -799,8 +799,8 @@ test("Creates a simple uint256 tracker", () => {
         "name": "Simple Int Tracker",
         "type": "uint256",
         "initialValue": "14"
-        }`
-  var retVal = parseTrackerSyntax(JSON.parse(str))
+        }`;
+  var retVal = parseTrackerSyntax(JSON.parse(str));
 
   expect(retVal.name).toEqual("Simple Int Tracker");
   expect(retVal.type).toEqual(pTypeEnum.UINT256);
@@ -814,12 +814,13 @@ test("Creates a simple bool tracker", () => {
         "name": "Simple bool Tracker",
         "type": "bool",
         "initialValue": "true"
-        }`
-  var retVal = parseTrackerSyntax(JSON.parse(str))
-  expect(retVal.name).toEqual("Simple bool Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.BOOL)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('uint256'), [BigInt(1)]))
+        }`;
+  var retVal = parseTrackerSyntax(JSON.parse(str));
+  expect(retVal.name).toEqual("Simple bool Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.BOOL);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
+  );
 });
 
 test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators and function parameters)" test', () => {
@@ -884,12 +885,15 @@ test("Creates a simple address tracker", () => {
   "name": "Simple Address Tracker",
   "type": "address",
   "initialValue": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"
-  }`
-  var retVal = parseTrackerSyntax(JSON.parse(str))
-  expect(retVal.name).toEqual("Simple Address Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.ADDRESS)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('address'), ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']))
+  }`;
+  var retVal = parseTrackerSyntax(JSON.parse(str));
+  expect(retVal.name).toEqual("Simple Address Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.ADDRESS);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("address"), [
+      "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+    ])
+  );
 });
 
 test("Creates a simple string tracker", () => {
@@ -897,12 +901,13 @@ test("Creates a simple string tracker", () => {
   "name": "Simple String Tracker",
   "type": "string",
   "initialValue": "test"
-  }`
-  var retVal = parseTrackerSyntax(JSON.parse(str))
-  expect(retVal.name).toEqual("Simple String Tracker")
-  expect(retVal.type).toEqual(pTypeEnum.STRING)
-  expect(retVal.initialValue).toEqual(encodeAbiParameters(
-    parseAbiParameters('string'), ['test']))
+  }`;
+  var retVal = parseTrackerSyntax(JSON.parse(str));
+  expect(retVal.name).toEqual("Simple String Tracker");
+  expect(retVal.type).toEqual(pTypeEnum.STRING);
+  expect(retVal.initialValue).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["test"])
+  );
 });
 
 test("Creates a simple foreign call", () => {
@@ -931,7 +936,7 @@ test("Creates a simple foreign call", () => {
       },
     ],
     ["to", "someString", "value"]
-  )
+  );
   expect(retVal.name).toEqual("Simple Foreign Call");
   expect(retVal.address).toEqual(
     getAddress("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC")
@@ -2430,4 +2435,104 @@ test("Creates a simple foreign call with a boolean return", () => {
   );
   expect(retVal.function).toEqual("testSig(address,string,uint256)");
   expect(retVal.returnType).toEqual(3);
+});
+
+test("Evaluates a syntax string that includes the Block Number Global Variable", () => {
+  var ruleStringA = `{
+    "condition": "value + GV:BLOCK_NUMBER > 5 AND (1 == 1)",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "callingFunction": "addValue"
+    }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND, address lORe",
+    [],
+    []
+  );
+
+  expect(retVal.placeHolders[1].flags).toEqual(0x10);
+});
+
+test("Evaluates a syntax string that includes the Msg Sender Global Variable", () => {
+  var ruleStringA = `{
+    "condition": "lORe == GV:MSG_SENDER",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "callingFunction": "addValue"
+    }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND, address lORe",
+    [],
+    []
+  );
+
+  expect(retVal.placeHolders[1].flags).toEqual(0x04);
+});
+
+test("Evaluates a syntax string that includes the Block Timestamp Global Variable", () => {
+  var ruleStringA = `{
+    "condition": "value > GV:BLOCK_TIMESTAMP",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "callingFunction": "addValue"
+    }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "uint256 value, uint256 sAND, address lORe",
+    [],
+    []
+  );
+
+  expect(retVal.placeHolders[1].flags).toEqual(0x08);
+});
+
+test("Evaluates a syntax string that includes the Block Timestamp Global Variable", () => {
+  var ruleStringA = `{
+    "condition": "value == GV:MSG_DATA",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "callingFunction": "addValue"
+    }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "bytes value, uint256 sAND, address lORe",
+    [],
+    []
+  );
+
+  expect(retVal.placeHolders[1].flags).toEqual(0x0c);
+});
+
+test("Evaluates a syntax string that includes the Tx Origin Global Variable", () => {
+  var ruleStringA = `{
+    "condition": "lORe == GV:TX_ORIGIN",
+    "positiveEffects": ["revert"],
+    "negativeEffects": [],
+    "callingFunction": "addValue"
+    }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [],
+    [],
+    "bytes value, uint256 sAND, address lORe",
+    [],
+    []
+  );
+
+  expect(retVal.placeHolders[1].flags).toEqual(0x14);
 });

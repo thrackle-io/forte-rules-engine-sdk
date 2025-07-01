@@ -33,6 +33,7 @@ import {
   buildPlaceholderList,
   parseEffect,
   cleanseForeignCallLists,
+  parseGlobalVariables,
 } from "./parsing-utilities";
 
 import {
@@ -107,7 +108,8 @@ export function parseRuleSyntax(
   );
   fcCondition = trCondition;
   ruleComponents = [...ruleComponents, ...trackers];
-
+  const gvComponents = parseGlobalVariables(trCondition, ruleComponents);
+  ruleComponents = [...ruleComponents, ...gvComponents];
   var placeHolders = buildPlaceholderList(ruleComponents);
   for (var effectP in syntax.positiveEffects) {
     var effectNamesInternal: any[] = [];
@@ -210,8 +212,8 @@ export function parseMappedTrackerSyntax(
 ): MappedTrackerDefinition {
   let keyType = syntax.keyType;
   let valueType = syntax.valueType;
-  var keys = syntax.initialvalues.map((val) => val.key);
-  var values = syntax.initialvalues.map((val) => val.value);
+  var keys = syntax.initialKeys.map((val) => val.value);
+  var values = syntax.initialValues.map((val) => val.value);
   var trackerInitialKeys: any[] = encodeTrackerData(keys, keyType);
   var trackerInitialValues: any[] = encodeTrackerData(values, valueType);
 
