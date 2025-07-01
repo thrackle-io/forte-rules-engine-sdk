@@ -207,8 +207,8 @@ export interface MappedTrackerJSON
   extends z.infer<typeof mappedTrackerValidator> {}
 
 export const mappedTrackerKeyValuePairValidator = z.object({
-  key: z.union([z.string(), z.number()]),
-  value: z.union([z.string(), z.number()]),
+  key: z.union([z.string().trim(), z.number()]),
+  value: z.union([z.string().trim(), z.number()]),
 });
 
 export const mappedTrackerValidator = z.object({

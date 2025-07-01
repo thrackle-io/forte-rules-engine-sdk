@@ -16,6 +16,7 @@ import {
   matchArray,
   operandArray,
   PT,
+  pTypeEnum,
   RuleComponent,
   RuleDefinition,
   RulesError,
@@ -207,88 +208,60 @@ export function parseRuleSyntax(
 export function parseMappedTrackerSyntax(
   syntax: MappedTrackerJSON
 ): MappedTrackerDefinition {
-  let keyType = syntax.keyType.trim();
-  let valueType = syntax.valueType.trim();
-  var trackerInitialKeys: any[] = [];
-  var trackerInitialValues: any[] = [];
-  for (var pair of syntax.initialvalues) {
-    if (keyType == "uint256") {
-      trackerInitialKeys.push(encodePacked(["uint256"], [BigInt(pair.key)]));
-    } else if (keyType == "address") {
-      const validatedAddress = getAddress(pair.key as string);
-      var address = encodeAbiParameters(parseAbiParameters("address"), [
-        validatedAddress,
-      ]);
+  let keyType = syntax.keyType;
+  let valueType = syntax.valueType;
+  var keys = syntax.initialvalues.map((val) => val.key);
+  var values = syntax.initialvalues.map((val) => val.value);
+  var trackerInitialKeys: any[] = encodeTrackerData(keys, keyType);
+  var trackerInitialValues: any[] = encodeTrackerData(values, valueType);
 
-      trackerInitialKeys.push(address);
-    } else if (keyType == "bytes") {
-      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
-        toHex(stringToBytes(String(pair.key))),
-      ]);
-
-      trackerInitialKeys.push(bytes);
-    } else if (keyType == "bool") {
-      if (pair.key == "true") {
-        trackerInitialKeys.push(encodePacked(["uint256"], [1n]));
-      } else {
-        trackerInitialKeys.push(encodePacked(["uint256"], [0n]));
-      }
-    } else {
-      trackerInitialKeys.push(
-        encodeAbiParameters(parseAbiParameters("string"), [pair.key as string])
-      );
-    }
-
-    if (valueType == "uint256") {
-      trackerInitialValues.push(
-        encodePacked(["uint256"], [BigInt(pair.value)])
-      );
-    } else if (valueType == "address") {
-      const validatedAddress = getAddress(pair.value as string);
-      var address = encodeAbiParameters(parseAbiParameters("address"), [
-        validatedAddress,
-      ]);
-
-      trackerInitialValues.push(address);
-    } else if (valueType == "bytes") {
-      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
-        toHex(stringToBytes(String(pair.value))),
-      ]);
-
-      trackerInitialValues.push(bytes);
-    } else if (valueType == "bool") {
-      if (pair.value == "true") {
-        trackerInitialValues.push(encodePacked(["uint256"], [1n]));
-      } else {
-        trackerInitialValues.push(encodePacked(["uint256"], [0n]));
-      }
-    } else {
-      trackerInitialValues.push(
-        encodeAbiParameters(parseAbiParameters("string"), [
-          pair.value as string,
-        ])
-      );
-    }
-  }
-  var keyTypeEnum = 0;
-  var valueTypeEnum = 0;
-
-  for (var parameterType of PT) {
-    if (parameterType.name == keyType) {
-      keyTypeEnum = parameterType.enumeration;
-    }
-    if (parameterType.name == valueType) {
-      valueTypeEnum = parameterType.enumeration;
-    }
-  }
+  const keyTypeEnum = (PT.find((_pt) => (_pt.name = keyType)) ?? PT[4])
+    .enumeration;
+  const valueTypeEnum = (PT.find((_pt) => (_pt.name = valueType)) ?? PT[4])
+    .enumeration;
 
   return {
-    name: syntax.name.trim(),
+    name: syntax.name,
     keyType: keyTypeEnum,
     valueType: valueTypeEnum,
     initialKeys: trackerInitialKeys,
     initialValues: trackerInitialValues,
   };
+}
+
+function encodeTrackerData(valueSet: any[], keyType: string): any[] {
+  var values: any[] = [];
+
+  for (var val of valueSet) {
+    if (keyType == "uint256") {
+      values.push(encodePacked(["uint256"], [BigInt(val)]));
+    } else if (keyType == "address") {
+      const validatedAddress = getAddress(val as string);
+      var address = encodeAbiParameters(parseAbiParameters("address"), [
+        validatedAddress,
+      ]);
+
+      values.push(address);
+    } else if (keyType == "bytes") {
+      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
+        toHex(stringToBytes(String(val))),
+      ]);
+
+      values.push(bytes);
+    } else if (keyType == "bool") {
+      if (val == "true") {
+        values.push(encodePacked(["uint256"], [1n]));
+      } else {
+        values.push(encodePacked(["uint256"], [0n]));
+      }
+    } else {
+      values.push(
+        encodeAbiParameters(parseAbiParameters("string"), [val as string])
+      );
+    }
+  }
+
+  return values;
 }
 
 /**
