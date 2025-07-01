@@ -230,9 +230,8 @@ export function parseMappedTrackerSyntax(
 }
 
 function encodeTrackerData(valueSet: any[], keyType: string): any[] {
-  var values: any[] = [];
-
-  for (var val of valueSet) {
+  const values: any[] = valueSet.map((val) => {
+    // for (var val of valueSet) {
     if (keyType == "uint256") {
       values.push(encodePacked(["uint256"], [BigInt(val)]));
     } else if (keyType == "address") {
@@ -259,7 +258,7 @@ function encodeTrackerData(valueSet: any[], keyType: string): any[] {
         encodeAbiParameters(parseAbiParameters("string"), [val as string])
       );
     }
-  }
+  });
 
   return values;
 }
