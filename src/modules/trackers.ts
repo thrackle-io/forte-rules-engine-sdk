@@ -7,13 +7,17 @@ import {
   Config,
 } from "@wagmi/core";
 import { sleep } from "./contract-interaction-utils";
-import { parseTrackerSyntax } from "../parsing/parser";
 import {
-  RulesEngineComponentContract,
-  TrackerOnChain,
-} from "./types";
-import { isLeft, unwrapEither } from "./utils";
-import { getRulesErrorMessages, validateTrackerJSON } from "./validation";
+  parseMappedTrackerSyntax,
+  parseTrackerSyntax,
+} from "../parsing/parser";
+import { RulesEngineComponentContract, TrackerOnChain } from "./types";
+import { isLeft, isRight, unwrapEither } from "./utils";
+import {
+  getRulesErrorMessages,
+  validateMappedTrackerJSON,
+  validateTrackerJSON,
+} from "./validation";
 
 /**
  * @file Trackers.ts
@@ -34,6 +38,63 @@ import { getRulesErrorMessages, validateTrackerJSON } from "./validation";
  *
  * @note This file is a critical component of the Rules Engine SDK, enabling seamless integration with the Rules Engine smart contracts.
  */
+
+export const createMappedTracker = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  policyId: number,
+  mappedTrackerSyntax: string
+): Promise<number> => {
+  const json = validateMappedTrackerJSON(mappedTrackerSyntax);
+  if (isLeft(json)) {
+    throw new Error(getRulesErrorMessages(unwrapEither(json)));
+  }
+  const parsedTracker = parseMappedTrackerSyntax(unwrapEither(json));
+
+  var transactionTracker = {
+    set: true,
+    pType: parsedTracker.valueType,
+    mapped: true,
+    trackerKeyType: parsedTracker.keyType,
+    trackerValue: 0,
+    trackerIndex: 0,
+  };
+  var addTR;
+  while (true) {
+    try {
+      addTR = await simulateContract(config, {
+        address: rulesEngineComponentContract.address,
+        abi: rulesEngineComponentContract.abi,
+        functionName: "createTracker",
+        args: [
+          policyId,
+          transactionTracker,
+          parsedTracker.name,
+          parsedTracker.initialKeys,
+          parsedTracker.initialValues,
+        ],
+      });
+      break;
+    } catch (err) {
+      console.log(err);
+      // TODO: Look into replacing this loop/sleep with setTimeout
+      await sleep(1000);
+    }
+  }
+  if (addTR != null) {
+    const returnHash = await writeContract(config, {
+      ...addTR.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+
+    let trackerResult = addTR.result;
+    return trackerResult;
+  }
+  return -1;
+};
 
 /**
  * Asynchronously creates a tracker in the rules engine component contract.
@@ -95,7 +156,6 @@ export const createTracker = async (
     return trackerResult;
   }
   return -1;
-
 };
 /**
  * Asynchronously updates a tracker in the rules engine component contract.

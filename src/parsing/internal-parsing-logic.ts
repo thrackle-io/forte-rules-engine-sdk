@@ -116,7 +116,6 @@ export function convertHumanReadableToInstructionSet(
     mem: [],
     iterator: { value: 0 },
   };
-
   // Convert the AST into the Instruction Set Syntax
   convertASTToInstructionSet(
     astAccumulator,
@@ -171,43 +170,192 @@ function convertASTToInstructionSet(
   } else if (typeof expression[0] == "string") {
     var foundMatch = false;
     var plhIndex = 0;
-    for (var parameter of parameterNames) {
-      if (parameter.name == expression[0].trim()) {
-        foundMatch = true;
-        var plhIter = 0;
-        var copyFound = false;
-        for (var place of placeHolders) {
-          // Check if the expression is an exact match for one of our placeholders
-          // This will cover all placeholders except foreign calls and tracker updates
-          // these two get their own cases (found below)
-          if (expression[0].trim().includes("TR:")) {
-            if (
-              place.typeSpecificIndex == parameter.tIndex &&
-              place.flags == 0x02
-            ) {
-              acc.instructionSet.push("PLH");
-              acc.instructionSet.push(plhIter);
-              copyFound = true;
-              break;
+    var searchExpressions = [];
+    var split = expression[0];
+    if (expression[0].includes(" | ")) {
+      searchExpressions.push(expression[0].split(" | ")[0]);
+      split = expression[0].split(" | ")[1];
+    }
+    searchExpressions.push(split);
+    var expCount = 0;
+    for (var expr of searchExpressions) {
+      for (var parameter of parameterNames) {
+        if (parameter.name == expr.trim()) {
+          foundMatch = true;
+          var plhIter = 0;
+          var copyFound = false;
+          for (var place of placeHolders) {
+            // Check if the expression is an exact match for one of our placeholders
+            // This will cover all placeholders except foreign calls and tracker updates
+            // these two get their own cases (found below)
+            if (expr.trim().includes("TR:")) {
+              if (
+                place.typeSpecificIndex == parameter.tIndex &&
+                place.flags == 0x02
+              ) {
+                acc.instructionSet.push("PLH");
+                acc.instructionSet.push(plhIter);
+                copyFound = true;
+                break;
+              }
+            } else {
+              if (
+                place.typeSpecificIndex == parameter.tIndex &&
+                place.flags != 0x01 &&
+                place.flags != 0x02
+              ) {
+                acc.instructionSet.push("PLH");
+                acc.instructionSet.push(plhIter);
+                copyFound = true;
+                break;
+              }
+            }
+            plhIter += 1;
+          }
+          if (!copyFound) {
+            acc.instructionSet.push("PLH");
+            acc.instructionSet.push(plhIndex);
+          }
+          expCount += 1;
+          acc.mem.push(acc.iterator.value);
+          acc.iterator.value += 1;
+          if (expCount == searchExpressions.length) {
+            var sliced = expression.slice(1);
+
+            convertASTToInstructionSet(
+              acc,
+              sliced,
+              parameterNames,
+              placeHolders,
+              indexMap
+            );
+          }
+
+          // Check if the expression is a foreign call
+        } else if (parameter.fcPlaceholder) {
+          if (parameter.fcPlaceholder == split.trim()) {
+            foundMatch = true;
+            acc.instructionSet.push("PLH");
+            acc.instructionSet.push(plhIndex);
+            var found = false;
+            for (var pHold of placeHolders) {
+              if (
+                pHold.flags == 0x1 &&
+                pHold.typeSpecificIndex == parameter.tIndex
+              ) {
+                found = true;
+              }
+            }
+            var sliced = expression.slice(1);
+            acc.mem.push(acc.iterator.value);
+            acc.iterator.value += 1;
+            convertASTToInstructionSet(
+              acc,
+              sliced,
+              parameterNames,
+              placeHolders,
+              indexMap
+            );
+          } else {
+            plhIndex += 1;
+          }
+
+          // Check if the expression is a tracker update
+        } else if (split.trim().includes("TRU:")) {
+          foundMatch = true;
+          var trackerName = split.trim().replace("TRU:", "TR:");
+          var values = trackerName.split(" ");
+          var comparison = values[0];
+          if (values.length > 1) {
+            comparison = values[1];
+          }
+          if (comparison == parameter.name) {
+            acc.instructionSet.push("PLH");
+            acc.instructionSet.push(plhIndex);
+
+            for (var ind of indexMap) {
+              if (parameter.name == "TR:" + ind.name) {
+                truIndex = ind.id;
+              }
+            }
+
+            var sliced = expression.slice(1);
+            acc.mem.push(acc.iterator.value);
+            acc.iterator.value += 1;
+            convertASTToInstructionSet(
+              acc,
+              sliced,
+              parameterNames,
+              placeHolders,
+              indexMap
+            );
+          } else {
+            plhIndex += 1;
+          }
+          // The current parameter does not match the expression
+        } else {
+          plhIndex += 1;
+        }
+      }
+      if (!foundMatch) {
+        if (matchArray.includes(split.trim()) || split.includes("PLA")) {
+          foundMatch = true;
+          var sliced = expression.slice(1);
+          convertASTToInstructionSet(
+            acc,
+            sliced,
+            parameterNames,
+            placeHolders,
+            indexMap
+          );
+          if (truMatchArray.includes(split.trim())) {
+            switch (split.trim()) {
+              case "+=":
+                acc.instructionSet.push("+");
+                break;
+              case "-=":
+                acc.instructionSet.push("-");
+                break;
+              case "*=":
+                acc.instructionSet.push("*");
+                break;
+              case "/=":
+                acc.instructionSet.push("/");
+                break;
+              case "=":
+                acc.instructionSet.push("=");
+                break;
             }
           } else {
-            if (
-              place.typeSpecificIndex == parameter.tIndex &&
-              place.flags != 0x01 &&
-              place.flags != 0x02
-            ) {
-              acc.instructionSet.push("PLH");
-              acc.instructionSet.push(plhIter);
-              copyFound = true;
-              break;
+            acc.instructionSet.push(split);
+          }
+          var not = false;
+          if (split.includes("PLA")) {
+            var it = parseInt(split.replace("PLA", "").trim());
+            if (originalDelimiters[it] == "NOT") {
+              not = true;
             }
           }
-          plhIter += 1;
+          if (not) {
+            acc.instructionSet.push(acc.mem.pop());
+          } else {
+            acc.instructionSet.push(...acc.mem.splice(acc.mem.length - 2, 2));
+          }
+          if (truMatchArray.includes(split.trim())) {
+            acc.instructionSet.push("TRU");
+            acc.instructionSet.push(truIndex);
+            acc.instructionSet.push(acc.iterator.value);
+            // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates
+            acc.instructionSet.push(0);
+          } else {
+            acc.mem.push(acc.iterator.value);
+          }
+          acc.iterator.value += 1;
         }
-        if (!copyFound) {
-          acc.instructionSet.push("PLH");
-          acc.instructionSet.push(plhIndex);
-        }
+      }
+      if (!foundMatch) {
+        acc.instructionSet.push("N");
+        acc.instructionSet.push(split.trim());
         var sliced = expression.slice(1);
         acc.mem.push(acc.iterator.value);
         acc.iterator.value += 1;
@@ -218,145 +366,7 @@ function convertASTToInstructionSet(
           placeHolders,
           indexMap
         );
-
-        // Check if the expression is a foreign call
-      } else if (parameter.fcPlaceholder) {
-        if (parameter.fcPlaceholder == expression[0].trim()) {
-          foundMatch = true;
-          acc.instructionSet.push("PLH");
-          acc.instructionSet.push(plhIndex);
-          var found = false;
-          for (var pHold of placeHolders) {
-            if (
-              pHold.flags == 0x1 &&
-              pHold.typeSpecificIndex == parameter.tIndex
-            ) {
-              found = true;
-            }
-          }
-          var sliced = expression.slice(1);
-          acc.mem.push(acc.iterator.value);
-          acc.iterator.value += 1;
-          convertASTToInstructionSet(
-            acc,
-            sliced,
-            parameterNames,
-            placeHolders,
-            indexMap
-          );
-        } else {
-          plhIndex += 1;
-        }
-
-        // Check if the expression is a tracker update
-      } else if (expression[0].trim().includes("TRU:")) {
-        foundMatch = true;
-        var trackerName = expression[0].replace("TRU:", "TR:");
-        var values = trackerName.split(" ");
-        var comparison = values[0];
-        if (values.length > 1) {
-          comparison = values[1];
-        }
-        if (comparison == parameter.name) {
-          acc.instructionSet.push("PLH");
-          acc.instructionSet.push(plhIndex);
-
-          for (var ind of indexMap) {
-            if (parameter.name == "TR:" + ind.name) {
-              truIndex = ind.id;
-            }
-          }
-
-          var sliced = expression.slice(1);
-          acc.mem.push(acc.iterator.value);
-          acc.iterator.value += 1;
-          convertASTToInstructionSet(
-            acc,
-            sliced,
-            parameterNames,
-            placeHolders,
-            indexMap
-          );
-        } else {
-          plhIndex += 1;
-        }
-        // The current parameter does not match the expression
-      } else {
-        plhIndex += 1;
       }
-    }
-    if (!foundMatch) {
-      if (
-        matchArray.includes(expression[0].trim()) ||
-        expression[0].includes("PLA")
-      ) {
-        foundMatch = true;
-        var sliced = expression.slice(1);
-        convertASTToInstructionSet(
-          acc,
-          sliced,
-          parameterNames,
-          placeHolders,
-          indexMap
-        );
-        if (truMatchArray.includes(expression[0].trim())) {
-          switch (expression[0].trim()) {
-            case "+=":
-              acc.instructionSet.push("+");
-              break;
-            case "-=":
-              acc.instructionSet.push("-");
-              break;
-            case "*=":
-              acc.instructionSet.push("*");
-              break;
-            case "/=":
-              acc.instructionSet.push("/");
-              break;
-            case "=":
-              acc.instructionSet.push("=");
-              break;
-          }
-        } else {
-          acc.instructionSet.push(expression[0]);
-        }
-        var not = false;
-        if (expression[0].includes("PLA")) {
-          var it = parseInt(expression[0].replace("PLA", "").trim());
-          if (originalDelimiters[it] == "NOT") {
-            not = true;
-          }
-        }
-        if (not) {
-          acc.instructionSet.push(acc.mem.pop());
-        } else {
-          acc.instructionSet.push(...acc.mem.splice(acc.mem.length - 2, 2));
-        }
-        if (truMatchArray.includes(expression[0].trim())) {
-          acc.instructionSet.push("TRU");
-          acc.instructionSet.push(truIndex);
-          acc.instructionSet.push(acc.iterator.value);
-          // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates
-          acc.instructionSet.push(0);
-        } else {
-          acc.mem.push(acc.iterator.value);
-        }
-        acc.iterator.value += 1;
-      }
-    }
-    if (!foundMatch) {
-      acc.instructionSet.push("N");
-      acc.instructionSet.push(expression[0].trim());
-      var sliced = expression.slice(1);
-      acc.mem.push(acc.iterator.value);
-      acc.iterator.value += 1;
-      convertASTToInstructionSet(
-        acc,
-        sliced,
-        parameterNames,
-        placeHolders,
-        indexMap
-      );
     }
 
     // If it's an array with a number as the first index, add the number to the instruction set, add its memory

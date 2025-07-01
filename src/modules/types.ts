@@ -202,6 +202,14 @@ export type TrackerDefinition = {
   initialValue: any;
 };
 
+export type MappedTrackerDefinition = {
+  name: string;
+  keyType: number;
+  valueType: number;
+  initialKeys: any[];
+  initialValues: any[];
+};
+
 export type InstructionSet = (number | string | BigInt)[];
 
 export type RawData = {
