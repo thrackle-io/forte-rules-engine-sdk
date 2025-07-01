@@ -206,22 +206,48 @@ export interface TrackerJSON extends z.infer<typeof trackerValidator> {}
 export interface MappedTrackerJSON
   extends z.infer<typeof mappedTrackerValidator> {}
 
-export const mappedTrackerKeyValuePairValidator = z.object({
-  key: z.union([z.string().trim(), z.number()]),
-  value: z.union([z.string().trim(), z.number()]),
-});
+const SupportedValues = [
+  z.object({
+    type: "uint256",
+    value: z.number(),
+  }),
+
+  z.object({
+    type: "string",
+    value: z.string(),
+  }),
+
+  z.object({
+    type: "string",
+    value: z.string(),
+  }),
+
+  z.object({
+    type: "address",
+    value: z.string(),
+  }),
+
+  z.object({
+    type: "uint256",
+    value: z.number(),
+  }),
+
+  z.object({
+    type: "uint256",
+    value: z.literal(["true", "false"]),
+  }),
+] as const;
 
 export const mappedTrackerValidator = z.object({
   name: z.string().trim(),
-  keyType: z.preprocess(
+  initialValues: z.preprocess(
     trimPossibleString,
-    z.literal(supportedTrackerTypes, "Unsupported type")
+    z.array(z.discriminatedUnion("type", SupportedValues))
   ),
-  valueType: z.preprocess(
+  initialKeys: z.preprocess(
     trimPossibleString,
-    z.literal(supportedTrackerTypes, "Unsupported type")
+    z.array(z.discriminatedUnion("type", SupportedValues))
   ),
-  initialvalues: z.array(mappedTrackerKeyValuePairValidator),
 });
 
 /**
