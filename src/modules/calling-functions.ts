@@ -11,8 +11,10 @@ import { sleep } from "./contract-interaction-utils";
 import { parseFunctionArguments } from "../parsing/parser";
 import {
   CallingFunctionHashMapping,
+  PT,
   RulesEngineComponentContract,
 } from "./types";
+import { PType } from "./validation";
 
 /**
  * @file CallingFunctions.ts
@@ -62,14 +64,15 @@ export const createCallingFunction = async (
   var argsRaw = parseFunctionArguments(callingFunction);
   var args = [];
   for (var arg of argsRaw) {
-    if (arg.rawType == "uint256") {
-      args.push(2);
-    } else if (arg.rawType == "string") {
-      args.push(1);
-    } else if (arg.rawType == "address") {
-      args.push(0);
+    for (var pt of PT) {
+      if (pt.name == arg.rawType) {
+        args.push(pt.enumeration);
+        break;
+      }
     }
   }
+
+  console.log(args);
 
   var addRule;
   while (true) {

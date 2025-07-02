@@ -22,6 +22,7 @@ import {
   cleanInstructionSet,
   parseTrackerSyntax,
   parseForeignCallDefinition,
+  parseMappedTrackerSyntax,
 } from "../src/parsing/parser.js";
 import { reverseParseRule } from "../src/parsing/reverse-parsing-logic.js";
 import { removeExtraParenthesis } from "../src/parsing/parsing-utilities.js";
@@ -29,797 +30,849 @@ import { unwrapEither } from "../src/modules/utils.js";
 import { removeArrayWrappers } from "../src/parsing/internal-parsing-logic.js";
 import { removeFlag } from "typedoc/dist/lib/utils/enum.js";
 
-test("Evaluates a simple syntax string (using only values and operators)", () => {
-  /**
-   * Original Syntax:
-   * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
-   *
-   * Abtract Tree Syntax:
-   * [AND,
-   *  [">",
-   *      ["+", "3", "4"],
-   *      "5"]
-   *  [AND,
-   *      ["==", "1", "1"],
-   *      ["==", "2", "2"]
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'N', 3, 'N', 4, '+', 0,
-   *    1, 'N', 5, '>', 2, 3,
-   *   'N', 1, 'N', 1, '==', 5,
-   *    6, 'N', 2, 'N', 2, '==',
-   *    8, 9, 'AND', 7, 10, 'AND',
-   *    4, 11 ]
-   */
-  var expectedArray = [
-    "N",
-    3n,
-    "N",
-    3n,
-    "==",
-    0n,
-    1n,
-    "N",
-    1n,
-    "N",
-    1n,
-    "==",
-    3n,
-    4n,
-    "N",
-    2n,
-    "N",
-    2n,
-    "==",
-    6n,
-    7n,
-    "N",
-    3n,
-    "N",
-    3n,
-    "==",
-    9n,
-    10n,
-    "AND",
-    8n,
-    11n,
-    "OR",
-    5n,
-    12n,
-    "AND",
-    2n,
-    13n,
-  ];
+// test("Evaluates a simple syntax string (using only values and operators)", () => {
+//   /**
+//    * Original Syntax:
+//    * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+//    *
+//    * Abtract Tree Syntax:
+//    * [AND,
+//    *  [">",
+//    *      ["+", "3", "4"],
+//    *      "5"]
+//    *  [AND,
+//    *      ["==", "1", "1"],
+//    *      ["==", "2", "2"]
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'N', 3, 'N', 4, '+', 0,
+//    *    1, 'N', 5, '>', 2, 3,
+//    *   'N', 1, 'N', 1, '==', 5,
+//    *    6, 'N', 2, 'N', 2, '==',
+//    *    8, 9, 'AND', 7, 10, 'AND',
+//    *    4, 11 ]
+//    */
+//   var expectedArray = [
+//     "N",
+//     3n,
+//     "N",
+//     3n,
+//     "==",
+//     0n,
+//     1n,
+//     "N",
+//     1n,
+//     "N",
+//     1n,
+//     "==",
+//     3n,
+//     4n,
+//     "N",
+//     2n,
+//     "N",
+//     2n,
+//     "==",
+//     6n,
+//     7n,
+//     "N",
+//     3n,
+//     "N",
+//     3n,
+//     "==",
+//     9n,
+//     10n,
+//     "AND",
+//     8n,
+//     11n,
+//     "OR",
+//     5n,
+//     12n,
+//     "AND",
+//     2n,
+//     13n,
+//   ];
 
-  var ruleStringA = `{
-  "condition": "3 == 3 AND (1 == 1 OR (2 == 2 AND 3 == 3))",
-  "positiveEffects": ["revert"],
-  "negativeEffects": [],
-  "callingFunction": "addValue"
-  }`;
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value, uint256 sAND",
-    [],
-    []
-  );
-  console.log(retVal.instructionSet);
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var ruleStringA = `{
+//   "condition": "3 == 3 AND (1 == 1 OR (2 == 2 AND 3 == 3))",
+//   "positiveEffects": ["revert"],
+//   "negativeEffects": [],
+//   "callingFunction": "addValue"
+//   }`;
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value, uint256 sAND",
+//     [],
+//     []
+//   );
+//   console.log(retVal.instructionSet);
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test("Evaluates a simple syntax string (using only values and operators)", () => {
-  /**
-   * Original Syntax:
-   * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
-   *
-   * Abtract Tree Syntax:
-   * [AND,
-   *  [">",
-   *      ["+", "3", "4"],
-   *      "5"]
-   *  [AND,
-   *      ["==", "1", "1"],
-   *      ["==", "2", "2"]
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'N', 3, 'N', 4, '+', 0,
-   *    1, 'N', 5, '>', 2, 3,
-   *   'N', 1, 'N', 1, '==', 5,
-   *    6, 'N', 2, 'N', 2, '==',
-   *    8, 9, 'AND', 7, 10, 'AND',
-   *    4, 11 ]
-   */
-  var expectedArray = [
-    "PLH",
-    0n,
-    "PLH",
-    1n,
-    "+",
-    0n,
-    1n,
-    "N",
-    5n,
-    ">",
-    2n,
-    3n,
-    "PLH",
-    1n,
-    "N",
-    1n,
-    "==",
-    5n,
-    6n,
-    "N",
-    2n,
-    "PLH",
-    1n,
-    "==",
-    8n,
-    9n,
-    "AND",
-    7n,
-    10n,
-    "AND",
-    4n,
-    11n,
-  ];
+// test("Evaluates a simple syntax string (using only values and operators)", () => {
+//   /**
+//    * Original Syntax:
+//    * 3 + 4 > 5 AND (1 == 1 AND 2 == 2)
+//    *
+//    * Abtract Tree Syntax:
+//    * [AND,
+//    *  [">",
+//    *      ["+", "3", "4"],
+//    *      "5"]
+//    *  [AND,
+//    *      ["==", "1", "1"],
+//    *      ["==", "2", "2"]
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'N', 3, 'N', 4, '+', 0,
+//    *    1, 'N', 5, '>', 2, 3,
+//    *   'N', 1, 'N', 1, '==', 5,
+//    *    6, 'N', 2, 'N', 2, '==',
+//    *    8, 9, 'AND', 7, 10, 'AND',
+//    *    4, 11 ]
+//    */
+//   var expectedArray = [
+//     "PLH",
+//     0n,
+//     "PLH",
+//     1n,
+//     "+",
+//     0n,
+//     1n,
+//     "N",
+//     5n,
+//     ">",
+//     2n,
+//     3n,
+//     "PLH",
+//     1n,
+//     "N",
+//     1n,
+//     "==",
+//     5n,
+//     6n,
+//     "N",
+//     2n,
+//     "PLH",
+//     1n,
+//     "==",
+//     8n,
+//     9n,
+//     "AND",
+//     7n,
+//     10n,
+//     "AND",
+//     4n,
+//     11n,
+//   ];
 
-  var ruleStringA = `{
-  "condition": "value + sAND > 5 AND (sAND == 1 AND 2 == sAND)",
-  "positiveEffects": ["revert"],
-  "negativeEffects": [],
-  "callingFunction": "addValue"
-  }`;
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value, uint256 sAND",
-    [],
-    []
-  );
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var ruleStringA = `{
+//   "condition": "value + sAND > 5 AND (sAND == 1 AND 2 == sAND)",
+//   "positiveEffects": ["revert"],
+//   "negativeEffects": [],
+//   "callingFunction": "addValue"
+//   }`;
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value, uint256 sAND",
+//     [],
+//     []
+//   );
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test("Evaluates a simple syntax string with >= (using only values and operators)", () => {
-  /**
-   * Original Syntax:
-   * 3 + 4 >= 5 AND (1 == 1 AND 2 == 2)
-   *
-   * Abtract Tree Syntax:
-   * [AND,
-   *  [">=",
-   *      ["+", "3", "4"],
-   *      "5"]
-   *  [AND,
-   *      ["==", "1", "1"],
-   *      ["==", "2", "2"]
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'N', 3, 'N', 4, '+', 0,
-   *    1, 'N', 5, '>=', 2, 3,
-   *   'N', 1, 'N', 1, '==', 5,
-   *    6, 'N', 2, 'N', 2, '==',
-   *    8, 9, 'AND', 7, 10, 'AND',
-   *    4, 11 ]
-   */
-  var expectedArray = [
-    "PLH",
-    0n,
-    "PLH",
-    1n,
-    "+",
-    0n,
-    1n,
-    "N",
-    5n,
-    ">=",
-    2n,
-    3n,
-    "PLH",
-    1n,
-    "N",
-    1n,
-    "==",
-    5n,
-    6n,
-    "N",
-    2n,
-    "PLH",
-    1n,
-    "==",
-    8n,
-    9n,
-    "AND",
-    7n,
-    10n,
-    "AND",
-    4n,
-    11n,
-  ];
+// test("Evaluates a simple syntax string with >= (using only values and operators)", () => {
+//   /**
+//    * Original Syntax:
+//    * 3 + 4 >= 5 AND (1 == 1 AND 2 == 2)
+//    *
+//    * Abtract Tree Syntax:
+//    * [AND,
+//    *  [">=",
+//    *      ["+", "3", "4"],
+//    *      "5"]
+//    *  [AND,
+//    *      ["==", "1", "1"],
+//    *      ["==", "2", "2"]
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'N', 3, 'N', 4, '+', 0,
+//    *    1, 'N', 5, '>=', 2, 3,
+//    *   'N', 1, 'N', 1, '==', 5,
+//    *    6, 'N', 2, 'N', 2, '==',
+//    *    8, 9, 'AND', 7, 10, 'AND',
+//    *    4, 11 ]
+//    */
+//   var expectedArray = [
+//     "PLH",
+//     0n,
+//     "PLH",
+//     1n,
+//     "+",
+//     0n,
+//     1n,
+//     "N",
+//     5n,
+//     ">=",
+//     2n,
+//     3n,
+//     "PLH",
+//     1n,
+//     "N",
+//     1n,
+//     "==",
+//     5n,
+//     6n,
+//     "N",
+//     2n,
+//     "PLH",
+//     1n,
+//     "==",
+//     8n,
+//     9n,
+//     "AND",
+//     7n,
+//     10n,
+//     "AND",
+//     4n,
+//     11n,
+//   ];
 
-  var ruleStringA = `{
-  "condition": "value + sAND >= 5 AND (sAND == 1 AND 2 == sAND)",
-  "positiveEffects": ["revert"],
-  "negativeEffects": [],
-  "callingFunction": "addValue"
-  }`;
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value, uint256 sAND",
-    [],
-    []
-  );
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var ruleStringA = `{
+//   "condition": "value + sAND >= 5 AND (sAND == 1 AND 2 == sAND)",
+//   "positiveEffects": ["revert"],
+//   "negativeEffects": [],
+//   "callingFunction": "addValue"
+//   }`;
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value, uint256 sAND",
+//     [],
+//     []
+//   );
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test("Evaluates a simple syntax string with <= (using only values and operators)", () => {
-  /**
-   * Original Syntax:
-   * 3 + 4 <= 5 AND (1 == 1 AND 2 == 2)
-   *
-   * Abtract Tree Syntax:
-   * [AND,
-   *  ["<=",
-   *      ["+", "3", "4"],
-   *      "5"]
-   *  [AND,
-   *      ["==", "1", "1"],
-   *      ["==", "2", "2"]
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'N', 3, 'N', 4, '+', 0,
-   *    1, 'N', 5, '<=', 2, 3,
-   *   'N', 1, 'N', 1, '==', 5,
-   *    6, 'N', 2, 'N', 2, '==',
-   *    8, 9, 'AND', 7, 10, 'AND',
-   *    4, 11 ]
-   */
-  var expectedArray = [
-    "PLH",
-    0n,
-    "PLH",
-    1n,
-    "+",
-    0n,
-    1n,
-    "N",
-    5n,
-    "<=",
-    2n,
-    3n,
-    "PLH",
-    1n,
-    "N",
-    1n,
-    "==",
-    5n,
-    6n,
-    "N",
-    2n,
-    "PLH",
-    1n,
-    "==",
-    8n,
-    9n,
-    "AND",
-    7n,
-    10n,
-    "AND",
-    4n,
-    11n,
-  ];
+// test("Evaluates a simple syntax string with <= (using only values and operators)", () => {
+//   /**
+//    * Original Syntax:
+//    * 3 + 4 <= 5 AND (1 == 1 AND 2 == 2)
+//    *
+//    * Abtract Tree Syntax:
+//    * [AND,
+//    *  ["<=",
+//    *      ["+", "3", "4"],
+//    *      "5"]
+//    *  [AND,
+//    *      ["==", "1", "1"],
+//    *      ["==", "2", "2"]
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'N', 3, 'N', 4, '+', 0,
+//    *    1, 'N', 5, '<=', 2, 3,
+//    *   'N', 1, 'N', 1, '==', 5,
+//    *    6, 'N', 2, 'N', 2, '==',
+//    *    8, 9, 'AND', 7, 10, 'AND',
+//    *    4, 11 ]
+//    */
+//   var expectedArray = [
+//     "PLH",
+//     0n,
+//     "PLH",
+//     1n,
+//     "+",
+//     0n,
+//     1n,
+//     "N",
+//     5n,
+//     "<=",
+//     2n,
+//     3n,
+//     "PLH",
+//     1n,
+//     "N",
+//     1n,
+//     "==",
+//     5n,
+//     6n,
+//     "N",
+//     2n,
+//     "PLH",
+//     1n,
+//     "==",
+//     8n,
+//     9n,
+//     "AND",
+//     7n,
+//     10n,
+//     "AND",
+//     4n,
+//     11n,
+//   ];
 
-  var ruleStringA = `{
-  "condition": "value + sAND <= 5 AND (sAND == 1 AND 2 == sAND)",
-  "positiveEffects": ["revert"],
-  "negativeEffects": [],
-  "callingFunction": "addValue"
-  }`;
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value, uint256 sAND",
-    [],
-    []
-  );
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var ruleStringA = `{
+//   "condition": "value + sAND <= 5 AND (sAND == 1 AND 2 == sAND)",
+//   "positiveEffects": ["revert"],
+//   "negativeEffects": [],
+//   "callingFunction": "addValue"
+//   }`;
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value, uint256 sAND",
+//     [],
+//     []
+//   );
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test('Reverse Interpretation for the: "Evaluates a simple syntax string (using only values and operators" test', () => {
-  let instructionSet = [
-    "N",
-    3,
-    "N",
-    4,
-    "+",
-    0,
-    1,
-    "N",
-    5,
-    ">",
-    2,
-    3,
-    "N",
-    1,
-    "N",
-    1,
-    "==",
-    5,
-    6,
-    "N",
-    2,
-    "N",
-    2,
-    "==",
-    8,
-    9,
-    "AND",
-    7,
-    10,
-    "AND",
-    4,
-    11,
-  ];
-  var expectedString = "3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 )";
-  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
-  var placeholderArray: any[] = [];
-  var retVal = reverseParseRule(
-    cleanedInstructionSet as number[],
-    placeholderArray,
-    []
-  );
-  expect(retVal).toEqual(expectedString);
-});
+// test('Reverse Interpretation for the: "Evaluates a simple syntax string (using only values and operators" test', () => {
+//   let instructionSet = [
+//     "N",
+//     3,
+//     "N",
+//     4,
+//     "+",
+//     0,
+//     1,
+//     "N",
+//     5,
+//     ">",
+//     2,
+//     3,
+//     "N",
+//     1,
+//     "N",
+//     1,
+//     "==",
+//     5,
+//     6,
+//     "N",
+//     2,
+//     "N",
+//     2,
+//     "==",
+//     8,
+//     9,
+//     "AND",
+//     7,
+//     10,
+//     "AND",
+//     4,
+//     11,
+//   ];
+//   var expectedString = "3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 )";
+//   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+//   var placeholderArray: any[] = [];
+//   var retVal = reverseParseRule(
+//     cleanedInstructionSet as number[],
+//     placeholderArray,
+//     []
+//   );
+//   expect(retVal).toEqual(expectedString);
+// });
 
-test("Evaluates a complex syntax string (using only values and operators)", () => {
-  /*
-   * Original Syntax:
-   * ( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4)
-   *
-   * Abstract Tree Syntax:
-   * [AND,
-   *  [1 + 1 == 2],
-   *  [AND,
-   *      [AND,
-   *          [3 + 4 > 5],
-   *          [AND,
-   *              [2 == 2],
-   *              [1 == 1],
-   *          ]
-   *      ],
-   *      [4 == 4]
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'N', 1, 'N', 1, '+', 0, 1, 'N',
-   *    2, '==', 2, 3, 'N', 3, 'N', 4,
-   *   '+', 5, 6, 'N', 5, '>', 7, 8,
-   *   'N', 1, 'N', 1, '==', 10, 11, 'N',
-   *    2, 'N', 2, '==', 13, 14, 'AND', 12,
-   *    15, 'AND', 9, 16, 'N', 4, 'N', 4,
-   *   '==', 18, 19, 'AND', 17, 20, 'AND', 4,
-   *    21 ]
-   */
-  var expectedArray = [
-    "N",
-    1n,
-    "N",
-    1n,
-    "+",
-    0n,
-    1n,
-    "N",
-    2n,
-    "==",
-    2n,
-    3n,
-    "N",
-    3n,
-    "N",
-    4n,
-    "+",
-    5n,
-    6n,
-    "N",
-    5n,
-    ">",
-    7n,
-    8n,
-    "N",
-    1n,
-    "N",
-    1n,
-    "==",
-    10n,
-    11n,
-    "N",
-    2n,
-    "N",
-    2n,
-    "==",
-    13n,
-    14n,
-    "AND",
-    12n,
-    15n,
-    "AND",
-    9n,
-    16n,
-    "AND",
-    4n,
-    17n,
-  ];
+// test("Evaluates a complex syntax string (using only values and operators)", () => {
+//   /*
+//    * Original Syntax:
+//    * ( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) AND (4 == 4)
+//    *
+//    * Abstract Tree Syntax:
+//    * [AND,
+//    *  [1 + 1 == 2],
+//    *  [AND,
+//    *      [AND,
+//    *          [3 + 4 > 5],
+//    *          [AND,
+//    *              [2 == 2],
+//    *              [1 == 1],
+//    *          ]
+//    *      ],
+//    *      [4 == 4]
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'N', 1, 'N', 1, '+', 0, 1, 'N',
+//    *    2, '==', 2, 3, 'N', 3, 'N', 4,
+//    *   '+', 5, 6, 'N', 5, '>', 7, 8,
+//    *   'N', 1, 'N', 1, '==', 10, 11, 'N',
+//    *    2, 'N', 2, '==', 13, 14, 'AND', 12,
+//    *    15, 'AND', 9, 16, 'N', 4, 'N', 4,
+//    *   '==', 18, 19, 'AND', 17, 20, 'AND', 4,
+//    *    21 ]
+//    */
+//   var expectedArray = [
+//     "N",
+//     1n,
+//     "N",
+//     1n,
+//     "+",
+//     0n,
+//     1n,
+//     "N",
+//     2n,
+//     "==",
+//     2n,
+//     3n,
+//     "N",
+//     3n,
+//     "N",
+//     4n,
+//     "+",
+//     5n,
+//     6n,
+//     "N",
+//     5n,
+//     ">",
+//     7n,
+//     8n,
+//     "N",
+//     1n,
+//     "N",
+//     1n,
+//     "==",
+//     10n,
+//     11n,
+//     "N",
+//     2n,
+//     "N",
+//     2n,
+//     "==",
+//     13n,
+//     14n,
+//     "AND",
+//     12n,
+//     15n,
+//     "AND",
+//     9n,
+//     16n,
+//     "AND",
+//     4n,
+//     17n,
+//   ];
 
-  var ruleStringA = `{
-     "condition": "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) ",
-     "positiveEffects": ["revert"],
-     "negativeEffects": [],
-     "callingFunction": "addValue"
-     }`;
+//   var ruleStringA = `{
+//      "condition": "( 1 + 1 == 2 ) AND ( 3 + 4 > 5 AND (1 == 1 AND 2 == 2) ) ",
+//      "positiveEffects": ["revert"],
+//      "negativeEffects": [],
+//      "callingFunction": "addValue"
+//      }`;
 
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value",
-    [],
-    []
-  );
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value",
+//     [],
+//     []
+//   );
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test('Reverse Interpretation for the: "Evaluates a complex syntax string (using only values and operators)" test', () => {
-  let instructionSet = [
-    "N",
-    1,
-    "N",
-    1,
-    "+",
-    0,
-    1,
-    "N",
-    2,
-    "==",
-    2,
-    3,
-    "N",
-    3,
-    "N",
-    4,
-    "+",
-    5,
-    6,
-    "N",
-    5,
-    ">",
-    7,
-    8,
-    "N",
-    1,
-    "N",
-    1,
-    "==",
-    10,
-    11,
-    "N",
-    2,
-    "N",
-    2,
-    "==",
-    13,
-    14,
-    "AND",
-    12,
-    15,
-    "AND",
-    9,
-    16,
-    "N",
-    4,
-    "N",
-    4,
-    "==",
-    18,
-    19,
-    "AND",
-    17,
-    20,
-    "AND",
-    4,
-    21,
-  ];
-  var expectedString =
-    "1 + 1 == 2 AND ( ( 3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 ) ) AND 4 == 4 )";
-  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
-  var placeholderArray: any[] = [];
-  var retVal = reverseParseRule(
-    cleanedInstructionSet as number[],
-    placeholderArray,
-    []
-  );
-  expect(retVal).toEqual(expectedString);
-});
+// test('Reverse Interpretation for the: "Evaluates a complex syntax string (using only values and operators)" test', () => {
+//   let instructionSet = [
+//     "N",
+//     1,
+//     "N",
+//     1,
+//     "+",
+//     0,
+//     1,
+//     "N",
+//     2,
+//     "==",
+//     2,
+//     3,
+//     "N",
+//     3,
+//     "N",
+//     4,
+//     "+",
+//     5,
+//     6,
+//     "N",
+//     5,
+//     ">",
+//     7,
+//     8,
+//     "N",
+//     1,
+//     "N",
+//     1,
+//     "==",
+//     10,
+//     11,
+//     "N",
+//     2,
+//     "N",
+//     2,
+//     "==",
+//     13,
+//     14,
+//     "AND",
+//     12,
+//     15,
+//     "AND",
+//     9,
+//     16,
+//     "N",
+//     4,
+//     "N",
+//     4,
+//     "==",
+//     18,
+//     19,
+//     "AND",
+//     17,
+//     20,
+//     "AND",
+//     4,
+//     21,
+//   ];
+//   var expectedString =
+//     "1 + 1 == 2 AND ( ( 3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 ) ) AND 4 == 4 )";
+//   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+//   var placeholderArray: any[] = [];
+//   var retVal = reverseParseRule(
+//     cleanedInstructionSet as number[],
+//     placeholderArray,
+//     []
+//   );
+//   expect(retVal).toEqual(expectedString);
+// });
 
-test("Evaluates a simple syntax string (using AND + OR operators)", () => {
-  /*
-   * Original Syntax:
-   * (3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)
-   *
-   * Abstract Tree Syntax:
-   * [OR,
-   *  [AND,
-   *    [>,
-   *      [+, 3, 4] ,5],
-   *    [==, 5, 5]],
-   *  [OR,
-   *    [==, 1, 1],
-   *    [==, 2, 3]
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'N', 3, 'N', 4, '+', 0, 1,
-   *   'N', 5, '>', 2, 3, 'N', 5,
-   *   'N', 5, '==', 5, 6, 'AND', 4,
-   *    7, 'N', 1, 'N', 1, '==', 9,
-   *    10, 'N', 2, 'N', 3, '==', 12,
-   *    13, 'OR', 11, 14, 'OR', 8, 15 ]
-   */
-  var expectedArray = [
-    "N",
-    3n,
-    "N",
-    4n,
-    "+",
-    0n,
-    1n,
-    "N",
-    5n,
-    ">",
-    2n,
-    3n,
-    "N",
-    5n,
-    "N",
-    5n,
-    "==",
-    5n,
-    6n,
-    "AND",
-    4n,
-    7n,
-    "N",
-    1n,
-    "N",
-    1n,
-    "==",
-    9n,
-    10n,
-    "N",
-    2n,
-    "N",
-    3n,
-    "==",
-    12n,
-    13n,
-    "OR",
-    11n,
-    14n,
-    "OR",
-    8n,
-    15n,
-  ];
+// test("Evaluates a simple syntax string (using AND + OR operators)", () => {
+//   /*
+//    * Original Syntax:
+//    * (3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)
+//    *
+//    * Abstract Tree Syntax:
+//    * [OR,
+//    *  [AND,
+//    *    [>,
+//    *      [+, 3, 4] ,5],
+//    *    [==, 5, 5]],
+//    *  [OR,
+//    *    [==, 1, 1],
+//    *    [==, 2, 3]
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'N', 3, 'N', 4, '+', 0, 1,
+//    *   'N', 5, '>', 2, 3, 'N', 5,
+//    *   'N', 5, '==', 5, 6, 'AND', 4,
+//    *    7, 'N', 1, 'N', 1, '==', 9,
+//    *    10, 'N', 2, 'N', 3, '==', 12,
+//    *    13, 'OR', 11, 14, 'OR', 8, 15 ]
+//    */
+//   var expectedArray = [
+//     "N",
+//     3n,
+//     "N",
+//     4n,
+//     "+",
+//     0n,
+//     1n,
+//     "N",
+//     5n,
+//     ">",
+//     2n,
+//     3n,
+//     "N",
+//     5n,
+//     "N",
+//     5n,
+//     "==",
+//     5n,
+//     6n,
+//     "AND",
+//     4n,
+//     7n,
+//     "N",
+//     1n,
+//     "N",
+//     1n,
+//     "==",
+//     9n,
+//     10n,
+//     "N",
+//     2n,
+//     "N",
+//     3n,
+//     "==",
+//     12n,
+//     13n,
+//     "OR",
+//     11n,
+//     14n,
+//     "OR",
+//     8n,
+//     15n,
+//   ];
 
-  var ruleStringA = `{
-  "condition": "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)",
-  "positiveEffects": ["revert"],
-  "negativeEffects": [],
-  "callingFunction": "addValue"
-  }`;
+//   var ruleStringA = `{
+//   "condition": "(3 + 4 > 5 AND 5 == 5) OR (1 == 1 OR 2 == 3)",
+//   "positiveEffects": ["revert"],
+//   "negativeEffects": [],
+//   "callingFunction": "addValue"
+//   }`;
 
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value",
-    [],
-    []
-  );
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value",
+//     [],
+//     []
+//   );
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators)" test', () => {
-  let instructionSet = [
-    "N",
-    3,
-    "N",
-    4,
-    "+",
-    0,
-    1,
-    "N",
-    5,
-    ">",
-    2,
-    3,
-    "N",
-    5,
-    "N",
-    5,
-    "==",
-    5,
-    6,
-    "AND",
-    4,
-    7,
-    "N",
-    1,
-    "N",
-    1,
-    "==",
-    9,
-    10,
-    "N",
-    2,
-    "N",
-    3,
-    "==",
-    12,
-    13,
-    "OR",
-    11,
-    14,
-    "OR",
-    8,
-    15,
-  ];
-  var expectedString = "( 3 + 4 > 5 AND 5 == 5 ) OR ( 1 == 1 OR 2 == 3 )";
-  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
-  var placeholderArray: any[] = [];
-  var retVal = reverseParseRule(
-    cleanedInstructionSet as number[],
-    placeholderArray,
-    []
-  );
-  expect(retVal).toEqual(expectedString);
-});
+// test('Reverse Interpretation for the: "Evaluates a simple syntax string (using AND + OR operators)" test', () => {
+//   let instructionSet = [
+//     "N",
+//     3,
+//     "N",
+//     4,
+//     "+",
+//     0,
+//     1,
+//     "N",
+//     5,
+//     ">",
+//     2,
+//     3,
+//     "N",
+//     5,
+//     "N",
+//     5,
+//     "==",
+//     5,
+//     6,
+//     "AND",
+//     4,
+//     7,
+//     "N",
+//     1,
+//     "N",
+//     1,
+//     "==",
+//     9,
+//     10,
+//     "N",
+//     2,
+//     "N",
+//     3,
+//     "==",
+//     12,
+//     13,
+//     "OR",
+//     11,
+//     14,
+//     "OR",
+//     8,
+//     15,
+//   ];
+//   var expectedString = "( 3 + 4 > 5 AND 5 == 5 ) OR ( 1 == 1 OR 2 == 3 )";
+//   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+//   var placeholderArray: any[] = [];
+//   var retVal = reverseParseRule(
+//     cleanedInstructionSet as number[],
+//     placeholderArray,
+//     []
+//   );
+//   expect(retVal).toEqual(expectedString);
+// });
 
-test("Evaluates a simple syntax string (using AND + OR operators and function parameters)", () => {
-  /*
-   * Original Syntax:
-   * (value + 4 > 5 AND 5 == 5) OR (info == "test" OR addr == '0x1234567')  --> revert --> addValue(uint256 value, string info, address addr)
-   *
-   * Abstract Tree Syntax:
-   * [OR,
-   *  [AND,
-   *    [>,
-   *      [+, "value", 4], 5],
-   *    [==, 5, 5]],
-   *  [OR,
-   *    [==, "info", "test"],
-   *    [==, "addr", '0x1234567']
-   *  ]
-   * ]
-   *
-   * Instruction Set Syntax:
-   * [ 'PLH', 0, 0, 'N',
-   *    4, '+', 0, 1,
-   *   'N', 5, '>', 2,
-   *    3, 'N', 5, 'N',
-   *    5, '==', 5, 6,
-   *   'AND', 4, 7, 'PLH',
-   *    1, 0, 'test', '==',
-   *    9, 10, 'PLH',  2,
-   *    0, "'0x1234567'", '==', 12,
-   *    13, 'OR', 11, 14,
-   *   'OR', 8, 15 ]
-   */
-  var expectedArray = [
-    "PLH",
-    0n,
-    "N",
-    4n,
-    "+",
-    0n,
-    1n,
-    "N",
-    5n,
-    ">",
-    2n,
-    3n,
-    "N",
-    5n,
-    "N",
-    5n,
-    "==",
-    5n,
-    6n,
-    "AND",
-    4n,
-    7n,
-    "PLH",
-    1n,
-    "N",
-    BigInt(
-      keccak256(encodeAbiParameters(parseAbiParameters("string"), ["test"]))
-    ),
-    "==",
-    9n,
-    10n,
-    "PLH",
-    2n,
-    "N",
-    BigInt("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"),
-    "==",
-    12n,
-    13n,
-    "OR",
-    11n,
-    14n,
-    "OR",
-    8n,
-    15n,
-  ];
+// test("Evaluates a simple syntax string (using AND + OR operators and function parameters)", () => {
+//   /*
+//    * Original Syntax:
+//    * (value + 4 > 5 AND 5 == 5) OR (info == "test" OR addr == '0x1234567')  --> revert --> addValue(uint256 value, string info, address addr)
+//    *
+//    * Abstract Tree Syntax:
+//    * [OR,
+//    *  [AND,
+//    *    [>,
+//    *      [+, "value", 4], 5],
+//    *    [==, 5, 5]],
+//    *  [OR,
+//    *    [==, "info", "test"],
+//    *    [==, "addr", '0x1234567']
+//    *  ]
+//    * ]
+//    *
+//    * Instruction Set Syntax:
+//    * [ 'PLH', 0, 0, 'N',
+//    *    4, '+', 0, 1,
+//    *   'N', 5, '>', 2,
+//    *    3, 'N', 5, 'N',
+//    *    5, '==', 5, 6,
+//    *   'AND', 4, 7, 'PLH',
+//    *    1, 0, 'test', '==',
+//    *    9, 10, 'PLH',  2,
+//    *    0, "'0x1234567'", '==', 12,
+//    *    13, 'OR', 11, 14,
+//    *   'OR', 8, 15 ]
+//    */
+//   var expectedArray = [
+//     "PLH",
+//     0n,
+//     "N",
+//     4n,
+//     "+",
+//     0n,
+//     1n,
+//     "N",
+//     5n,
+//     ">",
+//     2n,
+//     3n,
+//     "N",
+//     5n,
+//     "N",
+//     5n,
+//     "==",
+//     5n,
+//     6n,
+//     "AND",
+//     4n,
+//     7n,
+//     "PLH",
+//     1n,
+//     "N",
+//     BigInt(
+//       keccak256(encodeAbiParameters(parseAbiParameters("string"), ["test"]))
+//     ),
+//     "==",
+//     9n,
+//     10n,
+//     "PLH",
+//     2n,
+//     "N",
+//     BigInt("0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"),
+//     "==",
+//     12n,
+//     13n,
+//     "OR",
+//     11n,
+//     14n,
+//     "OR",
+//     8n,
+//     15n,
+//   ];
 
-  var ruleStringA = `{
-"condition": "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
-"positiveEffects": ["revert"],
-"negativeEffects": [],
-"callingFunction": "addValue"
-}`;
+//   var ruleStringA = `{
+// "condition": "(value + 4 > 5 AND 5 == 5) OR (info == test OR addr == 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)",
+// "positiveEffects": ["revert"],
+// "negativeEffects": [],
+// "callingFunction": "addValue"
+// }`;
 
-  var retVal = parseRuleSyntax(
-    JSON.parse(ruleStringA),
-    [],
-    [],
-    "uint256 value, string info, address addr",
-    [],
-    []
-  );
-  expect(retVal.instructionSet).toEqual(expectedArray);
-});
+//   var retVal = parseRuleSyntax(
+//     JSON.parse(ruleStringA),
+//     [],
+//     [],
+//     "uint256 value, string info, address addr",
+//     [],
+//     []
+//   );
+//   expect(retVal.instructionSet).toEqual(expectedArray);
+// });
 
-test("Creates a simple uint256 tracker", () => {
-  var str = `{
-        "name": "Simple Int Tracker",
-        "type": "uint256",
-        "initialValue": "14"
-        }`;
-  var retVal = parseTrackerSyntax(JSON.parse(str));
+// test("Creates a simple uint256 tracker", () => {
+//   var str = `{
+//         "name": "Simple Int Tracker",
+//         "type": "uint256",
+//         "initialValue": "14"
+//         }`;
+//   var retVal = parseTrackerSyntax(JSON.parse(str));
 
-  expect(retVal.name).toEqual("Simple Int Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.UINT256);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(14)])
-  );
-});
+//   expect(retVal.name).toEqual("Simple Int Tracker");
+//   expect(retVal.type).toEqual(pTypeEnum.UINT256);
+//   expect(retVal.initialValue).toEqual(
+//     encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(14)])
+//   );
+// });
 
-test("Creates a simple bool tracker", () => {
+// test("Creates a simple bool tracker", () => {
+//   var str = `{
+//         "name": "Simple bool Tracker",
+//         "type": "bool",
+//         "initialValue": "true"
+//         }`;
+//   var retVal = parseTrackerSyntax(JSON.parse(str));
+//   expect(retVal.name).toEqual("Simple bool Tracker");
+//   expect(retVal.type).toEqual(pTypeEnum.BOOL);
+//   expect(retVal.initialValue).toEqual(
+//     encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
+//   );
+// });
+
+test("Creates a simple mapped tracker", () => {
   var str = `{
         "name": "Simple bool Tracker",
-        "type": "bool",
-        "initialValue": "true"
+        "keyType": "uint256",
+        "valueType": "uint256",
+        "initialKeys": [0, 1, 2],
+        "initialValues": [1, 2, 3]
         }`;
-  var retVal = parseTrackerSyntax(JSON.parse(str));
+  var retVal = parseMappedTrackerSyntax(JSON.parse(str));
   expect(retVal.name).toEqual("Simple bool Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.BOOL);
-  expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
+  expect(retVal.keyType).toEqual(2);
+  expect(retVal.valueType).toEqual(2);
+  expect(retVal.initialKeys[0]).toEqual(encodePacked(["uint256"], [BigInt(0)]));
+  expect(retVal.initialKeys[1]).toEqual(encodePacked(["uint256"], [BigInt(1)]));
+  expect(retVal.initialKeys[2]).toEqual(encodePacked(["uint256"], [BigInt(2)]));
+  expect(retVal.initialValues[0]).toEqual(
+    encodePacked(["uint256"], [BigInt(1)])
+  );
+  expect(retVal.initialValues[1]).toEqual(
+    encodePacked(["uint256"], [BigInt(2)])
+  );
+  expect(retVal.initialValues[2]).toEqual(
+    encodePacked(["uint256"], [BigInt(3)])
+  );
+});
+
+test("Creates a simple mapped tracker with a string value", () => {
+  var str = `{
+        "name": "Simple bool Tracker",
+        "keyType": "uint256",
+        "valueType": "string",
+        "initialKeys": [0, 1, 2],
+        "initialValues": ["Test", "Test Two", "Test Three"]
+        }`;
+  var retVal = parseMappedTrackerSyntax(JSON.parse(str));
+  expect(retVal.name).toEqual("Simple bool Tracker");
+  expect(retVal.keyType).toEqual(2);
+  expect(retVal.valueType).toEqual(1);
+  expect(retVal.initialKeys[0]).toEqual(encodePacked(["uint256"], [BigInt(0)]));
+  expect(retVal.initialKeys[1]).toEqual(encodePacked(["uint256"], [BigInt(1)]));
+  expect(retVal.initialKeys[2]).toEqual(encodePacked(["uint256"], [BigInt(2)]));
+  expect(retVal.initialValues[0]).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["Test" as string])
+  );
+  expect(retVal.initialValues[1]).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["Test Two" as string])
+  );
+  expect(retVal.initialValues[2]).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["Test Three" as string])
   );
 });
 

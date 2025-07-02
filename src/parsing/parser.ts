@@ -210,16 +210,25 @@ export function parseRuleSyntax(
 export function parseMappedTrackerSyntax(
   syntax: MappedTrackerJSON
 ): MappedTrackerDefinition {
+  console.log("SYN", syntax);
   let keyType = syntax.keyType;
   let valueType = syntax.valueType;
+  console.log("HERE");
   var keys = syntax.initialKeys.map((val) => val.value);
   var values = syntax.initialValues.map((val) => val.value);
-  var trackerInitialKeys: any[] = encodeTrackerData(keys, keyType);
-  var trackerInitialValues: any[] = encodeTrackerData(values, valueType);
-
-  const keyTypeEnum = (PT.find((_pt) => (_pt.name = keyType)) ?? PT[4])
+  console.log("HEREE", keys);
+  var trackerInitialKeys: any[] = encodeTrackerData(
+    syntax.initialKeys,
+    keyType
+  );
+  var trackerInitialValues: any[] = encodeTrackerData(
+    syntax.initialValues,
+    valueType
+  );
+  console.log("KEY", trackerInitialKeys);
+  const keyTypeEnum = (PT.find((_pt) => _pt.name == keyType) ?? PT[4])
     .enumeration;
-  const valueTypeEnum = (PT.find((_pt) => (_pt.name = valueType)) ?? PT[4])
+  const valueTypeEnum = (PT.find((_pt) => _pt.name == valueType) ?? PT[4])
     .enumeration;
 
   return {
@@ -232,9 +241,12 @@ export function parseMappedTrackerSyntax(
 }
 
 function encodeTrackerData(valueSet: any[], keyType: string): any[] {
-  const values: any[] = valueSet.map((val) => {
+  const values: any[] = [];
+  valueSet.map((val) => {
     // for (var val of valueSet) {
     if (keyType == "uint256") {
+      console.log("VAL", val);
+      console.log("SET", valueSet);
       values.push(encodePacked(["uint256"], [BigInt(val)]));
     } else if (keyType == "address") {
       const validatedAddress = getAddress(val as string);
@@ -354,10 +366,17 @@ export function parseForeignCallDefinition(
 
   const returnType: number = PType.indexOf(syntax.returnType);
 
-  const parameterTypes: number[] = splitFunctionInput(syntax.function).map(
-    (param) => PType.indexOf(param)
-  );
+  var parameterTypes: number[] = [];
+  for (var arg of splitFunctionInput(syntax.function)) {
+    for (var pt of PT) {
+      if (pt.name == arg) {
+        parameterTypes.push(pt.enumeration);
+        break;
+      }
+    }
+  }
 
+  console.log("parame", parameterTypes);
   var valuesToPass: number[] = syntax.valuesToPass
     .split(",")
     .filter((input: string) => !isNaN(Number(input)))
