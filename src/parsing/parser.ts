@@ -210,13 +210,8 @@ export function parseRuleSyntax(
 export function parseMappedTrackerSyntax(
   syntax: MappedTrackerJSON
 ): MappedTrackerDefinition {
-  console.log("SYN", syntax);
   let keyType = syntax.keyType;
   let valueType = syntax.valueType;
-  console.log("HERE");
-  var keys = syntax.initialKeys.map((val) => val.value);
-  var values = syntax.initialValues.map((val) => val.value);
-  console.log("HEREE", keys);
   var trackerInitialKeys: any[] = encodeTrackerData(
     syntax.initialKeys,
     keyType
@@ -225,7 +220,6 @@ export function parseMappedTrackerSyntax(
     syntax.initialValues,
     valueType
   );
-  console.log("KEY", trackerInitialKeys);
   const keyTypeEnum = (PT.find((_pt) => _pt.name == keyType) ?? PT[4])
     .enumeration;
   const valueTypeEnum = (PT.find((_pt) => _pt.name == valueType) ?? PT[4])
@@ -245,8 +239,6 @@ function encodeTrackerData(valueSet: any[], keyType: string): any[] {
   valueSet.map((val) => {
     // for (var val of valueSet) {
     if (keyType == "uint256") {
-      console.log("VAL", val);
-      console.log("SET", valueSet);
       values.push(encodePacked(["uint256"], [BigInt(val)]));
     } else if (keyType == "address") {
       const validatedAddress = getAddress(val as string);

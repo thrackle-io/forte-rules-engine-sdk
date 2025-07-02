@@ -14,7 +14,6 @@ import {
   PT,
   RulesEngineComponentContract,
 } from "./types";
-import { PType } from "./validation";
 
 /**
  * @file CallingFunctions.ts
@@ -71,8 +70,6 @@ export const createCallingFunction = async (
       }
     }
   }
-
-  console.log(args);
 
   var addRule;
   while (true) {

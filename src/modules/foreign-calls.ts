@@ -165,8 +165,6 @@ export const createForeignCall = async (
     encodedValues
   );
 
-  console.log(foreignCall);
-
   var fc = {
     set: true,
     foreignCallAddress: foreignCall.address,
