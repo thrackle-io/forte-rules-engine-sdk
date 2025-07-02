@@ -52,9 +52,9 @@ export const splitFunctionInput = (input: string): string[] => {
  * @returns The errors messages concatenated into a single string
  */
 export const getRulesErrorMessages = (errors: RulesError[]): string => {
-  console.log(errors[0]);
-  return errors.map((err) => `${err.message}`).join("\n");
-};
+  return errors.map(err => `${err.message}`).join("\n");
+}
+
 
 const ruleValidator = z.object({
   condition: z.string(),
@@ -62,7 +62,7 @@ const ruleValidator = z.object({
   negativeEffects: z.array(z.string()),
   callingFunction: z.string(),
 });
-export interface RuleJSON extends z.infer<typeof ruleValidator> {}
+export interface RuleJSON extends z.infer<typeof ruleValidator> { }
 
 /**
  * Parses a JSON string and returns Either a RuleJSON object or an error.
@@ -127,7 +127,7 @@ export const foreignCallValidator = z.object({
   callingFunction: z.string().trim(),
 });
 
-export interface ForeignCallJSON extends z.infer<typeof foreignCallValidator> {}
+export interface ForeignCallJSON extends z.infer<typeof foreignCallValidator> { }
 
 /**
  * Parses a JSON string and returns Either a ForeignCallJSON object or an error.
@@ -201,10 +201,10 @@ export const trackerValidator = z
     message: "Initial Value doesn't match type",
   });
 
-export interface TrackerJSON extends z.infer<typeof trackerValidator> {}
+export interface TrackerJSON extends z.infer<typeof trackerValidator> { }
 
 export interface MappedTrackerJSON
-  extends z.infer<typeof mappedTrackerValidator> {}
+  extends z.infer<typeof mappedTrackerValidator> { }
 
 const SupportedValues = [
   z.object({
@@ -311,7 +311,7 @@ export const callingFunctionValidator = z.object({
 });
 
 export interface CallingFunctionJSON
-  extends z.infer<typeof callingFunctionValidator> {}
+  extends z.infer<typeof callingFunctionValidator> { }
 
 /**
  * Parses a JSON string and returns Either a CallingFunctionJSON object or an error.
@@ -346,7 +346,7 @@ export const policyJSONValidator = z.object({
   MappedTrackers: z.array(mappedTrackerValidator),
   Rules: z.array(ruleValidator),
 });
-export interface PolicyJSON extends z.infer<typeof policyJSONValidator> {}
+export interface PolicyJSON extends z.infer<typeof policyJSONValidator> { }
 
 /**
  * Parses a JSON string and returns Either a PolicyJSON object or an error.

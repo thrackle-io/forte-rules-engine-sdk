@@ -1,0 +1,31 @@
+{
+    "Policy": "Test Policy",
+    "PolicyType": "Test",
+    "ForeignCalls": [],
+    "CallingFunctions": [
+        {
+            "name": "transfer(address to, uint256 value)",
+            "functionSignature": "transfer(address to, uint256 value)",
+            "encodedValues": "address to, uint256 value"
+        }
+    ],
+    "Trackers": [
+        {
+            "name": "trackerOne",
+            "type": "uint256",
+            "initialValue": "1"
+        }
+    ],
+    "Rules": [
+        {
+            "condition": "value > 10000",
+            "positiveEffects": [
+                "revert(\"Passed test\")"
+            ],
+            "negativeEffects": [
+                "revert(\"Failed test\")"
+            ],
+            "callingFunction": "transfer(address to, uint256 value)"
+        }
+    ]
+}

@@ -17,7 +17,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "generate": "ts-node src/codeGeneration/codeModificationScript.ts",
+    "generate": "ts-node src/codeGeneration/code-modification-script.ts",
     "test": "vitest"
   },
   "dependencies": {
