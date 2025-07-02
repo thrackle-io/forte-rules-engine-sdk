@@ -198,35 +198,26 @@ export function parseTrackers(
   return [trCondition, trackers];
 }
 
-export function parseGlobalVariables(
-  condition: string,
-  names: any[]
-): RuleComponent[] {
+export function parseGlobalVariables(condition: string): RuleComponent[] {
   const fcRegex = /GV:[a-zA-Z]+[^\s]+/g;
-  // const matches = condition.matchAll(fcRegex);
-  let processedCondition = condition;
 
-  let components: RuleComponent[] = [];
+  // let components: RuleComponent[] = [];
 
-  var found = false;
   // Convert matches iterator to array to process all at once
   const matches = condition.matchAll(fcRegex);
-  for (const match of matches) {
-    const fullFcExpr = match[0];
-    if (
-      fullFcExpr.trim() == "GV:MSG_SENDER" ||
-      fullFcExpr.trim() == "GV:BLOCK_TIMESTAMP" ||
-      fullFcExpr.trim() == "GV:MSG_DATA" ||
-      fullFcExpr.trim() == "GV:BLOCK_NUMBER" ||
-      fullFcExpr.trim() == "GV:TX_ORIGIN"
-    ) {
-      components.push({
-        name: fullFcExpr,
-        tIndex: 0,
-        rawType: "Global",
-      });
-    }
-  }
+  const matchesArray: RegExpExecArray[] = [...matches];
+  const gvExpressions = [
+    "GV:BLOCK_TIMESTAMP",
+    "GV:MSG_DATA",
+    "GV:MSG_SENDER",
+    "GV:BLOCK_NUMBER",
+    "GV:TX_ORIGIN",
+  ];
+  const components: RuleComponent[] = matchesArray
+    .filter((name) => gvExpressions.includes(name[0]))
+    .map((name) => {
+      return { name: name[0], tIndex: 0, rawType: "Global" };
+    });
 
   return components;
 }
@@ -467,7 +458,7 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
       mappedTrackerKey: encodeAbiParameters(parseAbiParameters("uint256"), [
         BigInt(1),
       ]),
-      flags: flags,
+      flags,
     };
     placeHolders.push(placeHolder);
   }

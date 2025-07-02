@@ -108,7 +108,7 @@ export function parseRuleSyntax(
   );
   fcCondition = trCondition;
   ruleComponents = [...ruleComponents, ...trackers];
-  const gvComponents = parseGlobalVariables(trCondition, ruleComponents);
+  const gvComponents = parseGlobalVariables(trCondition);
   ruleComponents = [...ruleComponents, ...gvComponents];
   var placeHolders = buildPlaceholderList(ruleComponents);
   for (var effectP in syntax.positiveEffects) {
