@@ -201,8 +201,6 @@ export function parseTrackers(
 export function parseGlobalVariables(condition: string): RuleComponent[] {
   const fcRegex = /GV:[a-zA-Z]+[^\s]+/g;
 
-  // let components: RuleComponent[] = [];
-
   // Convert matches iterator to array to process all at once
   const matches = condition.matchAll(fcRegex);
   const matchesArray: RegExpExecArray[] = [...matches];
