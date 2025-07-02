@@ -383,6 +383,16 @@ export function convertRuleStructToString(
           }
         }
       }
+    } else if (plh.flags == 0x04) {
+      plhArray.push("GV:MSG_SENDER");
+    } else if (plh.flags == 0x08) {
+      plhArray.push("GV:BLOCK_TIMESTAMP");
+    } else if (plh.flags == 0x0c) {
+      plhArray.push("GV:MSG_DATA");
+    } else if (plh.flags == 0x10) {
+      plhArray.push("GV:BLOCK_NUMBER");
+    } else if (plh.flags == 0x14) {
+      plhArray.push("GV:TX_ORIGIN");
     } else {
       plhArray.push(names[plh.typeSpecificIndex].name);
     }

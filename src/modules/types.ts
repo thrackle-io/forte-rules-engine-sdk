@@ -166,7 +166,6 @@ export type FunctionArgument = {
   name: string;
   tIndex: number;
   rawType: string;
-  fcPlaceholder?: PlaceholderStruct;
 };
 
 export type ForeignCall = {
