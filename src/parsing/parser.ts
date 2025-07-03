@@ -235,34 +235,32 @@ export function parseMappedTrackerSyntax(
 }
 
 function encodeTrackerData(valueSet: any[], keyType: string): any[] {
-  const values: any[] = [];
-  valueSet.map((val) => {
+  // const values: any[] = [];
+  const values: any[] = valueSet.map((val) => {
     // for (var val of valueSet) {
     if (keyType == "uint256") {
-      values.push(encodePacked(["uint256"], [BigInt(val)]));
+      return encodePacked(["uint256"], [BigInt(val)]);
     } else if (keyType == "address") {
       const validatedAddress = getAddress(val as string);
       var address = encodeAbiParameters(parseAbiParameters("address"), [
         validatedAddress,
       ]);
 
-      values.push(address);
+      return address;
     } else if (keyType == "bytes") {
       var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
         toHex(stringToBytes(String(val))),
       ]);
 
-      values.push(bytes);
+      return bytes;
     } else if (keyType == "bool") {
       if (val == "true") {
-        values.push(encodePacked(["uint256"], [1n]));
+        return encodePacked(["uint256"], [1n]);
       } else {
-        values.push(encodePacked(["uint256"], [0n]));
+        return encodePacked(["uint256"], [0n]);
       }
     } else {
-      values.push(
-        encodeAbiParameters(parseAbiParameters("string"), [val as string])
-      );
+      return encodeAbiParameters(parseAbiParameters("string"), [val as string]);
     }
   });
 
@@ -358,15 +356,9 @@ export function parseForeignCallDefinition(
 
   const returnType: number = PType.indexOf(syntax.returnType);
 
-  var parameterTypes: number[] = [];
-  for (var arg of splitFunctionInput(syntax.function)) {
-    for (var pt of PT) {
-      if (pt.name == arg) {
-        parameterTypes.push(pt.enumeration);
-        break;
-      }
-    }
-  }
+  var parameterTypes: number[] = splitFunctionInput(syntax.function).map(
+    (val) => determinePTEnumeration(val)
+  );
 
   return {
     ...syntax,
@@ -374,6 +366,10 @@ export function parseForeignCallDefinition(
     parameterTypes,
     encodedIndices,
   };
+}
+
+export function determinePTEnumeration(name: string): number {
+  return PT.find((pt) => name == pt.name)?.enumeration ?? 0;
 }
 
 export function parseCallingFunction(syntax: CallingFunctionJSON): string[] {

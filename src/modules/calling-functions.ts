@@ -8,7 +8,10 @@ import {
   readContract,
 } from "@wagmi/core";
 import { sleep } from "./contract-interaction-utils";
-import { parseFunctionArguments } from "../parsing/parser";
+import {
+  determinePTEnumeration,
+  parseFunctionArguments,
+} from "../parsing/parser";
 import {
   CallingFunctionHashMapping,
   PT,
@@ -61,16 +64,9 @@ export const createCallingFunction = async (
   encodedValues: string
 ): Promise<number> => {
   var argsRaw = parseFunctionArguments(callingFunction);
-  var args = [];
-  for (var arg of argsRaw) {
-    for (var pt of PT) {
-      if (pt.name == arg.rawType) {
-        args.push(pt.enumeration);
-        break;
-      }
-    }
-  }
-
+  var args: number[] = argsRaw.map((val) =>
+    determinePTEnumeration(val.rawType)
+  );
   var addRule;
   while (true) {
     try {
