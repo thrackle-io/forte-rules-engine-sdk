@@ -368,12 +368,6 @@ export function parseForeignCallDefinition(
     }
   }
 
-  console.log("parame", parameterTypes);
-  var valuesToPass: number[] = syntax.valuesToPass
-    .split(",")
-    .filter((input: string) => !isNaN(Number(input)))
-    .map((input: string) => Number(input));
-
   return {
     ...syntax,
     returnType,
