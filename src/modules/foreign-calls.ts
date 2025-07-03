@@ -23,7 +23,11 @@ import {
 import { getAllTrackers, getTrackerMetadata } from "./trackers";
 import { getCallingFunctionMetadata } from "./calling-functions";
 import { isLeft, unwrapEither } from "./utils";
-import { CallingFunctionJSON, getRulesErrorMessages, validateForeignCallJSON } from "./validation";
+import {
+  CallingFunctionJSON,
+  getRulesErrorMessages,
+  validateForeignCallJSON,
+} from "./validation";
 
 /**
  * @file ForeignCalls.ts
@@ -225,7 +229,6 @@ export const updateForeignCall = async (
   foreignCallId: number,
   fcSyntax: string
 ): Promise<number> => {
-
   var trackers: TrackerOnChain[] = await getAllTrackers(
     config,
     rulesEngineComponentContract,

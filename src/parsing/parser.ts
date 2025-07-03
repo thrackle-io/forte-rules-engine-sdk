@@ -212,14 +212,17 @@ export function parseMappedTrackerSyntax(
 ): MappedTrackerDefinition {
   let keyType = syntax.keyType;
   let valueType = syntax.valueType;
-  var keys = syntax.initialKeys.map((val) => val.value);
-  var values = syntax.initialValues.map((val) => val.value);
-  var trackerInitialKeys: any[] = encodeTrackerData(keys, keyType);
-  var trackerInitialValues: any[] = encodeTrackerData(values, valueType);
-
-  const keyTypeEnum = (PT.find((_pt) => (_pt.name = keyType)) ?? PT[4])
+  var trackerInitialKeys: any[] = encodeTrackerData(
+    syntax.initialKeys,
+    keyType
+  );
+  var trackerInitialValues: any[] = encodeTrackerData(
+    syntax.initialValues,
+    valueType
+  );
+  const keyTypeEnum = (PT.find((_pt) => _pt.name == keyType) ?? PT[4])
     .enumeration;
-  const valueTypeEnum = (PT.find((_pt) => (_pt.name = valueType)) ?? PT[4])
+  const valueTypeEnum = (PT.find((_pt) => _pt.name == valueType) ?? PT[4])
     .enumeration;
 
   return {
@@ -232,33 +235,32 @@ export function parseMappedTrackerSyntax(
 }
 
 function encodeTrackerData(valueSet: any[], keyType: string): any[] {
+  // const values: any[] = [];
   const values: any[] = valueSet.map((val) => {
     // for (var val of valueSet) {
     if (keyType == "uint256") {
-      values.push(encodePacked(["uint256"], [BigInt(val)]));
+      return encodePacked(["uint256"], [BigInt(val)]);
     } else if (keyType == "address") {
       const validatedAddress = getAddress(val as string);
       var address = encodeAbiParameters(parseAbiParameters("address"), [
         validatedAddress,
       ]);
 
-      values.push(address);
+      return address;
     } else if (keyType == "bytes") {
       var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
         toHex(stringToBytes(String(val))),
       ]);
 
-      values.push(bytes);
+      return bytes;
     } else if (keyType == "bool") {
       if (val == "true") {
-        values.push(encodePacked(["uint256"], [1n]));
+        return encodePacked(["uint256"], [1n]);
       } else {
-        values.push(encodePacked(["uint256"], [0n]));
+        return encodePacked(["uint256"], [0n]);
       }
     } else {
-      values.push(
-        encodeAbiParameters(parseAbiParameters("string"), [val as string])
-      );
+      return encodeAbiParameters(parseAbiParameters("string"), [val as string]);
     }
   });
 
@@ -354,14 +356,9 @@ export function parseForeignCallDefinition(
 
   const returnType: number = PType.indexOf(syntax.returnType);
 
-  const parameterTypes: number[] = splitFunctionInput(syntax.function).map(
-    (param) => PType.indexOf(param)
+  var parameterTypes: number[] = splitFunctionInput(syntax.function).map(
+    (val) => determinePTEnumeration(val)
   );
-
-  var valuesToPass: number[] = syntax.valuesToPass
-    .split(",")
-    .filter((input: string) => !isNaN(Number(input)))
-    .map((input: string) => Number(input));
 
   return {
     ...syntax,
@@ -369,6 +366,10 @@ export function parseForeignCallDefinition(
     parameterTypes,
     encodedIndices,
   };
+}
+
+export function determinePTEnumeration(name: string): number {
+  return PT.find((pt) => name == pt.name)?.enumeration ?? 0;
 }
 
 export function parseCallingFunction(syntax: CallingFunctionJSON): string[] {

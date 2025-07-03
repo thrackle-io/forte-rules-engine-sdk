@@ -240,11 +240,13 @@ const SupportedValues = [
 
 export const mappedTrackerValidator = z.object({
   name: z.string().trim(),
-  initialValues: z.preprocess(
+  keyType: z.string().trim(),
+  valueType: z.string().trim(),
+  initialKeys: z.preprocess(
     trimPossibleString,
     z.array(z.discriminatedUnion("type", SupportedValues))
   ),
-  initialKeys: z.preprocess(
+  initialValues: z.preprocess(
     trimPossibleString,
     z.array(z.discriminatedUnion("type", SupportedValues))
   ),

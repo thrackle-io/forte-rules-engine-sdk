@@ -22,6 +22,7 @@ import {
   cleanInstructionSet,
   parseTrackerSyntax,
   parseForeignCallDefinition,
+  parseMappedTrackerSyntax,
 } from "../src/parsing/parser.js";
 import { reverseParseRule } from "../src/parsing/reverse-parsing-logic.js";
 import { removeExtraParenthesis } from "../src/parsing/parsing-utilities.js";
@@ -820,6 +821,58 @@ test("Creates a simple bool tracker", () => {
   expect(retVal.type).toEqual(pTypeEnum.BOOL);
   expect(retVal.initialValue).toEqual(
     encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
+  );
+});
+
+test("Creates a simple mapped tracker", () => {
+  var str = `{
+        "name": "Simple bool Tracker",
+        "keyType": "uint256",
+        "valueType": "uint256",
+        "initialKeys": [0, 1, 2],
+        "initialValues": [1, 2, 3]
+        }`;
+  var retVal = parseMappedTrackerSyntax(JSON.parse(str));
+  expect(retVal.name).toEqual("Simple bool Tracker");
+  expect(retVal.keyType).toEqual(2);
+  expect(retVal.valueType).toEqual(2);
+  expect(retVal.initialKeys[0]).toEqual(encodePacked(["uint256"], [BigInt(0)]));
+  expect(retVal.initialKeys[1]).toEqual(encodePacked(["uint256"], [BigInt(1)]));
+  expect(retVal.initialKeys[2]).toEqual(encodePacked(["uint256"], [BigInt(2)]));
+  expect(retVal.initialValues[0]).toEqual(
+    encodePacked(["uint256"], [BigInt(1)])
+  );
+  expect(retVal.initialValues[1]).toEqual(
+    encodePacked(["uint256"], [BigInt(2)])
+  );
+  expect(retVal.initialValues[2]).toEqual(
+    encodePacked(["uint256"], [BigInt(3)])
+  );
+});
+
+test("Creates a simple mapped tracker with a string value", () => {
+  var str = `{
+        "name": "Simple bool Tracker",
+        "keyType": "uint256",
+        "valueType": "string",
+        "initialKeys": [0, 1, 2],
+        "initialValues": ["Test", "Test Two", "Test Three"]
+        }`;
+  var retVal = parseMappedTrackerSyntax(JSON.parse(str));
+  expect(retVal.name).toEqual("Simple bool Tracker");
+  expect(retVal.keyType).toEqual(2);
+  expect(retVal.valueType).toEqual(1);
+  expect(retVal.initialKeys[0]).toEqual(encodePacked(["uint256"], [BigInt(0)]));
+  expect(retVal.initialKeys[1]).toEqual(encodePacked(["uint256"], [BigInt(1)]));
+  expect(retVal.initialKeys[2]).toEqual(encodePacked(["uint256"], [BigInt(2)]));
+  expect(retVal.initialValues[0]).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["Test" as string])
+  );
+  expect(retVal.initialValues[1]).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["Test Two" as string])
+  );
+  expect(retVal.initialValues[2]).toEqual(
+    encodeAbiParameters(parseAbiParameters("string"), ["Test Three" as string])
   );
 });
 

@@ -247,6 +247,8 @@ export enum pTypeEnum {
   BOOL = 3,
   VOID = 4,
   BYTES = 5,
+  STATIC_TYPE_ARRAY = 6,
+  DYNAMIC_TYPE_ARRAY = 7,
 }
 export const PT = [
   { name: "address", enumeration: pTypeEnum.ADDRESS },
@@ -255,6 +257,11 @@ export const PT = [
   { name: "bool", enumeration: pTypeEnum.BOOL },
   { name: "void", enumeration: pTypeEnum.VOID },
   { name: "bytes", enumeration: pTypeEnum.BYTES },
+  { name: "address[]", enumeration: pTypeEnum.STATIC_TYPE_ARRAY },
+  { name: "uint256[]", enumeration: pTypeEnum.STATIC_TYPE_ARRAY },
+  { name: "bool[]", enumeration: pTypeEnum.STATIC_TYPE_ARRAY },
+  { name: "string[]", enumeration: pTypeEnum.DYNAMIC_TYPE_ARRAY },
+  { name: "bytes[]", enumeration: pTypeEnum.DYNAMIC_TYPE_ARRAY },
 ];
 
 export type ErrorType =
