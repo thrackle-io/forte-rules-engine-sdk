@@ -3,9 +3,27 @@ import { expect, test } from "vitest";
 import { generateModifier } from "../src/codeGeneration/generate-solidity";
 import { injectModifier } from "../src/codeGeneration/inject-modifier";
 import * as fs from "fs";
+import { policyModifierGeneration } from "../src/codeGeneration/code-modification-script";
+
+test("Code Modification test)", () => {
+
+  policyModifierGeneration("./tests/testPolicy.json", "./tests/testOutput/TestContract.sol", []);
+
+
+  fs.readFile("tests/testOutput/TestContract.sol", "utf-8", (err, data) => {
+    if (err) {
+      console.error("Error reading file:", err);
+      return;
+    }
+    console.log(data);
+
+    expect(data.includes("checkRulesBeforetransfer(")).toBeTruthy();
+  });
+});
 
 test("Code Generation test)", () => {
-  var policyJSON = `
+
+  const policyJSON = `
         {
         "Policy": "Test Policy", 
         "PolicyType": "open",
@@ -43,6 +61,7 @@ test("Code Generation test)", () => {
             }
         ]
         }`;
+
   generateModifier(policyJSON, "tests/testOutput/testFileA.sol");
   injectModifier(
     "transfer",
