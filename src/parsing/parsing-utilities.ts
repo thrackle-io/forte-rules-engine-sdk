@@ -54,46 +54,22 @@ export function parseFunctionArguments(
   var params = encodedValues.split(", ");
   var names = [];
   var typeIndex = 0;
+  var supported = [
+    "uint256",
+    "string",
+    "address",
+    "bytes",
+    "bool",
+    "uint256[]",
+    "string[]",
+    "address[]",
+    "bytes[]",
+    "bool[]",
+  ];
   for (var param of params) {
     var typeName = param.split(" ");
     if (
-      typeName[0].trim() == "uint256" &&
-      (condition == null || condition.includes(typeName[1]))
-    ) {
-      names.push({
-        name: typeName[1],
-        tIndex: typeIndex,
-        rawType: typeName[0].trim(),
-      });
-    } else if (
-      typeName[0].trim() == "string" &&
-      (condition == null || condition.includes(typeName[1]))
-    ) {
-      names.push({
-        name: typeName[1],
-        tIndex: typeIndex,
-        rawType: typeName[0].trim(),
-      });
-    } else if (
-      typeName[0].trim() == "address" &&
-      (condition == null || condition.includes(typeName[1]))
-    ) {
-      names.push({
-        name: typeName[1],
-        tIndex: typeIndex,
-        rawType: typeName[0].trim(),
-      });
-    } else if (
-      typeName[0].trim() == "bytes" &&
-      (condition == null || condition.includes(typeName[1]))
-    ) {
-      names.push({
-        name: typeName[1],
-        tIndex: typeIndex,
-        rawType: typeName[0].trim(),
-      });
-    } else if (
-      typeName[0].trim() == "bool" &&
+      supported.includes(typeName[0].trim()) &&
       (condition == null || condition.includes(typeName[1]))
     ) {
       names.push({
@@ -419,6 +395,14 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
       placeHolderEnum = 3;
     } else if (name.rawType == "bytes") {
       placeHolderEnum = 5;
+    } else if (
+      name.rawType == "uint256[]" ||
+      name.rawType == "address[]" ||
+      name.rawType == "bool[]"
+    ) {
+      placeHolderEnum = 6;
+    } else if (name.rawType == "string[]" || name.rawType == "bytes[]") {
+      placeHolderEnum = 7;
     } else if (name.rawType == "tracker") {
       if ((name as any).rawTypeTwo == "address") {
         placeHolderEnum = 0;

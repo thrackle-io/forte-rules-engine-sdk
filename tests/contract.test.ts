@@ -419,6 +419,62 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(fcAllRetrieve?.length).toEqual(1);
   });
+
+  test("Can create a new foreign call with a static array type", async () => {
+    var result = await createPolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      getRulesEngineRulesContract(rulesEngineContract, client),
+      getRulesEngineComponentContract(rulesEngineContract, client)
+    );
+
+    var callingFunction =
+      "someFunction(address to, string someString, uint256[] values)";
+    const fsId = await createCallingFunction(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      callingFunction,
+      "address to, string someString, uint256[] values"
+    );
+
+    var selector = toFunctionSelector(callingFunction);
+    await updatePolicy(
+      config,
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId,
+      [selector],
+      [fsId],
+      [[]]
+    );
+
+    var fcSyntax = `{
+          "name": "Simple Foreign Call",
+          "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          "function": "testSig(address,string,uint256[])",
+          "returnType": "uint256",
+          "valuesToPass": "to, someString, values",
+          "callingFunction": "someFunction(address to, string someString, uint256[] values)"
+          }`;
+    var fcId = await createForeignCall(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEnginePolicyContract(rulesEngineContract, client),
+      result.policyId,
+      fcSyntax
+    );
+    var fcRetrieve = await getForeignCall(
+      config,
+      getRulesEngineComponentContract(rulesEngineContract, client),
+      result.policyId,
+      fcId
+    );
+    expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
+    expect(fcRetrieve?.parameterTypes[2]).toEqual(6);
+    console.log(fcRetrieve?.parameterTypes);
+    console.log(fcRetrieve?.encodedIndices);
+  });
+
   test("Can delete a foreign call", async () => {
     var result = await createPolicy(
       config,
