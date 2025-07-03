@@ -16,6 +16,7 @@
             "initialValue": "1"
         }
     ],
+    "MappedTrackers": [],
     "Rules": [
         {
             "condition": "value > 10000",
