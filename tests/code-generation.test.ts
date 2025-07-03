@@ -7,7 +7,7 @@ import { policyModifierGeneration } from "../src/codeGeneration/code-modificatio
 
 test("Code Modification test)", () => {
 
-  policyModifierGeneration("./tests/testPolicy.json", "./tests/testOutput/TestContract.sol", ["./src/codeGeneration/Template.sol"]);
+  policyModifierGeneration("./tests/testPolicy.json", "./tests/testOutput/TestContract.sol", []);
 
 
   fs.readFile("tests/testOutput/TestContract.sol", "utf-8", (err, data) => {
@@ -15,6 +15,7 @@ test("Code Modification test)", () => {
       console.error("Error reading file:", err);
       return;
     }
+    console.log(data);
 
     expect(data.includes("checkRulesBeforetransfer(")).toBeTruthy();
   });

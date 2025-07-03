@@ -1,7 +1,6 @@
 {
     "Policy": "Test Policy",
-    "PolicyType": "Test",
-    "ForeignCalls": [],
+    "PolicyType": "open",
     "CallingFunctions": [
         {
             "name": "transfer(address to, uint256 value)",
@@ -9,22 +8,32 @@
             "encodedValues": "address to, uint256 value"
         }
     ],
+    "ForeignCalls": [
+        {
+            "name": "Simple Foreign Call",
+            "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "function": "testSig(address)",
+            "returnType": "uint256",
+            "valuesToPass": "to",
+            "callingFunction": "transfer(address to, uint256 value)"
+        }
+    ],
     "Trackers": [
         {
-            "name": "trackerOne",
-            "type": "uint256",
-            "initialValue": "1"
+            "name": "Simple String Tracker",
+            "type": "string",
+            "initialValue": "test"
         }
     ],
     "MappedTrackers": [],
     "Rules": [
         {
-            "condition": "value > 10000",
+            "condition": "value > 500",
             "positiveEffects": [
-                "revert(\"Passed test\")"
+                "emit Success"
             ],
             "negativeEffects": [
-                "revert(\"Failed test\")"
+                "revert()"
             ],
             "callingFunction": "transfer(address to, uint256 value)"
         }
