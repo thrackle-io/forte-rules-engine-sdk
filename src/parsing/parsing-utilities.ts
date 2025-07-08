@@ -367,8 +367,11 @@ export function cleanseForeignCallLists(doubleArray: any[]): any[] {
   }
 
   toRemove = [...new Set(toRemove)];
+  toRemove.sort((a, b) => a - b);
+  var reduceCount = 0;
   for (var secondRemoval of toRemove) {
-    finalizedArray.splice(secondRemoval, 1);
+    finalizedArray.splice(secondRemoval - reduceCount, 1);
+    reduceCount += 1;
   }
   return finalizedArray;
 }
@@ -381,8 +384,8 @@ export function cleanseForeignCallLists(doubleArray: any[]): any[] {
  */
 export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
   var placeHolders: PlaceholderStruct[] = [];
-  var flags = 0x0;
   for (var name of names) {
+    var flags = 0x0;
     var placeHolderEnum = 0;
     var tracker = false;
     if (name.rawType == "address") {

@@ -152,7 +152,6 @@ export function parseRuleSyntax(
     );
     effectCondition = effectTrackerCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
-
     effectNamesMega.push(effectNamesInternal);
   }
   effectNames = cleanseForeignCallLists(effectNamesMega);
