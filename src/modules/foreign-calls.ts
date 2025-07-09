@@ -1,5 +1,5 @@
 /// SPDX-License-Identifier: BUSL-1.1
-import { toFunctionSelector } from "viem";
+import { Address, toFunctionSelector } from "viem";
 import {
   simulateContract,
   waitForTransactionReceipt,
@@ -28,6 +28,7 @@ import {
   getRulesErrorMessages,
   validateForeignCallJSON,
 } from "./validation";
+import { ru } from "zod/dist/types/v4/locales";
 
 /**
  * @file ForeignCalls.ts
@@ -499,4 +500,272 @@ export const getAllForeignCalls = async (
     console.error(error);
     return [];
   }
+};
+
+/**
+ * Checks whether or not a foreign call is permissioned.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
+ * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+ * @param functionSelector - The selector for the specific foreign call
+ * @returns Whether or not the foreign call is permissioned
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const isForeignCallPermissioned = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  foreignCallAddress: Address,
+  functionSelector: string
+): Promise<boolean> => {
+  try {
+    var selector = toFunctionSelector(functionSelector);
+    const addFC = await readContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "isForeignCallPermissioned",
+      args: [foreignCallAddress, selector],
+    });
+    let foreignCallResult = addFC as boolean;
+    return foreignCallResult;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
+/**
+ * Retrieves the permission list for a permissioned foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
+ * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+ * @param functionSelector - The selector for the specific foreign call
+ * @returns Array of addresses that make up the permission list
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const getForeignCallPermissionList = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  foreignCallAddress: Address,
+  functionSelector: string
+): Promise<Address[]> => {
+  try {
+    var selector = toFunctionSelector(functionSelector);
+    const addFC = await readContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "getForeignCallPermissionList",
+      args: [foreignCallAddress, selector],
+    });
+    let foreignCallResult = addFC as Address[];
+    return foreignCallResult;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
+/**
+ * Adds a new address to the permission list for a foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
+ * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+ * @param functionSelector - The selector for the specific foreign call
+ * @param policyAdminToAdd - The address of the admin to add to the list
+ * @returns A promise that resolves to a number:
+ *          - `0` if the operation is successful.
+ *          - `-1` if an error occurs during the simulation of the contract interaction.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const addAdminToPermissionList = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  foreignCallAddress: Address,
+  functionSelector: string,
+  policyAdminToAdd: Address
+): Promise<number> => {
+  var addFC;
+  try {
+    var selector = toFunctionSelector(functionSelector);
+    addFC = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "addAdminToPermissionList",
+      args: [foreignCallAddress, policyAdminToAdd, selector],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Adds multiple addresses to the permission list for a foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
+ * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+ * @param functionSelector - The selector for the specific foreign call
+ * @param policyAdminsToAdd - The address of the admins to remove from the list
+ * @returns A promise that resolves to a number:
+ *          - `0` if the operation is successful.
+ *          - `-1` if an error occurs during the simulation of the contract interaction.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const addMultipleAdminsToPermissionList = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  foreignCallAddress: Address,
+  functionSelector: string,
+  policyAdminsToAdd: Address[]
+): Promise<number> => {
+  var addFC;
+
+  var addresses = await getForeignCallPermissionList(
+    config,
+    rulesEngineComponentContract,
+    foreignCallAddress,
+    functionSelector
+  );
+  addresses.push(...policyAdminsToAdd);
+  try {
+    var selector = toFunctionSelector(functionSelector);
+    addFC = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "updatePermissionList",
+      args: [foreignCallAddress, selector, addresses],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Removes multiple addresses from the permission list for a foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
+ * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+ * @param functionSelector - The selector for the specific foreign call
+ * @param policyAdminsToRemove - The address of the admins to remove from the list
+ * @returns A promise that resolves to a number:
+ *          - `0` if the operation is successful.
+ *          - `-1` if an error occurs during the simulation of the contract interaction.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const removeMultipleAdminsFromPermissionList = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  foreignCallAddress: Address,
+  functionSelector: string,
+  policyAdminsToRemove: Address[]
+): Promise<number> => {
+  var addFC;
+
+  var addresses = await getForeignCallPermissionList(
+    config,
+    rulesEngineComponentContract,
+    foreignCallAddress,
+    functionSelector
+  );
+  addresses = addresses.filter((item) => !policyAdminsToRemove.includes(item));
+  try {
+    var selector = toFunctionSelector(functionSelector);
+    addFC = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "updatePermissionList",
+      args: [foreignCallAddress, selector, addresses],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
+};
+
+/**
+ * Removes all addresses from the permission list for a foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineComponentContract - An object representing the Rules Engine Component Contract,
+ * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+ * @param functionSelector - The selector for the specific foreign call
+ * @returns A promise that resolves to a number:
+ *          - `0` if the operation is successful.
+ *          - `-1` if an error occurs during the simulation of the contract interaction.
+ *
+ * @throws Will log an error to the console if the operation fails.
+ */
+export const removeAllFromPermissionList = async (
+  config: Config,
+  rulesEngineComponentContract: RulesEngineComponentContract,
+  foreignCallAddress: Address,
+  functionSelector: string
+): Promise<number> => {
+  var addFC;
+  try {
+    var selector = toFunctionSelector(functionSelector);
+    addFC = await simulateContract(config, {
+      address: rulesEngineComponentContract.address,
+      abi: rulesEngineComponentContract.abi,
+      functionName: "removeAllFromPermissionList",
+      args: [foreignCallAddress, selector],
+    });
+  } catch (err) {
+    return -1;
+  }
+
+  if (addFC != null) {
+    const returnHash = await writeContract(config, {
+      ...addFC.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+
+  return 0;
 };

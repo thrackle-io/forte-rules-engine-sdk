@@ -70,6 +70,12 @@ import {
   getForeignCall as getForeignCallInternal,
   getAllForeignCalls as getAllForeignCallsInternal,
   getForeignCallMetadata as getForeignCallMetadataInternal,
+  isForeignCallPermissioned as isForeignCallPermissionedInternal,
+  getForeignCallPermissionList as getForeignCallPermissionListInternal,
+  addAdminToPermissionList as addAdminToPermissionListInternal,
+  addMultipleAdminsToPermissionList as addMultipleAdminsToPermissionListInternal,
+  removeMultipleAdminsFromPermissionList as removeMultipleAdminsFromPermissionListInternal,
+  removeAllFromPermissionList as removeAllFromPermissionListInternal,
 } from "./foreign-calls";
 
 import {
@@ -88,6 +94,9 @@ import {
   proposeNewCallingContractAdmin as proposeCallingContractAdminInternal,
   confirmNewCallingContractAdmin as confirmNewCallingContractAdminInternal,
   isCallingContractAdmin as isCallingContractAdminInternal,
+  proposeNewForeignCallAdmin as proposeNewForeignCallAdminInternal,
+  confirmNewForeignCallAdmin as confirmNewForeignCallAdminInternal,
+  isForeignCallAdmin as isForeignCallAdminInternal,
 } from "./admin";
 
 import {
@@ -370,7 +379,7 @@ export class RulesEngine {
    * @param foreignCallNameToID - An array mapping foreign call names to their corresponding IDs.
    * @param trackerNameToID - An array mapping tracker names to their corresponding IDs.
    * @returns A promise that resolves to the result of the rule creation operation. Returns the rule ID if successful, or -1 if the operation fails.
-   *   
+   *
    * @remarks
    * - The function parses the rule JSON string to build the rule and effect structures.
    * - It uses a retry mechanism with a delay to handle potential failures during contract simulation.
@@ -600,6 +609,27 @@ export class RulesEngine {
       this.rulesEngineComponentContract,
       policyId,
       foreignCallId
+    );
+  }
+
+  /**
+   * Checks whether or not a foreign call is permissioned.
+   *
+   * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+   * @param functionSelector - The selector for the specific foreign call
+   * @returns Whether or not the foreign call is permissioned
+   *
+   * @throws Will log an error to the console if the operation fails.
+   */
+  isForeignCallPermissioned(
+    foreignCallAddress: Address,
+    functionSelector: string
+  ): Promise<boolean> {
+    return isForeignCallPermissionedInternal(
+      config,
+      this.rulesEngineComponentContract,
+      foreignCallAddress,
+      functionSelector
     );
   }
 
@@ -889,6 +919,80 @@ export class RulesEngine {
       this.rulesEngineAdminContract,
       callingContract,
       account
+    );
+  }
+
+  /**
+   * Propose a new foreign call admin in the rules engine admin contract.
+   *
+   * This function proposes a new admin for a specific foreign call.
+   *
+   * @param foreignCallAddress - The address of the foreign call contract to set the admin for.
+   * @param newAdminAddress - The address to propose as the new admin
+   * @param functionSelector - The selector for the specific foreign call
+   * @returns A promise.
+   *
+   * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+   */
+  proposeForeignCallAdmin(
+    foreignCallAddress: Address,
+    newAdminAddress: Address,
+    foreignCallSelector: string
+  ) {
+    proposeNewForeignCallAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      foreignCallAddress,
+      newAdminAddress,
+      foreignCallSelector
+    );
+  }
+
+  /**
+   * Confirm a new foreign call admin in the rules engine admin contract.
+   *
+   * This function confirms a new admin for a specific foreign call.
+   *
+   * @param foreignCallAddress - The address of the foreign call to set the admin for.
+   * @param functionSelector - The selector for the specific foreign call
+   * @returns A promise.
+   *
+   * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+   */
+  confirmNewForeignCallAdmin(
+    foreignCallAddress: Address,
+    foreignCallSelector: string
+  ) {
+    confirmNewForeignCallAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      foreignCallAddress,
+      foreignCallSelector
+    );
+  }
+
+  /**
+   * Determine if address is the foreign call admin.
+   *
+   * This function determines whether or not an address is the admin for a specific foreign call.
+   *
+   * @param foreignCallAdress - The address of the contract to check the admin for.
+   * @param account - The address to check
+   * @param functionSelector - The selector for the specific foreign call
+   * @returns whether or not the address is the foreign call admin.
+   *
+   */
+  isForeignCallAdmin(
+    foreignCallAddress: Address,
+    account: Address,
+    foreignCallSelector: string
+  ): Promise<boolean> {
+    return isForeignCallAdminInternal(
+      config,
+      this.rulesEngineAdminContract,
+      foreignCallAddress,
+      account,
+      foreignCallSelector
     );
   }
 

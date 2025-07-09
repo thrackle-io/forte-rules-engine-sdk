@@ -59,11 +59,15 @@ import { sleep } from "../src/modules/contract-interaction-utils";
 import { Config } from "@wagmi/core";
 import {
   confirmNewCallingContractAdmin,
+  confirmNewForeignCallAdmin,
   confirmNewPolicyAdmin,
   grantCallingContractRole_Utility,
+  grantForeignCallRole_Utility,
   isCallingContractAdmin,
+  isForeignCallAdmin,
   isPolicyAdmin,
   proposeNewCallingContractAdmin,
+  proposeNewForeignCallAdmin,
   proposeNewPolicyAdmin,
 } from "../src/modules/admin";
 
@@ -1101,6 +1105,40 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(admin).toEqual(true);
   });
+
+  test("Can update a foreign call admin", options, async () => {
+    grantForeignCallRole_Utility(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+      "transfer(address,uint256"
+    );
+    proposeNewForeignCallAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+      getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"),
+      "transfer(address,uint256"
+    );
+    await sleep(5000);
+    await confirmNewForeignCallAdmin(
+      secondUserConfig,
+      getRulesEngineAdminContract(rulesEngineContract, secondUserClient),
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+      "transfer(address,uint256"
+    );
+    await sleep(5000);
+    var admin = await isForeignCallAdmin(
+      config,
+      getRulesEngineAdminContract(rulesEngineContract, client),
+      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+      getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"),
+      "transfer(address,uint256"
+    );
+    expect(admin).toEqual(true);
+  });
+
   test("Can cement a policy", options, async () => {
     var policyJSON = `
     {
