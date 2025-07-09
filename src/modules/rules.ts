@@ -21,6 +21,7 @@ import {
   RulesEngineRulesContract,
   RulesEngineComponentContract,
   RulesEnginePolicyContract,
+  RulesEngineForeignCallContract,
 } from "./types";
 import { getCallingFunctionMetadata } from "./calling-functions";
 import { buildForeignCallList } from "../parsing/parser";
@@ -74,6 +75,7 @@ export const createRule = async (
   rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
+  rulesEngineForeignCallContract: RulesEngineForeignCallContract,
   policyId: number,
   ruleS: string,
   foreignCallNameToID: FCNameToID[],
@@ -139,13 +141,13 @@ export const createRule = async (
       if (id.name.trim() == fc.trim()) {
         var fcChain = await getForeignCall(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
         var fcChainMeta = await getForeignCallMetadata(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
@@ -153,7 +155,7 @@ export const createRule = async (
           if (ind.eType == 1) {
             var fcChainInternal = await getForeignCallMetadata(
               config,
-              rulesEngineComponentContract,
+              rulesEngineForeignCallContract,
               policyId,
               ind.index
             );
@@ -191,13 +193,13 @@ export const createRule = async (
       if (id.name.trim() == fc.trim()) {
         var fcChain = await getForeignCall(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
         var fcChainMeta = await getForeignCallMetadata(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
@@ -205,7 +207,7 @@ export const createRule = async (
           if (ind.eType == 1) {
             var fcChainInternal = await getForeignCallMetadata(
               config,
-              rulesEngineComponentContract,
+              rulesEngineForeignCallContract,
               policyId,
               ind.index
             );
@@ -289,6 +291,7 @@ export const updateRule = async (
   rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
+  rulesEngineForeignCallContract: RulesEngineForeignCallContract,
   policyId: number,
   ruleId: number,
   ruleS: string,
@@ -340,13 +343,13 @@ export const updateRule = async (
       if (id.name.trim() == fc.trim()) {
         var fcChain = await getForeignCall(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
         var fcChainMeta = await getForeignCallMetadata(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
@@ -354,7 +357,7 @@ export const updateRule = async (
           if (ind.eType == 1) {
             var fcChainInternal = await getForeignCallMetadata(
               config,
-              rulesEngineComponentContract,
+              rulesEngineForeignCallContract,
               policyId,
               ind.index
             );
@@ -386,13 +389,13 @@ export const updateRule = async (
       if (id.name.trim() == fc.trim()) {
         var fcChain = await getForeignCall(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
         var fcChainMeta = await getForeignCallMetadata(
           config,
-          rulesEngineComponentContract,
+          rulesEngineForeignCallContract,
           policyId,
           id.id
         );
@@ -400,7 +403,7 @@ export const updateRule = async (
           if (ind.eType == 1) {
             var fcChainInternal = await getForeignCallMetadata(
               config,
-              rulesEngineComponentContract,
+              rulesEngineForeignCallContract,
               policyId,
               ind.index
             );

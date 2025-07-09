@@ -35,6 +35,8 @@ import {
   RulesEngineRulesABI,
   RulesEngineAdminContract,
   RulesEngineAdminABI,
+  RulesEngineForeignCallContract,
+  RulesEngineForeignCallABI,
 } from "./types";
 import {
   createPolicy as createPolicyInternal,
@@ -112,6 +114,7 @@ export class RulesEngine {
   private rulesEngineComponentContract: RulesEngineComponentContract;
   private rulesEngineRulesContract: RulesEngineRulesContract;
   private rulesEngineAdminContract: RulesEngineAdminContract;
+  private rulesEngineForeignCallContract: RulesEngineForeignCallContract;
 
   /**
    * @constructor
@@ -140,6 +143,11 @@ export class RulesEngine {
       abi: RulesEngineAdminABI,
       client,
     });
+    this.rulesEngineForeignCallContract = getContract({
+      address: rulesEngineAddress,
+      abi: RulesEngineForeignCallABI,
+      client,
+    });
     config = localConfig;
   }
   public getRulesEnginePolicyContract(): RulesEnginePolicyContract {
@@ -150,6 +158,9 @@ export class RulesEngine {
   }
   public getRulesEngineRulesContract(): RulesEngineRulesContract {
     return this.rulesEngineRulesContract;
+  }
+  public getRulesEngineForeignCallContract(): RulesEngineForeignCallContract {
+    return this.rulesEngineForeignCallContract;
   }
   /**
    * Creates a policy in the Rules Engine.
@@ -163,6 +174,7 @@ export class RulesEngine {
       this.rulesEnginePolicyContract,
       this.rulesEngineRulesContract,
       this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyJSON
     );
   }
@@ -499,6 +511,7 @@ export class RulesEngine {
   createForeignCall(policyId: number, fcSyntax: string): Promise<number> {
     return createForeignCallInternal(
       config,
+      this.rulesEngineForeignCallContract,
       this.rulesEngineComponentContract,
       this.rulesEnginePolicyContract,
       policyId,
@@ -531,6 +544,7 @@ export class RulesEngine {
       config,
       this.rulesEnginePolicyContract,
       this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId,
       foreignCallId,
       fcSyntax
@@ -551,7 +565,7 @@ export class RulesEngine {
   deleteForeignCall(policyId: number, foreignCallId: number): Promise<number> {
     return deleteForeignCallInternal(
       config,
-      this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId,
       foreignCallId
     );
@@ -586,7 +600,7 @@ export class RulesEngine {
   getAllForeignCalls(policyId: number): Promise<Maybe<any[]>> {
     return getAllForeignCallsInternal(
       config,
-      this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId
     );
   }
@@ -606,7 +620,7 @@ export class RulesEngine {
   ): Promise<Maybe<any>> {
     return getForeignCallMetadataInternal(
       config,
-      this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId,
       foreignCallId
     );
@@ -627,7 +641,129 @@ export class RulesEngine {
   ): Promise<boolean> {
     return isForeignCallPermissionedInternal(
       config,
+      this.rulesEngineForeignCallContract,
+      foreignCallAddress,
+      functionSelector
+    );
+  }
+
+  /**
+   * Retrieves the permission list for a permissioned foreign call.
+   *
+   * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+   * @param functionSelector - The selector for the specific foreign call
+   * @returns Array of addresses that make up the permission list
+   *
+   * @throws Will log an error to the console if the operation fails.
+   */
+  getForeignCallPermissionList(
+    foreignCallAddress: Address,
+    functionSelector: string
+  ): Promise<Address[]> {
+    return getForeignCallPermissionListInternal(
+      config,
+      this.rulesEngineForeignCallContract,
+      foreignCallAddress,
+      functionSelector
+    );
+  }
+
+  /**
+   * Adds a new address to the permission list for a foreign call.
+   *
+   * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+   * @param functionSelector - The selector for the specific foreign call
+   * @param policyAdminToAdd - The address of the admin to add to the list
+   * @returns A promise that resolves to a number:
+   *          - `0` if the operation is successful.
+   *          - `-1` if an error occurs during the simulation of the contract interaction.
+   *
+   * @throws Will log an error to the console if the operation fails.
+   */
+  addAdminToPermissionList(
+    foreignCallAddress: Address,
+    functionSelector: string,
+    policyAdminToAdd: Address
+  ): Promise<number> {
+    return addAdminToPermissionListInternal(
+      config,
       this.rulesEngineComponentContract,
+      foreignCallAddress,
+      functionSelector,
+      policyAdminToAdd
+    );
+  }
+
+  /**
+   * Adds multiple addresses to the permission list for a foreign call.
+   *
+   * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+   * @param functionSelector - The selector for the specific foreign call
+   * @param policyAdminsToAdd - The address of the admins to remove from the list
+   * @returns A promise that resolves to a number:
+   *          - `0` if the operation is successful.
+   *          - `-1` if an error occurs during the simulation of the contract interaction.
+   *
+   * @throws Will log an error to the console if the operation fails.
+   */
+  addMultipleAdminsToPermissionList(
+    foreignCallAddress: Address,
+    functionSelector: string,
+    policyAdminsToAdd: Address[]
+  ): Promise<number> {
+    return addMultipleAdminsToPermissionListInternal(
+      config,
+      this.rulesEngineComponentContract,
+      foreignCallAddress,
+      functionSelector,
+      policyAdminsToAdd
+    );
+  }
+
+  /**
+   * Removes multiple addresses from the permission list for a foreign call.
+   *
+   * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+   * @param functionSelector - The selector for the specific foreign call
+   * @param policyAdminsToRemove - The address of the admins to remove from the list
+   * @returns A promise that resolves to a number:
+   *          - `0` if the operation is successful.
+   *          - `-1` if an error occurs during the simulation of the contract interaction.
+   *
+   * @throws Will log an error to the console if the operation fails.
+   */
+  removeMultipleAdminsFromPermissionList(
+    foreignCallAddress: Address,
+    functionSelector: string,
+    policyAdminsToRemove: Address[]
+  ): Promise<number> {
+    return removeMultipleAdminsFromPermissionListInternal(
+      config,
+      this.rulesEngineForeignCallContract,
+      foreignCallAddress,
+      functionSelector,
+      policyAdminsToRemove
+    );
+  }
+
+  /**
+   * Removes all addresses from the permission list for a foreign call.
+   *
+   * @param foreignCallAddress - the address of the contract the foreign call belongs to.
+   * @param functionSelector - The selector for the specific foreign call
+   * @returns A promise that resolves to a number:
+   *          - `0` if the operation is successful.
+   *          - `-1` if an error occurs during the simulation of the contract interaction.
+   *
+   * @throws Will log an error to the console if the operation fails.
+   */
+  removeAllFromPermissionList(
+    foreignCallAddress: Address,
+    functionSelector: string
+  ): Promise<number> {
+    return removeAllFromPermissionListInternal(
+      config,
+      this.rulesEngineForeignCallContract,
       foreignCallAddress,
       functionSelector
     );

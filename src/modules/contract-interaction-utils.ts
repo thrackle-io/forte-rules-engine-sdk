@@ -24,6 +24,7 @@ import {
   RulesEngineAdminContract,
   RulesEngineComponentABI,
   RulesEngineComponentContract,
+  RulesEngineForeignCallContract,
   RulesEnginePolicyABI,
   RulesEnginePolicyContract,
   RulesEngineRulesABI,
@@ -95,6 +96,16 @@ export const getRulesEngineAdminContract = (
   getContract({
     address,
     abi: RulesEngineAdminABI,
+    client,
+  });
+
+export const getRulesEngineForeignCallContract = (
+  address: Address,
+  client: any
+): RulesEngineForeignCallContract =>
+  getContract({
+    address,
+    abi: RulesEngineComponentABI,
     client,
   });
 
