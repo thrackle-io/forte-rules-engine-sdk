@@ -197,15 +197,12 @@ function convertASTToInstructionSet(
                 // if searchExpressions as length more than 1
                 // it is a mapped tracker else it is a standard tracker
                 if (searchExpressions.length > 1) {
-                  console.log("mapped tracker", searchExpressions)
-                  // If the placeholder
                   acc.instructionSet.push("PLHM");
                   acc.instructionSet.push(plhIter - 1);
                 } else {
                   acc.instructionSet.push("PLH");
                 }
                 acc.instructionSet.push(plhIter);
-                console.log("updated is", acc.instructionSet)
                 copyFound = true;
                 break;
               }

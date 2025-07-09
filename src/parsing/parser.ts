@@ -474,6 +474,8 @@ export function cleanInstructionSet(instructionSet: any[]): any[] {
       return 15;
     } else if (instruction == "!=") {
       return 16;
+    } else if (instruction == "PLHM") {
+      return 18;
     }
     return instruction;
   });

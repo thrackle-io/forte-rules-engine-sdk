@@ -2433,7 +2433,7 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
    *    8, 9, 'AND', 7, 10, 'AND',
    *    4, 11 ]
    */
-  var expectedArray = ["PLHM", 0n, 1n, "N", 1n, "==", 1n, 2n];
+  var expectedArray = ["PLH", 0n, "PLHM", 0n, 1n, "N", 1n, "==", 1n, 2n];
 
   var ruleStringA = `{
     "condition": "TR:trackerOne(to) == true",
