@@ -245,7 +245,7 @@ export const matchArray: string[] = [
   "!=",
 ];
 export const truMatchArray: string[] = ["+=", "-=", "*=", "/=", "="];
-export const operandArray: string[] = ["PLH", "N"];
+export const operandArray: string[] = ["PLH", "N", "PLHM"];
 
 export enum pTypeEnum {
   ADDRESS = 0,
