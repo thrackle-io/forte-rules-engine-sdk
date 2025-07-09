@@ -108,7 +108,6 @@ test("Evaluates a simple syntax string (using only values and operators)", () =>
     [],
     []
   );
-  console.log(retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -996,7 +995,6 @@ test("Creates a simple foreign call", () => {
   );
   expect(retVal.function).toEqual("testSig(address,string,uint256)");
   expect(retVal.returnType).toEqual(2);
-  console.log(retVal.encodedIndices);
   expect(retVal.encodedIndices[1].eType).toEqual(1);
 });
 
@@ -1055,7 +1053,6 @@ test("Evaluates a simple syntax string with a Foreign Call", () => {
     ["FC:leaderboard"],
     []
   );
-  console.log(retVal.placeHolders);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -1248,7 +1245,6 @@ test("Evaluate a complex syntax string with multiple foreign calls", () => {
     ["FC:isAllowed", "FC:isSuperCoolGuy", "FC:isRich", "FC:creditRisk"],
     []
   );
-  console.log(retVal.placeHolders);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -1571,8 +1567,6 @@ test("Evaluates a simple syntax string (using AND + OR operators, trackers and f
     ["FC:isAllowed"],
     []
   );
-  console.log(retVal.placeHolders);
-  console.log(retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -2177,7 +2171,6 @@ test("Evaluates a simple syntax string involving a NOT operation", () => {
     [],
     []
   );
-  console.log(retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
@@ -2368,8 +2361,6 @@ test("Evaluates a simple syntax string involving a boolean variable", () => {
     []
   );
   expect(retVal.instructionSet).toEqual(expectedArray);
-  console.log(retVal.instructionSet);
-  console.log(retVal.placeHolders);
 });
 
 test("Evaluates a simple syntax string involving a boolean tracker", () => {
@@ -2442,7 +2433,7 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
    *    8, 9, 'AND', 7, 10, 'AND',
    *    4, 11 ]
    */
-  var expectedArray = ["PLH", 0n, "PLH", 1n, "N", 1n, "==", 1n, 2n];
+  var expectedArray = ["PLHM", 0n, 1n, "N", 1n, "==", 1n, 2n];
 
   var ruleStringA = `{
     "condition": "TR:trackerOne(to) == true",
@@ -2461,7 +2452,6 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
     [],
     []
   );
-  // console.log("instruction set", retVal.instructionSet);
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
