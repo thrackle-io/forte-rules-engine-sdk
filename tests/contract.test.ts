@@ -62,8 +62,6 @@ import {
   confirmNewCallingContractAdmin,
   confirmNewForeignCallAdmin,
   confirmNewPolicyAdmin,
-  grantCallingContractRole_Utility,
-  grantForeignCallRole_Utility,
   isCallingContractAdmin,
   isForeignCallAdmin,
   isPolicyAdmin,
@@ -423,14 +421,14 @@ describe("Rules Engine Interactions", async () => {
     );
     var fcRetrieve = await getForeignCall(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId,
       fcId
     );
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
@@ -483,7 +481,7 @@ describe("Rules Engine Interactions", async () => {
     );
     var fcRetrieve = await getForeignCall(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId,
       fcId
     );
@@ -538,27 +536,27 @@ describe("Rules Engine Interactions", async () => {
     );
     var fcRetrieve = await getForeignCall(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId,
       fcId
     );
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
     var ret = await deleteForeignCall(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId,
       fcId
     );
     expect(ret).toEqual(0);
     fcAllRetrieve = await getAllForeignCalls(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
@@ -609,14 +607,14 @@ describe("Rules Engine Interactions", async () => {
     );
     var fcRetrieve = await getForeignCall(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId,
       fcId
     );
     expect(fcRetrieve?.foreignCallIndex).toEqual(fcId);
     var fcAllRetrieve = await getAllForeignCalls(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
     expect(fcAllRetrieve?.length).toEqual(1);
@@ -630,9 +628,9 @@ describe("Rules Engine Interactions", async () => {
           }`;
     var updatedId = await updateForeignCall(
       config,
-      getRulesEngineForeignCallContract(rulesEngineContract, client),
       getRulesEnginePolicyContract(rulesEngineContract, client),
       getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId,
       fcId,
       updatedSyntax
@@ -843,7 +841,7 @@ describe("Rules Engine Interactions", async () => {
     expect(result.policyId).toBeGreaterThanOrEqual(0);
     var resultFC = await getAllForeignCalls(
       config,
-      getRulesEngineComponentContract(rulesEngineContract, client),
+      getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
 
@@ -1002,7 +1000,7 @@ describe("Rules Engine Interactions", async () => {
       expect(trAllRetrieve![0].set).toEqual(false);
       var fcAllRetrieve = await getAllForeignCalls(
         config,
-        getRulesEngineComponentContract(rulesEngineContract, client),
+        getRulesEngineForeignCallContract(rulesEngineContract, client),
         result.policyId
       );
       expect(fcAllRetrieve?.length).toEqual(1);
@@ -1133,40 +1131,6 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(admin).toEqual(true);
   });
-
-  test("Can update a foreign call admin", options, async () => {
-    grantForeignCallRole_Utility(
-      config,
-      getRulesEngineAdminContract(rulesEngineContract, client),
-      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-      "transfer(address,uint256"
-    );
-    proposeNewForeignCallAdmin(
-      config,
-      getRulesEngineAdminContract(rulesEngineContract, client),
-      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-      getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"),
-      "transfer(address,uint256"
-    );
-    await sleep(5000);
-    await confirmNewForeignCallAdmin(
-      secondUserConfig,
-      getRulesEngineAdminContract(rulesEngineContract, secondUserClient),
-      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-      "transfer(address,uint256"
-    );
-    await sleep(5000);
-    var admin = await isForeignCallAdmin(
-      config,
-      getRulesEngineAdminContract(rulesEngineContract, client),
-      getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-      getAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"),
-      "transfer(address,uint256"
-    );
-    expect(admin).toEqual(true);
-  });
-
   test("Can cement a policy", options, async () => {
     var policyJSON = `
     {

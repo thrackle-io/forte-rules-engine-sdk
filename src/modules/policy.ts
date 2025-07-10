@@ -117,10 +117,11 @@ export const createPolicy = async (
   });
 
   let policyId: number = addPolicy.result;
-
+  console.log(policyId);
   if (policySyntax !== undefined) {
     const validatedPolicyJSON = validatePolicyJSON(policySyntax);
     if (isLeft(validatedPolicyJSON)) {
+      console.log("WTF");
       throw new Error(getRulesErrorMessages(unwrapEither(validatedPolicyJSON)));
     }
     const policyJSON = unwrapEither(validatedPolicyJSON);
@@ -236,6 +237,7 @@ export const createPolicy = async (
         rulesEnginePolicyContract,
         rulesEngineRulesContract,
         rulesEngineComponentContract,
+        rulesEngineForeignCallContract,
         policyId,
         JSON.stringify(rule),
         fcIds,

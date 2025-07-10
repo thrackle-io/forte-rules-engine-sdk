@@ -148,46 +148,6 @@ export const isPolicyAdmin = async (
 };
 
 /**
- * UTILITY FUNCTION - used to mimic the contract setting the initial calling contract admin (used for testing purposes)
- *
- * @param rulesEngineAdminContract - The contract instance containing the address and ABI
- * @param contractAddress - address of the "contract" must also be the address calling this function
- * @param adminAddress - The address to make the initial calling contract admin
- * @returns A promise.
- */
-export const grantCallingContractRole_Utility = async (
-  config: Config,
-  rulesEngineAdminContract: RulesEngineAdminContract,
-  contractAddress: Address,
-  adminAddress: Address
-): Promise<void> => {
-  var confirmAdmin;
-  while (true) {
-    try {
-      confirmAdmin = await simulateContract(config, {
-        address: rulesEngineAdminContract.address,
-        abi: rulesEngineAdminContract.abi,
-        functionName: "grantCallingContractRole",
-        args: [contractAddress, adminAddress],
-      });
-      break;
-    } catch (err) {
-      console.log(err);
-      await sleep(1000);
-    }
-  }
-  if (confirmAdmin != null) {
-    const returnHash = await writeContract(config, {
-      ...confirmAdmin.request,
-      account: config.getClient().account,
-    });
-    await waitForTransactionReceipt(config, {
-      hash: returnHash,
-    });
-  }
-};
-
-/**
  * Propose a new calling contract admin in the rules engine admin contract.
  *
  * This function proposes a new admin for a specific calling contract.
@@ -302,48 +262,6 @@ export const isCallingContractAdmin = async (
     return policyExists.result as boolean;
   } catch (error) {
     return false;
-  }
-};
-
-/**
- * UTILITY FUNCTION - used to mimic the contract setting the initial foreign call admin (used for testing purposes)
- *
- * @param rulesEngineAdminContract - The contract instance containing the address and ABI
- * @param contractAddress - address of the "contract" must also be the address calling this function
- * @param adminAddress - The address to make the initial foreign call admin
- * @returns A promise.
- */
-export const grantForeignCallRole_Utility = async (
-  config: Config,
-  rulesEngineAdminContract: RulesEngineAdminContract,
-  contractAddress: Address,
-  adminAddress: Address,
-  functionSelector: string
-): Promise<void> => {
-  var confirmAdmin;
-  var selector = toFunctionSelector(functionSelector);
-  while (true) {
-    try {
-      confirmAdmin = await simulateContract(config, {
-        address: rulesEngineAdminContract.address,
-        abi: rulesEngineAdminContract.abi,
-        functionName: "grantForeignCallAdminRole",
-        args: [contractAddress, adminAddress, selector],
-      });
-      break;
-    } catch (err) {
-      console.log(err);
-      await sleep(1000);
-    }
-  }
-  if (confirmAdmin != null) {
-    const returnHash = await writeContract(config, {
-      ...confirmAdmin.request,
-      account: config.getClient().account,
-    });
-    await waitForTransactionReceipt(config, {
-      hash: returnHash,
-    });
   }
 };
 

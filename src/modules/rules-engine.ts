@@ -274,6 +274,7 @@ export class RulesEngine {
       this.rulesEnginePolicyContract,
       this.rulesEngineRulesContract,
       this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId
     );
   }
@@ -407,6 +408,7 @@ export class RulesEngine {
       this.rulesEnginePolicyContract,
       this.rulesEngineRulesContract,
       this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId,
       ruleS,
       foreignCallNameToID,
@@ -437,6 +439,7 @@ export class RulesEngine {
       this.rulesEnginePolicyContract,
       this.rulesEngineRulesContract,
       this.rulesEngineComponentContract,
+      this.rulesEngineForeignCallContract,
       policyId,
       ruleId,
       ruleS,
