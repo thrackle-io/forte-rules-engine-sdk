@@ -442,37 +442,37 @@ export function cleanInstructionSet(instructionSet: any[]): any[] {
   return instructionSet.map((instruction) => {
     if (instruction == "N") {
       return 0;
-    } else if (instruction == "+") {
-      return 1;
-    } else if (instruction == "-") {
-      return 2;
-    } else if (instruction == "*") {
-      return 3;
-    } else if (instruction == "/") {
-      return 4;
-    } else if (instruction == "<") {
-      return 5;
-    } else if (instruction == ">") {
-      return 6;
-    } else if (instruction == "==") {
-      return 7;
-    } else if (instruction == "AND") {
-      return 8;
-    } else if (instruction == "OR") {
-      return 9;
     } else if (instruction == "NOT") {
-      return 10;
+      return 1;
     } else if (instruction == "PLH") {
+      return 2;
+    } else if (instruction == "PLHM") {
+      return 3;
+    } else if (instruction == "+") {
+      return 4;
+    } else if (instruction == "-") {
+      return 5;
+    } else if (instruction == "*") {
+      return 6;
+    } else if (instruction == "/") {
+      return 7;
+    } else if (instruction == "<") {
+      return 8;
+    } else if (instruction == ">") {
+      return 9;
+    } else if (instruction == "==") {
+      return 10;
+    } else if (instruction == "AND") {
       return 11;
-    } else if (instruction == "TRU") {
+    } else if (instruction == "OR") {
       return 12;
-    } else if (instruction == "=") {
-      return 13;
     } else if (instruction == ">=") {
-      return 14;
+      return 13;
     } else if (instruction == "<=") {
-      return 15;
+      return 14;
     } else if (instruction == "!=") {
+      return 15;
+    } else if (instruction == "TRU") {
       return 16;
     }
     return instruction;
