@@ -13,10 +13,22 @@
   },
   "version": "0.0.4-rc.2",
   "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:cjs && npm run build:esm && npm run build:types",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:types": "tsc -p tsconfig.types.json",
     "generate": "ts-node src/codeGeneration/code-modification-script.ts",
     "test": "vitest"
   },
@@ -43,8 +55,7 @@
     "LICENSE",
     "package.json",
     "config.ts",
-    "tsconfig.json",
-    "index.js",
+    "tsconfig*.json",
     "src",
     "dist"
   ],
