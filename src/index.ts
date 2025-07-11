@@ -1,9 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
-// index.js
 
-export { RulesEngine } from './src/modules/rules-engine.ts'
+export { RulesEngine } from './modules/rules-engine.js'
 
-export { getConfig, connectConfig, setupConfig } from './config.ts'
+export { getConfig, connectConfig, setupConfig } from '../config.js'
 
 export {
   RulesEnginePolicyContract,
@@ -27,11 +26,9 @@ export {
   operandArray,
   pTypeEnum,
   PT,
-} from './src/modules/types.ts'
+} from './modules/types.js'
 
-// Export validation functions and interfaces
 export {
-  // Validation functions
   safeParseJson,
   getRulesErrorMessages,
   validateRuleJSON,
@@ -40,30 +37,21 @@ export {
   validateMappedTrackerJSON,
   validateCallingFunctionJSON,
   validatePolicyJSON,
-
-  // Zod validators (for runtime validation)
   ruleValidator,
   foreignCallValidator,
   trackerValidator,
   mappedTrackerValidator,
   callingFunctionValidator,
   policyJSONValidator,
+  splitFunctionInput,
+  validateFCFunctionInput,
+} from './modules/validation.js'
 
-  // TypeScript interfaces
+export type {
   RuleJSON,
   ForeignCallJSON,
   TrackerJSON,
   MappedTrackerJSON,
   CallingFunctionJSON,
   PolicyJSON,
-
-  // Utility functions
-  splitFunctionInput,
-  validateFCFunctionInput,
-} from './src/modules/validation.ts'
-
-export { generateModifier } from './src/codeGeneration/generate-solidity.ts'
-
-export { injectModifier } from './src/codeGeneration/inject-modifier.ts'
-
-export { policyModifierGeneration } from './src/codeGeneration/code-modification-script.ts'
+} from './modules/validation.js'
