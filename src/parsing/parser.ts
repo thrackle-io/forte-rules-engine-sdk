@@ -446,34 +446,36 @@ export function cleanInstructionSet(instructionSet: any[]): any[] {
       return 1;
     } else if (instruction == "PLH") {
       return 2;
-    } else if (instruction == "PLHM") {
+    } else if (instruction == "=") {
       return 3;
-    } else if (instruction == "+") {
+    } else if (instruction == "PLHM") {
       return 4;
-    } else if (instruction == "-") {
+    } else if (instruction == "+") {
       return 5;
-    } else if (instruction == "*") {
+    } else if (instruction == "-") {
       return 6;
-    } else if (instruction == "/") {
+    } else if (instruction == "*") {
       return 7;
-    } else if (instruction == "<") {
+    } else if (instruction == "/") {
       return 8;
-    } else if (instruction == ">") {
+    } else if (instruction == "<") {
       return 9;
-    } else if (instruction == "==") {
+    } else if (instruction == ">") {
       return 10;
-    } else if (instruction == "AND") {
+    } else if (instruction == "==") {
       return 11;
-    } else if (instruction == "OR") {
+    } else if (instruction == "AND") {
       return 12;
-    } else if (instruction == ">=") {
+    } else if (instruction == "OR") {
       return 13;
-    } else if (instruction == "<=") {
+    } else if (instruction == ">=") {
       return 14;
-    } else if (instruction == "!=") {
+    } else if (instruction == "<=") {
       return 15;
-    } else if (instruction == "TRU") {
+    } else if (instruction == "!=") {
       return 16;
+    } else if (instruction == "TRU") {
+      return 17;
     }
     return instruction;
   });

@@ -66,7 +66,7 @@ export function reverseParseRule(
           currentActionIndex = 1;
           break;
         case 4:
-          currentActionIndex = 2;
+          currentActionIndex = 1;
           break;
         case 5:
           currentActionIndex = 2;
@@ -87,6 +87,9 @@ export function reverseParseRule(
           currentActionIndex = 2;
           break;
         case 11:
+          currentActionIndex = 2;
+          break;
+        case 12:
           currentActionIndex = 2;
           break;
         default:
@@ -139,7 +142,26 @@ export function reverseParseRule(
           });
           currentMemAddress += 1;
           break;
+        case 3:
+          for (var memValue of memAddressesMap) {
+            if (memValue.memAddr == instruction) {
+              currentInstructionValues.push(memValue.value);
+            }
+          }
+          if (currentActionIndex == 1) {
+            var currentString = "= " + currentInstructionValues[0];
+            memAddressesMap.push({
+              memAddr: currentMemAddress,
+              value: currentString,
+            });
+            retVal = currentString;
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
         case 4:
+          break;
+        case 5:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -153,7 +175,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 5:
+        case 6:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -167,7 +189,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 6:
+        case 7:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -181,7 +203,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 7:
+        case 8:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -195,7 +217,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 8:
+        case 9:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -209,7 +231,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 9:
+        case 10:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -223,7 +245,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 10:
+        case 11:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -237,7 +259,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 11:
+        case 12:
           retVal = logicalOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -251,7 +273,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 12:
+        case 13:
           retVal = logicalOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -265,7 +287,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 13:
+        case 14:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
@@ -279,7 +301,7 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 14:
+        case 15:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,

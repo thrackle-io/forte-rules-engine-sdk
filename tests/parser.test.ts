@@ -1843,7 +1843,7 @@ test("Evaluate a simple syntax string for an event effect with an instruction se
 });
 test("Simple Reverse Interpretation", () => {
   var numbers = [
-    0, 1, 0, 2, 4, 0, 1, 0, 3, 10, 2, 3, 0, 1, 2, 0, 10, 5, 6, 11, 4, 7,
+    0, 1, 0, 2, 5, 0, 1, 0, 3, 11, 2, 3, 0, 1, 2, 0, 11, 5, 6, 12, 4, 7,
   ];
   var placeholderArray = ["value"];
   var retVal = reverseParseRule(numbers, placeholderArray, []);
