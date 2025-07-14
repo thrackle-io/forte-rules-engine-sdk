@@ -476,6 +476,8 @@ export function cleanInstructionSet(instructionSet: any[]): any[] {
       return 16;
     } else if (instruction == "TRU") {
       return 17;
+    } else if (instruction == "TRUM") {
+      return 18;
     }
     return instruction;
   });

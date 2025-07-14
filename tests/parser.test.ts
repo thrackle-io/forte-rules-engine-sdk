@@ -2455,6 +2455,31 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
+test("Evaluates a simple effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = ["PLH", 0, "N", 1n, "-", 0, 1, "TRUM", 4, 2, 0];
+
+  var ruleStringA = `{
+  "condition": " value > 5 ",
+  "positiveEffects": [" TRU:testOne(to) -= 1 "],
+  "negativeEffects": [],
+  "callingFunction": "addValue"
+  }`;
+
+  var str =
+    "value > 5  --> TRU:testOne -= value --> addValue(uint256 value, string info, address addr)";
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [{ id: 4, name: "testOne", type: 0 }],
+    [],
+    "uint256 value, string info, address addr",
+    [],
+    []
+  );
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+  expect(retVal.effectPlaceHolders.length).toEqual(1);
+  expect(retVal.effectPlaceHolders[0].flags).toEqual(0x02);
+});
+
 test("Creates a simple foreign call with a boolean return", () => {
   var str = `{
   "name": "Simple Foreign Call",
