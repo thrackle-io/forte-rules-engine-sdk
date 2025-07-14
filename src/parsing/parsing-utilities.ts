@@ -101,6 +101,7 @@ export function parseTrackers(
   const trRegex = /TR:[a-zA-Z]+/g;
   const truRegex = /TRU:[a-zA-Z]+/g;
   const trMappedRegex = /TR:[a-zA-Z]+\([^()]+\)/g;
+  const truMappedRegex = /TRU:[a-zA-Z]+\([^()]+\)/g;
   var matches = condition.match(trRegex);
   const trackers: Tracker[] = [];
   var trCondition = condition;
@@ -108,8 +109,26 @@ export function parseTrackers(
   if (mappedMatches != null) {
     var uniq = [...new Set(mappedMatches)];
     for (var match of uniq!) {
+
       var initialSplit = match.split("(")[1];
+
       initialSplit = initialSplit.substring(0, initialSplit.length - 1);
+
+      trCondition = trCondition.replace(
+        match,
+        initialSplit + " | " + match.split("(")[0]
+      );
+    }
+  }
+
+  var mappedUpdateMatches = condition.match(truMappedRegex);
+  if (mappedUpdateMatches != null) {
+    var uniq = [...new Set(mappedUpdateMatches)];
+    for (var match of uniq!) {
+      var initialSplit = match.split("(")[1];
+
+      initialSplit = initialSplit.substring(0, initialSplit.length - 1);
+
       trCondition = trCondition.replace(
         match,
         initialSplit + " | " + match.split("(")[0]
