@@ -40,7 +40,7 @@ export { injectModifier } from "./src/codeGeneration/inject-modifier.ts";
 export { policyModifierGeneration } from "./src/codeGeneration/code-modification-script.ts";
 
 export {
-  ruleJSON,
+  RuleJSON,
   validateRuleJSON,
   ForeignCallJSON,
   validateForeignCallJSON,
