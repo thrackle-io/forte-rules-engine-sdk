@@ -1,8 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 // index.js
 
-import { validate } from "typedoc/dist/lib/utils/validation.js";
-
 export { RulesEngine } from "./src/modules/rules-engine.ts";
 
 export { getConfig, connectConfig, setupConfig } from "./config.ts";
