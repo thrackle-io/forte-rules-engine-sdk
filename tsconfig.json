@@ -6,7 +6,7 @@
     "outDir": "./dist",
     "declarationMap": true,
     "target": "es2020",
-    "module": "commonjs",
+    "module": "esnext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,

@@ -3,17 +3,14 @@
   "homepage": "https://github.com/thrackle-io/forte-rules-engine-sdk#readme",
   "name": "@thrackle-io/forte-rules-engine-sdk",
   "license": "BSL 1.1",
-  "keywords": [
-    "rules",
-    "sdk",
-    "thrackle"
-  ],
+  "keywords": ["rules", "sdk", "thrackle"],
   "bugs": {
     "url": "https://github.com/thrackle-io/forte-rules-engine-sdk/issues"
   },
   "version": "0.0.4-rc.3",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
