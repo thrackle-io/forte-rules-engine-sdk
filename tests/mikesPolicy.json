@@ -1,0 +1,37 @@
+{
+  "Policy": "Test Policy",
+  "PolicyType": "open",
+  "CallingFunctions": [
+    {
+      "name": "transfer",
+      "functionSignature": "transfer(address to, uint256 value, string somethingElse)",
+      "encodedValues": "address to, uint256 value, string somethingElse"
+    }
+  ],
+  "ForeignCalls": [],
+  "Trackers": [
+    {
+      "name": "trackerOne",
+      "type": "uint256",
+      "initialValue": "1"
+    },
+    {
+      "name": "trackerTwo",
+      "type": "uint256",
+      "initialValue": "2"
+    }
+  ],
+  "MappedTrackers": [],
+  "Rules": [
+    {
+      "condition": "FC:testSigTwo == 1234 AND FC:testSig == 1234",
+      "positiveEffects": ["revert(\"Tracker Updated\")"],
+      "negativeEffects": [
+        " TRU:trackerOne = 0 ",
+        " TRU:trackerTwo = 47",
+        "FC:testSig"
+      ],
+      "callingFunction": "transfer(address to, uint256 value, string somethingElse)"
+    }
+  ]
+}

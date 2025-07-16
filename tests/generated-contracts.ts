@@ -23,6 +23,7 @@ import * as dotenv from "dotenv";
 import { connectConfig, DiamondAddress } from "../config";
 import * as solc from "solc";
 import * as fs from "fs";
+import { PolicyJSON } from "../src/modules/validation";
 
 dotenv.config();
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
@@ -128,6 +129,29 @@ async function main() {
   }
   var RULES_ENGINE = new RulesEngine(RULES_ENGINE_ADDRESS, config, client);
   const policyCreationResult = await RULES_ENGINE.createPolicy(policyData);
+
+  await RULES_ENGINE.appendPolicy(
+    policyCreationResult.policyId,
+    receipt.contractAddress!
+  );
+  var policyJSON: PolicyJSON = JSON.parse(policyData);
+  var name = policyJSON.CallingFunctions[0].name;
+  var params = policyJSON.CallingFunctions[0].encodedValues;
+
+  // Iterate through params and generate random values add to array below
+
+  var randomlyGeneratedParams: any[] = []; // TODO: Replace with Tayler's code
+
+  const transaction = await simulateContract(config, {
+    address: receipt.contractAddress!,
+    abi: abi,
+    functionName: name,
+    args: randomlyGeneratedParams,
+  });
+  const myHash = await writeContract(config, {
+    ...transaction.request,
+    account: config.getClient().account,
+  });
 }
 
 main();
