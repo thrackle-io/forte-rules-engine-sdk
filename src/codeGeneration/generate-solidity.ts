@@ -1,9 +1,11 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import * as fs from "fs";
 import * as path from "path";
-import { getRulesErrorMessages, validatePolicyJSON } from "../modules/validation";
+import {
+  getRulesErrorMessages,
+  validatePolicyJSON,
+} from "../modules/validation";
 import { isLeft, unwrapEither } from "../modules/utils";
-
 
 /**
  * @file generateSolidity.ts
@@ -72,7 +74,7 @@ export function generateModifier(
       countArray.push(rule.callingFunction);
     }
   }
-  var absPath = path.join(__dirname, "Template.sol");
+  var absPath = path.join("./src/codeGeneration", "Template.sol");
   var overallModifiedData = fs.readFileSync(absPath, "utf-8");
 
   if (!fs.existsSync(path.dirname(outputFileName))) {
@@ -85,6 +87,10 @@ export function generateModifier(
       if (fCall.functionSignature.trim() == syntax.callingFunction.trim()) {
         argList = fCall.encodedValues;
         break;
+      } else {
+        console.log("HERE");
+        console.log(fCall.functionSignature.trim());
+        console.log(syntax.callingFunction.trim());
       }
     }
     var callingFunction = syntax.callingFunction.split("(")[0];

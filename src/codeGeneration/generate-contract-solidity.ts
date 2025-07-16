@@ -6,8 +6,6 @@ import {
   validatePolicyJSON,
 } from "../modules/validation";
 import { isLeft, unwrapEither } from "../modules/utils";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 
 export function generateTestContract(
   policyS: string,
@@ -19,11 +17,14 @@ export function generateTestContract(
   }
   const policySyntax = unwrapEither(validatedPolicySyntax);
 
-  const __dirname = dirname(fileURLToPath(import.meta.url));
-  let templateFilePath = path.join(__dirname, "UserContractTemplate.sol");
+  // const __dirname = dirname(fileURLToPath(import.meta.url));
+  let templateFilePath = path.join(
+    "./src/codeGeneration",
+    "UserContractTemplate.sol"
+  );
   let contractTemplate = fs.readFileSync(templateFilePath, "utf-8");
 
-  const testFn = policySyntax.CallingFunctions[0].name;
+  const testFn = policySyntax.CallingFunctions[0].functionSignature;
   const testFnParams =
     policySyntax.CallingFunctions[0].encodedValues.split(",");
   const writeableFnParams = testFnParams.map(

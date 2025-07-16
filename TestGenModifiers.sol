@@ -16,5 +16,15 @@ abstract contract RulesEngineClientCustom is RulesEngineClient {
      */
     function setCallingContractAdmin(address callingContractAdmin) external {}
 
-    // Modifier Here
+    modifier checkRulesBeforetransfer(address to, uint256 value, uint256 somethingElse) {
+		bytes memory encoded = abi.encodeWithSelector(msg.sig,to, value, somethingElse);
+		_invokeRulesEngine(encoded);
+		_;
+	}
+
+	modifier checkRulesAftertransfer(address to, uint256 value, uint256 somethingElse) {
+		bytes memory encoded = abi.encodeWithSelector(msg.sig,to, value, somethingElse);
+		_;
+		_invokeRulesEngine(encoded);
+	}
 }

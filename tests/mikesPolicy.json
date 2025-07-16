@@ -3,9 +3,9 @@
   "PolicyType": "open",
   "CallingFunctions": [
     {
-      "name": "transfer",
-      "functionSignature": "transfer(address to, uint256 value, string somethingElse)",
-      "encodedValues": "address to, uint256 value, string somethingElse"
+      "name": "transfer(address to, uint256 value, uint256 somethingElse)",
+      "functionSignature": "transfer(address to, uint256 value, uint256 somethingElse)",
+      "encodedValues": "address to, uint256 value, uint256 somethingElse"
     }
   ],
   "ForeignCalls": [],
@@ -31,7 +31,7 @@
         " TRU:trackerTwo = 47",
         "FC:testSig"
       ],
-      "callingFunction": "transfer(address to, uint256 value, string somethingElse)"
+      "callingFunction": "transfer(address to, uint256 value, uint256 somethingElse)"
     }
   ]
 }

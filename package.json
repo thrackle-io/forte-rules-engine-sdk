@@ -3,7 +3,11 @@
   "homepage": "https://github.com/thrackle-io/forte-rules-engine-sdk#readme",
   "name": "@thrackle-io/forte-rules-engine-sdk",
   "license": "BSL 1.1",
-  "keywords": ["rules", "sdk", "thrackle"],
+  "keywords": [
+    "rules",
+    "sdk",
+    "thrackle"
+  ],
   "bugs": {
     "url": "https://github.com/thrackle-io/forte-rules-engine-sdk/issues"
   },
@@ -22,6 +26,7 @@
     "@wagmi/connectors": "^5.7.13",
     "@wagmi/core": "^2.17.0",
     "diff": "^7.0.0",
+    "dotenv": "^17.2.0",
     "solc": "^0.8.30",
     "uuid": "^11.1.0",
     "vitest": "^3.1.2",
