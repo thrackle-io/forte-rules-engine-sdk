@@ -1,6 +1,8 @@
 /// SPDX-License-Identifier: BUSL-1.1
 // index.js
 
+import { validate } from "typedoc/dist/lib/utils/validation.js";
+
 export { RulesEngine } from "./src/modules/rules-engine.ts";
 
 export { getConfig, connectConfig, setupConfig } from "./config.ts";
@@ -11,9 +13,6 @@ export {
   FCNameToID,
   RuleStorageSet,
   hexToFunctionString,
-  PolicyJSON,
-  foreignCallJSON,
-  ruleJSON,
   EffectType,
   RuleStruct,
   ForeignCallDefinition,
@@ -31,6 +30,9 @@ export {
   supportedTrackerTypes,
   pTypeEnum,
   PT,
+  Left,
+  Right,
+  Either
 } from "./src/modules/types.ts";
 
 export { generateModifier } from "./src/codeGeneration/generate-solidity.ts";
@@ -38,3 +40,24 @@ export { generateModifier } from "./src/codeGeneration/generate-solidity.ts";
 export { injectModifier } from "./src/codeGeneration/inject-modifier.ts";
 
 export { policyModifierGeneration } from "./src/codeGeneration/code-modification-script.ts";
+
+export {
+  ruleJSON,
+  validateRuleJSON,
+  ForeignCallJSON,
+  validateForeignCallJSON,
+  TrackerJSON,
+  validateTrackerJSON,
+  MappedTrackerJSON,
+  validateMappedTrackerJSON,
+  CallingFunctionJSON,
+  validateCallingFunctionJSON,
+  PolicyJSON,
+  validatePolicyJSON,
+} from "./src/modules/validation.ts";
+
+export {
+  isLeft,
+  isRight,
+  unwrapEither
+} from "./src/modules/utils.ts";
