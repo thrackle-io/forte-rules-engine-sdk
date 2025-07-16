@@ -11,9 +11,6 @@ export {
   FCNameToID,
   RuleStorageSet,
   hexToFunctionString,
-  PolicyJSON,
-  foreignCallJSON,
-  ruleJSON,
   EffectType,
   RuleStruct,
   ForeignCallDefinition,
@@ -31,6 +28,9 @@ export {
   supportedTrackerTypes,
   pTypeEnum,
   PT,
+  Left,
+  Right,
+  Either
 } from "./src/modules/types.ts";
 
 export { generateModifier } from "./src/codeGeneration/generate-solidity.ts";
@@ -38,3 +38,24 @@ export { generateModifier } from "./src/codeGeneration/generate-solidity.ts";
 export { injectModifier } from "./src/codeGeneration/inject-modifier.ts";
 
 export { policyModifierGeneration } from "./src/codeGeneration/code-modification-script.ts";
+
+export {
+  RuleJSON,
+  validateRuleJSON,
+  ForeignCallJSON,
+  validateForeignCallJSON,
+  TrackerJSON,
+  validateTrackerJSON,
+  MappedTrackerJSON,
+  validateMappedTrackerJSON,
+  CallingFunctionJSON,
+  validateCallingFunctionJSON,
+  PolicyJSON,
+  validatePolicyJSON,
+} from "./src/modules/validation.ts";
+
+export {
+  isLeft,
+  isRight,
+  unwrapEither
+} from "./src/modules/utils.ts";
