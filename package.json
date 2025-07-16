@@ -16,12 +16,12 @@
   "type": "module",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/types/src/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/esm/src/index.js",
       "require": "./dist/cjs/src/index.js",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/src/index.d.ts"
     }
   },
   "scripts": {
