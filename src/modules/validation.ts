@@ -61,7 +61,7 @@ export const ruleValidator = z.object({
   positiveEffects: z.array(z.string()),
   negativeEffects: z.array(z.string()),
   callingFunction: z.string(),
-})
+});
 export interface RuleJSON extends z.infer<typeof ruleValidator> { }
 
 /**
