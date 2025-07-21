@@ -72,13 +72,12 @@ import {
   getForeignCall as getForeignCallInternal,
   getAllForeignCalls as getAllForeignCallsInternal,
   getForeignCallMetadata as getForeignCallMetadataInternal,
-  isForeignCallPermissioned as isForeignCallPermissionedInternal,
   getForeignCallPermissionList as getForeignCallPermissionListInternal,
   addAdminToPermissionList as addAdminToPermissionListInternal,
   addMultipleAdminsToPermissionList as addMultipleAdminsToPermissionListInternal,
   removeMultipleAdminsFromPermissionList as removeMultipleAdminsFromPermissionListInternal,
   removeAllFromPermissionList as removeAllFromPermissionListInternal,
-} from "./foreign-calls";
+} from './foreign-calls'
 
 import {
   createTracker as createTrackerInternal,
