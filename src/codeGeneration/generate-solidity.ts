@@ -3,6 +3,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { getRulesErrorMessages, validatePolicyJSON } from "../modules/validation";
 import { isLeft, unwrapEither } from "../modules/utils";
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
 
 
 /**
@@ -37,6 +39,9 @@ import { isLeft, unwrapEither } from "../modules/utils";
  * @note This file is a critical component of the Rules Engine SDK, enabling the dynamic generation of Solidity code
  *       for enforcing rules in smart contracts.
  */
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 /**
  * Generates Solidity modifiers and inserts them into a template file.

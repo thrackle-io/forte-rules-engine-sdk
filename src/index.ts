@@ -8,6 +8,8 @@ export { generateModifier } from './codeGeneration/generate-solidity.js'
 
 export { injectModifier } from './codeGeneration/inject-modifier.js'
 
+export { policyModifierGeneration } from './codeGeneration/code-modification-script.js'
+
 export {
   RulesEnginePolicyContract,
   RulesEngineComponentContract,
