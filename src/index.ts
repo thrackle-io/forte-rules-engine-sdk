@@ -2,7 +2,11 @@
 
 export { RulesEngine } from './modules/rules-engine.js'
 
-export { getConfig, connectConfig, setupConfig } from '../config.js'
+export { getConfig, connectConfig, setupConfig } from './config.js'
+
+export { generateModifier } from './codeGeneration/generate-solidity.js'
+
+export { injectModifier } from './codeGeneration/inject-modifier.js'
 
 export {
   RulesEnginePolicyContract,
