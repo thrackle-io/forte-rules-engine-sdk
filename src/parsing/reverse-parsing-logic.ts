@@ -57,16 +57,16 @@ export function reverseParseRule(
           currentActionIndex = 1;
           break;
         case 1:
-          currentActionIndex = 2;
+          currentActionIndex = 1;
           break;
         case 2:
-          currentActionIndex = 2;
+          currentActionIndex = 1;
           break;
         case 3:
-          currentActionIndex = 2;
+          currentActionIndex = 1;
           break;
         case 4:
-          currentActionIndex = 2;
+          currentActionIndex = 1;
           break;
         case 5:
           currentActionIndex = 2;
@@ -84,13 +84,16 @@ export function reverseParseRule(
           currentActionIndex = 2;
           break;
         case 10:
-          currentActionIndex = 1;
+          currentActionIndex = 2;
           break;
         case 11:
-          currentActionIndex = 1;
+          currentActionIndex = 2;
+          break;
+        case 12:
+          currentActionIndex = 2;
           break;
         default:
-          currentActionIndex = 0;
+          currentActionIndex = 2;
           break;
       }
     } else {
@@ -116,132 +119,6 @@ export function reverseParseRule(
           currentMemAddress += 1;
           break;
         case 1:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " + "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 2:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " - "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 3:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " * "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 4:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " / "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 5:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " < "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 6:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " > "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 7:
-          retVal = arithmeticOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " == "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 8:
-          retVal = logicalOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " AND "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 9:
-          retVal = logicalOperatorReverseInterpretation(
-            instruction,
-            currentMemAddress,
-            memAddressesMap,
-            currentActionIndex,
-            currentInstructionValues,
-            " OR "
-          );
-          if (currentActionIndex == 1) {
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 10:
           for (var memValue of memAddressesMap) {
             if (memValue.memAddr == instruction) {
               currentInstructionValues.push(memValue.value);
@@ -258,23 +135,152 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
-        case 11:
+        case 2:
           memAddressesMap.push({
             memAddr: currentMemAddress,
             value: placeHolderArray[instruction],
           });
           currentMemAddress += 1;
           break;
-        case 12:
+        case 3:
+          for (var memValue of memAddressesMap) {
+            if (memValue.memAddr == instruction) {
+              currentInstructionValues.push(memValue.value);
+            }
+          }
+          if (currentActionIndex == 1) {
+            var currentString = "= " + currentInstructionValues[0];
+            memAddressesMap.push({
+              memAddr: currentMemAddress,
+              value: currentString,
+            });
+            retVal = currentString;
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
           break;
-        case 13:
+        case 4:
+          break;
+        case 5:
           retVal = arithmeticOperatorReverseInterpretation(
             instruction,
             currentMemAddress,
             memAddressesMap,
             currentActionIndex,
             currentInstructionValues,
-            " = "
+            " + "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 6:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " - "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 7:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " * "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 8:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " / "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 9:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " < "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 10:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " > "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 11:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " == "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 12:
+          retVal = logicalOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " AND "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 13:
+          retVal = logicalOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " OR "
           );
           if (currentActionIndex == 1) {
             currentMemAddress += 1;

@@ -5,6 +5,7 @@ import RulesEnginePolicyLogicArtifact from "@thrackle-io/forte-rules-engine/out/
 import RulesEngineComponentLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineComponentFacet.sol/RulesEngineComponentFacet.json";
 import RulesEngineRuleLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json";
 import RulesEngineAdminLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineAdminRolesFacet.sol/RulesEngineAdminRolesFacet.json";
+import RulesEngineForeignCallLogicArtifact from "@thrackle-io/forte-rules-engine/out/RulesEngineForeignCallFacet.sol/RulesEngineForeignCallFacet.json";
 
 /**
  * @file types.ts
@@ -27,6 +28,8 @@ export const RulesEnginePolicyABI = RulesEnginePolicyLogicArtifact.abi;
 export const RulesEngineComponentABI = RulesEngineComponentLogicArtifact.abi;
 export const RulesEngineRulesABI = RulesEngineRuleLogicArtifact.abi;
 export const RulesEngineAdminABI = RulesEngineAdminLogicArtifact.abi;
+export const RulesEngineForeignCallABI =
+  RulesEngineForeignCallLogicArtifact.abi;
 
 export type RulesEnginePolicyContract = GetContractReturnType<
   typeof RulesEnginePolicyABI
@@ -39,6 +42,10 @@ export type RulesEngineRulesContract = GetContractReturnType<
 >;
 export type RulesEngineAdminContract = GetContractReturnType<
   typeof RulesEngineAdminABI
+>;
+
+export type RulesEngineForeignCallContract = GetContractReturnType<
+  typeof RulesEngineForeignCallABI
 >;
 
 export type FCNameToID = {
