@@ -7,6 +7,17 @@ import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
 
+// Handle both ES modules and CommonJS
+let __dirname: string;
+if (typeof __filename !== 'undefined') {
+  // CommonJS environment
+  __dirname = dirname(__filename);
+} else {
+  // ES module environment
+  const __filename = fileURLToPath(import.meta.url);
+  __dirname = dirname(__filename);
+}
+
 /**
  * @file generateSolidity.ts
  * @description This file contains functionality for dynamically generating Solidity modifiers based on rule definitions.
@@ -39,9 +50,6 @@ import { dirname } from 'path'
  * @note This file is a critical component of the Rules Engine SDK, enabling the dynamic generation of Solidity code
  *       for enforcing rules in smart contracts.
  */
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 /**
  * Generates Solidity modifiers and inserts them into a template file.
