@@ -17,7 +17,7 @@ contract ExampleUserContract {
      * @param somethingElse An additional parameter for custom logic (purpose not specified in the given code).
      * @return bool Returns true if the transfer is successful.
      */
-    function [[FUNCTION_SIGNATURE]] public pure returns (bool) {
+    function [[FUNCTION_SIGNATURE]] public returns (bool) {
       [[FUNCTION_PARAMS]]
 
       return true;

@@ -27,6 +27,7 @@ import { PolicyJSON } from "../src/modules/validation";
 import { generateTestContract } from "../src/codeGeneration/generate-contract-solidity";
 import { policyModifierGeneration } from "../src/codeGeneration/code-modification-script";
 import path from "path";
+import { sleep } from "../src/modules/contract-interaction-utils";
 
 dotenv.config();
 // Hardcoded address of the diamond in diamondDeployedAnvilState.json
@@ -43,17 +44,17 @@ type OverrideJSON = {
   overrides: overrideStruct[];
 };
 
-const importCallback = (importPath: string) => {
-  try {
-    // Adjust this logic to your project's structure and node_modules location
-    const resolvedPath = path.resolve("./", importPath);
-    console.log("resolvedPath", resolvedPath);
-    const content = fs.readFileSync(resolvedPath, "utf8");
-    return { contents: content };
-  } catch (e: any) {
-    return { error: `File not found: ${importPath} - ${e.message}` };
-  }
-};
+// const importCallback = (importPath: string) => {
+//   try {
+//     // Adjust this logic to your project's structure and node_modules location
+//     const resolvedPath = path.resolve("./", importPath);
+//     console.log("resolvedPath", resolvedPath);
+//     const content = fs.readFileSync(resolvedPath, "utf8");
+//     return { contents: content };
+//   } catch (e: any) {
+//     return { error: `File not found: ${importPath} - ${e.message}` };
+//   }
+// };
 
 /**
  * The following address and private key are defaults from anvil and are only meant to be used in a test environment.
@@ -131,15 +132,29 @@ async function main() {
     },
   };
   console.log(JSON.stringify(input));
+
+  // Define the import callback function
+  function findImports(relativePath) {
+    // In this example, we assume imported files are located in a 'node_modules' folder.
+    // You would adjust this path based on where your imported contracts are stored.
+    const absolutePath = path.resolve("./", relativePath);
+    try {
+      const source = fs.readFileSync(absolutePath, "utf8");
+      return { contents: source };
+    } catch (e) {
+      return { error: "File not found: " + relativePath };
+    }
+  }
+
   const output = JSON.parse(
-    solc.compile(JSON.stringify(input), importCallback)
+    solc.compile(JSON.stringify(input), { import: findImports })
   );
   console.log(output);
   const bytecode =
-    output.contracts["TestGenContract.sol"]["ExampleUserContract"].evm.bytecode
-      .object;
+    output.contracts["./TestGenContract.sol"]["ExampleUserContract"].evm
+      .bytecode.object;
   const abi =
-    output.contracts["TestGenContract.sol"]["ExampleUserContract"].abi;
+    output.contracts["./TestGenContract.sol"]["ExampleUserContract"].abi;
 
   const result = await deployContract(config, {
     abi: abi,
@@ -153,77 +168,97 @@ async function main() {
 
   console.log("receipt.contractAddress", receipt.contractAddress);
 
-  //   // create and apply the policy
-  //   const addPolicy = await simulateContract(config, {
-  //     address: receipt.contractAddress!,
-  //     abi: abi,
-  //     functionName: "setCallingContractAdmin",
-  //     args: [getAddress(foundryAccountAddress)],
-  //   });
-  //   const returnHash = await writeContract(config, {
-  //     ...addPolicy.request,
-  //     account: config.getClient().account,
-  //   });
-  //   var RULES_ENGINE = new RulesEngine(RULES_ENGINE_ADDRESS, config, client);
-  //   const policyCreationResult = await RULES_ENGINE.createPolicy(policyData);
+  const addPolicyzero = await simulateContract(config, {
+    address: receipt.contractAddress!,
+    abi: abi,
+    functionName: "setRulesEngineAddress",
+    args: [getAddress(DiamondAddress)],
+  });
+  const returnHashzero = await writeContract(config, {
+    ...addPolicyzero.request,
+    account: config.getClient().account,
+  });
+  await waitForTransactionReceipt(config, {
+    hash: returnHashzero,
+  });
+  // create and apply the policy
+  const addPolicy = await simulateContract(config, {
+    address: receipt.contractAddress!,
+    abi: abi,
+    functionName: "setCallingContractAdmin",
+    args: [getAddress(foundryAccountAddress)],
+  });
+  const returnHash = await writeContract(config, {
+    ...addPolicy.request,
+    account: config.getClient().account,
+  });
+  await waitForTransactionReceipt(config, {
+    hash: returnHash,
+  });
+  var RULES_ENGINE = new RulesEngine(RULES_ENGINE_ADDRESS, config, client);
+  const policyCreationResult = await RULES_ENGINE.createPolicy(policyData);
 
-  //   await RULES_ENGINE.appendPolicy(
-  //     policyCreationResult.policyId,
-  //     receipt.contractAddress!
-  //   );
+  await RULES_ENGINE.appendPolicy(
+    policyCreationResult.policyId,
+    receipt.contractAddress!
+  );
 
-  //   // create random parameter inputs and run a rules enabled transaction
-  //   var policyJSON: PolicyJSON = JSON.parse(policyData);
-  //   var name = policyJSON.CallingFunctions[0].name;
-  //   var params = policyJSON.CallingFunctions[0].encodedValues;
+  // create random parameter inputs and run a rules enabled transaction
+  var policyJSON: PolicyJSON = JSON.parse(policyData);
+  var name = policyJSON.CallingFunctions[0].name.split("(")[0];
+  var params = policyJSON.CallingFunctions[0].encodedValues;
 
-  //   // Override data (Add back in after testing existing functionality)
-  //   //   var overrideFile = process.argv[3];
-  //   //   let overrideData: string = fs.readFileSync(overrideFile, "utf8");
-  //   //   if (!overrideData) {
-  //   //     console.error(`Policy JSON file ${overrideFile} does not exist.`);
-  //   //   }
-  //   //   var overrideJSON: OverrideJSON = JSON.parse(overrideData);
-  //   //   for (var over of overrideJSON.overrides) {
-  //   //   }
-  //   // Iterate through params and generate random values add to array below
-
-  //   var randomlyGeneratedParams: any[] = [];
-
-  //   for (let param of params.split(",")) {
-  //     if (param.includes("address")) {
-  //       randomlyGeneratedParams.push(
-  //         getAddress("0x" + Math.random().toString(16).slice(2, 42))
-  //       );
-  //     } else if (param.includes("uint256")) {
-  //       randomlyGeneratedParams.push(Math.floor(Math.random() * 1000000));
-  //     } else if (param.includes("string")) {
-  //       randomlyGeneratedParams.push(
-  //         "testString" + Math.random().toString(36).substring(7)
-  //       );
-  //     } else if (param.includes("bool")) {
-  //       randomlyGeneratedParams.push(Math.random() < 0.5);
-  //     } else if (param.includes("bytes")) {
-  //       randomlyGeneratedParams.push(
-  //         "0x" + Math.random().toString(16).slice(2, 66)
-  //       );
-  //     }
-  //     // Add more types as needed
-  //     else {
-  //       console.warn(`Unknown parameter type: ${param}`);
-  //     }
+  // Override data (Add back in after testing existing functionality)
+  //   var overrideFile = process.argv[3];
+  //   let overrideData: string = fs.readFileSync(overrideFile, "utf8");
+  //   if (!overrideData) {
+  //     console.error(`Policy JSON file ${overrideFile} does not exist.`);
   //   }
+  //   var overrideJSON: OverrideJSON = JSON.parse(overrideData);
+  //   for (var over of overrideJSON.overrides) {
+  //   }
+  // Iterate through params and generate random values add to array below
 
-  //   const transaction = await simulateContract(config, {
-  //     address: receipt.contractAddress!,
-  //     abi: abi,
-  //     functionName: name,
-  //     args: randomlyGeneratedParams,
-  //   });
-  //   const myHash = await writeContract(config, {
-  //     ...transaction.request,
-  //     account: config.getClient().account,
-  //   });
+  var randomlyGeneratedParams: any[] = [];
+
+  for (let param of params.split(",")) {
+    if (param.includes("address")) {
+      randomlyGeneratedParams.push(
+        getAddress("0x" + Math.random().toString(16).slice(2, 42))
+      );
+    } else if (param.includes("uint256")) {
+      randomlyGeneratedParams.push(Math.floor(Math.random() * 1000000));
+    } else if (param.includes("string")) {
+      randomlyGeneratedParams.push(
+        "testString" + Math.random().toString(36).substring(7)
+      );
+    } else if (param.includes("bool")) {
+      randomlyGeneratedParams.push(Math.random() < 0.5);
+    } else if (param.includes("bytes")) {
+      randomlyGeneratedParams.push(
+        "0x" + Math.random().toString(16).slice(2, 66)
+      );
+    }
+    // Add more types as needed
+    else {
+      console.warn(`Unknown parameter type: ${param}`);
+    }
+  }
+  await sleep(5000);
+  const transaction = await simulateContract(config, {
+    address: receipt.contractAddress!,
+    abi: abi,
+    functionName: name,
+    args: randomlyGeneratedParams,
+  });
+  const myHash = await writeContract(config, {
+    ...transaction.request,
+    account: config.getClient().account,
+  });
+  var receiptFinal = await waitForTransactionReceipt(config, {
+    hash: myHash,
+  });
+  console.log(receiptFinal.status);
 }
 
 main();

@@ -3,9 +3,9 @@
   "PolicyType": "open",
   "CallingFunctions": [
     {
-      "name": "transfer(address to, uint256 value, uint256 somethingElse)",
-      "functionSignature": "transfer(address to, uint256 value, uint256 somethingElse)",
-      "encodedValues": "address to, uint256 value, uint256 somethingElse"
+      "name": "transfer(uint256 to, uint256 value, uint256 somethingElse)",
+      "functionSignature": "transfer(uint256 to, uint256 value, uint256 somethingElse)",
+      "encodedValues": "uint256 to, uint256 value, uint256 somethingElse"
     }
   ],
   "ForeignCalls": [],
@@ -24,14 +24,10 @@
   "MappedTrackers": [],
   "Rules": [
     {
-      "condition": "FC:testSigTwo == 1234 AND FC:testSig == 1234",
+      "condition": "value == 1234 AND value == 1234",
       "positiveEffects": ["revert(\"Tracker Updated\")"],
-      "negativeEffects": [
-        " TRU:trackerOne = 0 ",
-        " TRU:trackerTwo = 47",
-        "FC:testSig"
-      ],
-      "callingFunction": "transfer(address to, uint256 value, uint256 somethingElse)"
+      "negativeEffects": ["revert(\"WE DID IT\")"],
+      "callingFunction": "transfer(uint256 to, uint256 value, uint256 somethingElse)"
     }
   ]
 }

@@ -11,18 +11,14 @@ pragma solidity ^0.8.24;
  *              for modifiers that are generated and injected programmatically.
  */
 abstract contract RulesEngineClientCustom is RulesEngineClient {
-    /**
-     * @notice This function overrides a function in the RulesEngineClient and must be updated for successful compilation.
-     */
-    function setCallingContractAdmin(address callingContractAdmin) external {}
 
-    modifier checkRulesBeforetransfer(address to, uint256 value, uint256 somethingElse) {
+    modifier checkRulesBeforetransfer(uint256 to, uint256 value, uint256 somethingElse) {
 		bytes memory encoded = abi.encodeWithSelector(msg.sig,to, value, somethingElse);
 		_invokeRulesEngine(encoded);
 		_;
 	}
 
-	modifier checkRulesAftertransfer(address to, uint256 value, uint256 somethingElse) {
+	modifier checkRulesAftertransfer(uint256 to, uint256 value, uint256 somethingElse) {
 		bytes memory encoded = abi.encodeWithSelector(msg.sig,to, value, somethingElse);
 		_;
 		_invokeRulesEngine(encoded);
