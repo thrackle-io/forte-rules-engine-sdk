@@ -14,7 +14,7 @@ export {
   RuleStruct,
   ForeignCallDefinition,
   PlaceholderStruct,
-  IndividualArugmentMapping,
+  IndividualArgumentMapping as IndividualArugmentMapping,
   ForeignCallArgumentMappings,
   FunctionArgument,
   stringReplacement,
