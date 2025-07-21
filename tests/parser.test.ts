@@ -1843,7 +1843,7 @@ test("Evaluate a simple syntax string for an event effect with an instruction se
 });
 test("Simple Reverse Interpretation", () => {
   var numbers = [
-    0, 1, 0, 2, 1, 0, 1, 0, 3, 7, 2, 3, 0, 1, 11, 0, 7, 5, 6, 8, 4, 7,
+    0, 1, 0, 2, 5, 0, 1, 0, 3, 11, 2, 3, 0, 1, 2, 0, 11, 5, 6, 12, 4, 7,
   ];
   var placeholderArray = ["value"];
   var retVal = reverseParseRule(numbers, placeholderArray, []);
@@ -1971,7 +1971,6 @@ test("Extraneous paraenthesis", () => {
   "negativeEffects": [],
   "callingFunction": "addValue"
   }`;
-  console.log("HG");
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [{ id: 1, name: "testTwo", type: 0 }],

@@ -148,46 +148,6 @@ export const isPolicyAdmin = async (
 };
 
 /**
- * UTILITY FUNCTION - used to mimic the contract setting the initial calling contract admin (used for testing purposes)
- *
- * @param rulesEngineAdminContract - The contract instance containing the address and ABI
- * @param contractAddress - address of the "contract" must also be the address calling this function
- * @param adminAddress - The address to make the initial calling contract admin
- * @returns A promise.
- */
-export const grantCallingContractRole_Utility = async (
-  config: Config,
-  rulesEngineAdminContract: RulesEngineAdminContract,
-  contractAddress: Address,
-  adminAddress: Address
-): Promise<void> => {
-  var confirmAdmin;
-  while (true) {
-    try {
-      confirmAdmin = await simulateContract(config, {
-        address: rulesEngineAdminContract.address,
-        abi: rulesEngineAdminContract.abi,
-        functionName: "grantCallingContractRole",
-        args: [contractAddress, adminAddress],
-      });
-      break;
-    } catch (err) {
-      console.log(err);
-      await sleep(1000);
-    }
-  }
-  if (confirmAdmin != null) {
-    const returnHash = await writeContract(config, {
-      ...confirmAdmin.request,
-      account: config.getClient().account,
-    });
-    await waitForTransactionReceipt(config, {
-      hash: returnHash,
-    });
-  }
-};
-
-/**
  * Propose a new calling contract admin in the rules engine admin contract.
  *
  * This function proposes a new admin for a specific calling contract.
@@ -302,5 +262,132 @@ export const isCallingContractAdmin = async (
     return policyExists.result as boolean;
   } catch (error) {
     return false;
+  }
+};
+
+/**
+ * Determine if address is the foreign call admin.
+ *
+ * This function determines whether or not an address is the admin for a specific foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param foreignCallContract - The address of the contract to check the admin for.
+ * @param account - The address to check
+ * @param functionSelector - The selector for the specific foreign call
+ * @returns whether or not the address is the foreign call admin.
+ *
+ */
+export const isForeignCallAdmin = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  foreignCallContract: Address,
+  account: Address,
+  functionSelector: string
+): Promise<boolean> => {
+  var selector = toFunctionSelector(functionSelector);
+  try {
+    let isForeignCallAdmin = await simulateContract(config, {
+      address: rulesEngineAdminContract.address,
+      abi: rulesEngineAdminContract.abi,
+      functionName: "isForeignCallAdmin",
+      args: [foreignCallContract, account, selector],
+    });
+    return isForeignCallAdmin.result as boolean;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * Propose a new foreign call admin in the rules engine admin contract.
+ *
+ * This function proposes a new admin for a specific foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param foreignCallAddress - The address of the foreign call contract to set the admin for.
+ * @param newAdminAddress - The address to propose as the new admin
+ * @param functionSelector - The selector for the specific foreign call
+ * @returns A promise.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const proposeNewForeignCallAdmin = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  foreignCallAddress: Address,
+  newAdminAddress: Address,
+  functionSelector: string
+): Promise<void> => {
+  var proposeAdmin;
+  var selector = toFunctionSelector(functionSelector);
+  while (true) {
+    try {
+      proposeAdmin = await simulateContract(config, {
+        address: rulesEngineAdminContract.address,
+        abi: rulesEngineAdminContract.abi,
+        functionName: "proposeNewForeignCallAdmin",
+        args: [foreignCallAddress, newAdminAddress, selector],
+      });
+      break;
+    } catch (err) {
+      await sleep(1000);
+    }
+  }
+  if (proposeAdmin != null) {
+    const returnHash = await writeContract(config, {
+      ...proposeAdmin.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+  }
+};
+
+/**
+ * Confirm a new foreign call admin in the rules engine admin contract.
+ *
+ * This function confirms a new admin for a specific foreign call.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineAdminContract - The contract instance containing the address and ABI
+ * @param foreignCallAddress - The address of the foreign call to set the admin for.
+ * @param functionSelector - The selector for the specific foreign call
+ * @returns A promise.
+ *
+ * @throws Will retry indefinitely on contract interaction failure, with a delay between attempts.
+ */
+export const confirmNewForeignCallAdmin = async (
+  config: Config,
+  rulesEngineAdminContract: RulesEngineAdminContract,
+  foreignCallAddress: Address,
+  functionSelector: string
+) => {
+  var confirmAdmin;
+  var selector = toFunctionSelector(functionSelector);
+  while (true) {
+    try {
+      confirmAdmin = await simulateContract(config, {
+        address: rulesEngineAdminContract.address,
+        abi: rulesEngineAdminContract.abi,
+        functionName: "confirmNewForeignCallAdmin",
+        args: [foreignCallAddress, selector],
+      });
+      break;
+    } catch (err) {
+      console.log(err);
+      await sleep(1000);
+    }
+  }
+  if (confirmAdmin != null) {
+    const returnHash = await writeContract(config, {
+      ...confirmAdmin.request,
+      account: config.getClient().account,
+    });
+    await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
   }
 };

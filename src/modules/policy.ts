@@ -25,6 +25,7 @@ import {
   hexToFunctionString,
   RulesEngineRulesContract,
   MappedTrackerDefinition,
+  RulesEngineForeignCallContract,
 } from "./types";
 import {
   createForeignCall,
@@ -87,6 +88,7 @@ export const createPolicy = async (
   rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
+  rulesEngineForeignCallContract: RulesEngineForeignCallContract,
   policySyntax?: string
 ): Promise<{ policyId: number }> => {
   var fcIds: FCNameToID[] = [];
@@ -115,7 +117,6 @@ export const createPolicy = async (
   });
 
   let policyId: number = addPolicy.result;
-
   if (policySyntax !== undefined) {
     const validatedPolicyJSON = validatePolicyJSON(policySyntax);
     if (isLeft(validatedPolicyJSON)) {
@@ -213,6 +214,7 @@ export const createPolicy = async (
 
         const fcId = await createForeignCall(
           config,
+          rulesEngineForeignCallContract,
           rulesEngineComponentContract,
           rulesEnginePolicyContract,
           policyId,
@@ -233,6 +235,7 @@ export const createPolicy = async (
         rulesEnginePolicyContract,
         rulesEngineRulesContract,
         rulesEngineComponentContract,
+        rulesEngineForeignCallContract,
         policyId,
         JSON.stringify(rule),
         fcIds,
@@ -437,6 +440,7 @@ export const deletePolicy = async (
  * @param rulesEnginePolicyContract - The contract instance for interacting with the Rules Engine Policy.
  * @param rulesEngineRulesContract - The contract instance for interacting with the Rules Engine Rules.
  * @param rulesEngineComponentContract - The contract instance for interacting with the Rules Engine Component.
+ * @param rulesEngineForeignCallContract - The contract instance for interacting with the Rules Engine Foreign Calls.
  * @param policyId - The ID of the policy to retrieve.
  * @returns A JSON string representing the full policy.
  */
@@ -445,6 +449,7 @@ export const getPolicy = async (
   rulesEnginePolicyContract: RulesEnginePolicyContract,
   rulesEngineRulesContract: RulesEngineRulesContract,
   rulesEngineComponentContract: RulesEngineComponentContract,
+  rulesEngineForeignCallContract: RulesEngineForeignCallContract,
   policyId: number
 ): Promise<string> => {
   var callingFunctionMappings: hexToFunctionString[] = [];
@@ -480,14 +485,14 @@ export const getPolicy = async (
 
     var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(
       config,
-      rulesEngineComponentContract,
+      rulesEngineForeignCallContract,
       policyId
     );
     var foreignCallNames: string[] = [];
     for (var fc of foreignCalls) {
       var name = await getForeignCallMetadata(
         config,
-        rulesEngineComponentContract,
+        rulesEngineForeignCallContract,
         policyId,
         fc.foreignCallIndex
       );
