@@ -26,6 +26,9 @@ export {
   operandArray,
   pTypeEnum,
   PT,
+  Left,
+  Right,
+  Either,
 } from './modules/types.js'
 
 export {
@@ -55,3 +58,5 @@ export type {
   CallingFunctionJSON,
   PolicyJSON,
 } from './modules/validation.js'
+
+export { isLeft, isRight, unwrapEither } from './modules/utils.js'
