@@ -1,5 +1,6 @@
 {
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
   "out": "docs",
   "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-frontmatter", "./typedoc-custom-plugin.mjs"],
   "tsconfig": "tsconfig.typedoc.json",
