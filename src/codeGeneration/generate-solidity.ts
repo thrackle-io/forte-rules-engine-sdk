@@ -6,17 +6,16 @@ import { isLeft, unwrapEither } from "../modules/utils";
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
-
-// Handle both ES modules and CommonJS
-let __dirname: string;
-if (typeof __filename !== 'undefined') {
-  // CommonJS environment
-  __dirname = dirname(__filename);
-} else {
-  // ES module environment
-  const __filename = fileURLToPath(import.meta.url);
-  __dirname = dirname(__filename);
-}
+// Cross-platform __dirname resolution
+const __dirname = (() => {
+  try {
+    // Try CommonJS first
+    return dirname(__filename)
+  } catch {
+    // Fallback for ES modules - use known project structure
+    return path.resolve(process.cwd(), 'src', 'codeGeneration')
+  }
+})()
 
 /**
  * @file generateSolidity.ts
