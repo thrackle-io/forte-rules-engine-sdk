@@ -193,8 +193,17 @@ function convertASTToInstructionSet(
                 place.typeSpecificIndex == parameter.tIndex &&
                 place.flags == 0x02
               ) {
-                acc.instructionSet.push("PLH");
-                acc.instructionSet.push(plhIter);
+
+                // if searchExpressions as length more than 1
+                // it is a mapped tracker else it is a standard tracker
+                if (searchExpressions.length > 1) {
+                  acc.instructionSet.push("PLHM");
+                  acc.instructionSet.push(plhIter);
+                  acc.instructionSet.push(plhIter - 1);
+                } else {
+                  acc.instructionSet.push("PLH");
+                  acc.instructionSet.push(plhIter);
+                }
                 copyFound = true;
                 break;
               }
@@ -406,7 +415,6 @@ function convertASTToInstructionSet(
       indexMap
     );
   }
-
   return acc;
 }
 
