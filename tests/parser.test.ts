@@ -2456,7 +2456,7 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
 });
 
 test("Evaluates a simple effect involving a mapped tracker update (TRUM))", () => {
-  var expectedArray = ["PLH", 0, "N", 1n, "-", 0, 1, "TRUM", 4, 2, 0];
+  var expectedArray = ["PLH", 0, "PLHM", 1, 0, "N", 1, "-", 1, 2, "TRUM", 1, 3, 0, 0];
 
   var ruleStringA = `{
   "condition": "value > 5 ",
