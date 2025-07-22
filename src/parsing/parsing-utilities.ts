@@ -22,7 +22,6 @@ import {
 } from "../modules/types";
 import { convertHumanReadableToInstructionSet } from "./internal-parsing-logic";
 import { getRandom } from "../modules/utils";
-import { tr } from "zod/dist/types/v4/locales";
 
 /**
  * @file parsing-utilities.ts
