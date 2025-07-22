@@ -42,4 +42,4 @@ jobs:
     - name: Run Tests
       run: npm run test
     - name: Run Typedoc Check
-      run: npx typedoc --entryPointStrategy Expand src --tsconfig tsconfig.json
+      run: npx typedoc --options typedoc.json

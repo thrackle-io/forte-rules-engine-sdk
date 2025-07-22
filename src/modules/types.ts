@@ -159,15 +159,15 @@ export type PlaceholderStruct = {
   flags: number;
 };
 
-export type IndividualArugmentMapping = {
-  functionCallArgumentType: number;
-  callingFunctionArg: PlaceholderStruct;
-};
+export type IndividualArgumentMapping = {
+  functionCallArgumentType: number
+  callingFunctionArg: PlaceholderStruct
+}
 
 export type ForeignCallArgumentMappings = {
-  foreignCallIndex: number;
-  mappings: IndividualArugmentMapping[];
-};
+  foreignCallIndex: number
+  mappings: IndividualArgumentMapping[]
+}
 
 export type FunctionArgument = {
   name: string;

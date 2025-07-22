@@ -56,7 +56,7 @@ export const getRulesErrorMessages = (errors: RulesError[]): string => {
 }
 
 
-const ruleValidator = z.object({
+export const ruleValidator = z.object({
   condition: z.string(),
   positiveEffects: z.array(z.string()),
   negativeEffects: z.array(z.string()),

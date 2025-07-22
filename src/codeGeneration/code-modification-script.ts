@@ -128,24 +128,3 @@ export function policyModifierGeneration(configPath: string, outputFile: string,
   console.log('Policy processing complete!');
 }
 
-/**
- * Command-line entry point
- */
-if (require.main === module) {
-  // Parse command line arguments
-  const args = process.argv.slice(3);
-  console.log(`Arguments received: ${args.join(', ')}`);
-
-  if (args.length < 3) {
-    console.error('Usage: node codeModificationScript.js <config-path> < > <file-path-1> [file-path-2] ...');
-    process.exit(1);
-  }
-
-  const configPath = args[0];
-  const outputFile = args[1]
-  const filePaths = args.slice(2); // All remaining arguments are file paths
-
-  policyModifierGeneration(configPath, outputFile, filePaths);
-
-}
-
