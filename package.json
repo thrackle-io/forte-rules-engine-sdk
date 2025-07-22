@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@types/diff": "^7.0.2",
-    "@types/node": "^22.15.17",
+    "@types/node": "^24.1.0",
     "tsx": "^4.20.3",
     "typedoc": "^0.26.5",
     "typedoc-plugin-frontmatter": "1.0.0",
