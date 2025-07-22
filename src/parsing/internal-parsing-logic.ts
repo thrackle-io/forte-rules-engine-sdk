@@ -345,7 +345,7 @@ function convertASTToInstructionSet(
             acc.instructionSet.push(...acc.mem.splice(acc.mem.length - 2, 2));
           }
           if (truMatchArray.includes(split.trim())) {
-
+            // this asumes the update operator is at index 0 and the tracker name is at index 1
             if (expression[1].includes("|")) {
               acc.instructionSet.push("TRUM");
             } else {
