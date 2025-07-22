@@ -159,15 +159,7 @@ function convertASTToInstructionSet(
   placeHolders: PlaceholderStruct[],
   indexMap: trackerIndexNameMapping[]
 ): ASTAccumulator {
-  // If it's a number add it directly to the instruction set and store its memory location in mem
-  if (typeof expression == "number" || typeof expression == "bigint") {
-    acc.instructionSet.push("N");
-    acc.instructionSet.push(BigInt(expression));
-    acc.mem.push(acc.iterator.value);
-    acc.iterator.value += 1;
-    // If it's an array with a string as the first index, recursively run starting at the next index
-    // Then add the the string and the two memory addresses generated from the recursive run to the instruction set
-  } else if (typeof expression[0] == "string") {
+  if (typeof expression[0] == "string") {
     var foundMatch = false;
     var plhIndex = 0;
     var searchExpressions = [];
@@ -176,6 +168,7 @@ function convertASTToInstructionSet(
       searchExpressions.push(expression[0].split(" | ")[0]);
       split = expression[0].split(" | ")[1];
     }
+
     searchExpressions.push(split);
     var expCount = 0;
     for (var expr of searchExpressions) {
@@ -289,6 +282,7 @@ function convertASTToInstructionSet(
             }
 
             var sliced = expression.slice(1);
+            console.log("sliced: ", sliced);
             acc.mem.push(acc.iterator.value);
             acc.iterator.value += 1;
             convertASTToInstructionSet(
@@ -351,7 +345,12 @@ function convertASTToInstructionSet(
             acc.instructionSet.push(...acc.mem.splice(acc.mem.length - 2, 2));
           }
           if (truMatchArray.includes(split.trim())) {
-            acc.instructionSet.push("TRU");
+
+            if (expression[1].includes("|")) {
+              acc.instructionSet.push("TRUM");
+            } else {
+              acc.instructionSet.push("TRU");
+            }
             acc.instructionSet.push(truIndex);
             acc.instructionSet.push(acc.iterator.value);
             // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates

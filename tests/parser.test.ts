@@ -2459,19 +2459,17 @@ test("Evaluates a simple effect involving a mapped tracker update (TRUM))", () =
   var expectedArray = ["PLH", 0, "N", 1n, "-", 0, 1, "TRUM", 4, 2, 0];
 
   var ruleStringA = `{
-  "condition": " value > 5 ",
+  "condition": "value > 5 ",
   "positiveEffects": [" TRU:testOne(to) -= 1 "],
   "negativeEffects": [],
   "callingFunction": "addValue"
   }`;
 
-  var str =
-    "value > 5  --> TRU:testOne -= value --> addValue(uint256 value, string info, address addr)";
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
-    [{ id: 4, name: "testOne", type: 0 }],
+    [{ id: 1, name: "testOne", type: 3 }],
     [],
-    "uint256 value, string info, address addr",
+    "uint256 value, address to",
     [],
     []
   );

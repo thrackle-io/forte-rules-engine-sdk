@@ -128,7 +128,7 @@ export function parseRuleSyntax(
       effectNamesInternal,
       indexMap
     );
-    effectCondition = effectTrCondition;
+    syntax.positiveEffects[effectP] = effectTrCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
 
     effectNamesMega.push(effectNamesInternal);
