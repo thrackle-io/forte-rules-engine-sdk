@@ -11,6 +11,8 @@ import { RulesError } from "../src/modules/types";
 import { safeParse } from "zod/v4/core";
 
 const ruleJSON = `{
+        "Name": "Rule A",
+        "Description": "Rule A Description",
 				"condition": "3 + 4 > 5 AND (1 == 1 AND 2 == 2)",
 				"positiveEffects": ["revert"],
 				"negativeEffects": [],
@@ -35,6 +37,7 @@ const trackerJSON = `{
 var policyJSON = `
     {
     "Policy": "Test Policy",
+    "Description": "Test Policy Description",
     "PolicyType": "open",
     "CallingFunctions": [
       {
@@ -63,6 +66,8 @@ var policyJSON = `
 	"MappedTrackers": [],
     "Rules": [
         {
+            "Name": "Rule A",
+            "Description": "Rule A Description",
             "condition": "value > 500",
             "positiveEffects": ["emit Success"],
             "negativeEffects": ["revert()"],
@@ -87,17 +92,23 @@ test("Can catch all missing required fields in rule JSON", () => {
   if (isLeft(parsedRule)) {
     const errors = unwrapEither(parsedRule);
 
-    expect(errors.length).toEqual(4);
+    expect(errors.length).toEqual(6);
     expect(errors[0].message).toEqual(
-      "Invalid input: expected string, received undefined: Field condition"
+      "Invalid input: expected string, received undefined: Field Name"
     );
     expect(errors[1].message).toEqual(
-      "Invalid input: expected array, received undefined: Field positiveEffects"
+      "Invalid input: expected string, received undefined: Field Description"
     );
     expect(errors[2].message).toEqual(
-      "Invalid input: expected array, received undefined: Field negativeEffects"
+      "Invalid input: expected string, received undefined: Field condition"
     );
     expect(errors[3].message).toEqual(
+      "Invalid input: expected array, received undefined: Field positiveEffects"
+    );
+    expect(errors[4].message).toEqual(
+      "Invalid input: expected array, received undefined: Field negativeEffects"
+    );
+    expect(errors[5].message).toEqual(
       "Invalid input: expected string, received undefined: Field callingFunction"
     );
   }
@@ -105,6 +116,8 @@ test("Can catch all missing required fields in rule JSON", () => {
 
 test("Can catch all wrong input types for fields in rule JSON", () => {
   const invalidJSON = `{
+        "Name": "Rule A",
+        "Description": "Rule A Description",
 				"condition": 1,
 				"positiveEffects": "foo",
 				"negativeEffects": "bar",
@@ -367,23 +380,26 @@ test("Can catch all missing required fields in policy JSON", () => {
   if (isLeft(parsedPolicy)) {
     const errors = unwrapEither(parsedPolicy);
 
-    expect(errors.length).toEqual(7);
+    expect(errors.length).toEqual(8);
     expect(errors[0].message).toEqual(
       "Invalid input: expected string, received undefined: Field Policy"
     );
     expect(errors[1].message).toEqual(
-      "Invalid input: expected string, received undefined: Field PolicyType"
+      "Invalid input: expected string, received undefined: Field Description"
     );
     expect(errors[2].message).toEqual(
-      "Invalid input: expected array, received undefined: Field CallingFunctions"
+      "Invalid input: expected string, received undefined: Field PolicyType"
     );
     expect(errors[3].message).toEqual(
-      "Invalid input: expected array, received undefined: Field ForeignCalls"
+      "Invalid input: expected array, received undefined: Field CallingFunctions"
     );
     expect(errors[4].message).toEqual(
+      "Invalid input: expected array, received undefined: Field ForeignCalls"
+    );
+    expect(errors[5].message).toEqual(
       "Invalid input: expected array, received undefined: Field Trackers"
     );
-    expect(errors[6].message).toEqual(
+    expect(errors[7].message).toEqual(
       "Invalid input: expected array, received undefined: Field Rules"
     );
   }
@@ -393,6 +409,7 @@ test("Can catch all wrong inputs for fields in policy JSON", () => {
   const invalidJSON = `
 		{
 		"Policy": 1,
+    "Description": "Test",
 		"PolicyType": 1,
 		"CallingFunctions": "mop",
 		"ForeignCalls": "foo",

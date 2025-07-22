@@ -4,6 +4,7 @@ import { toFunctionSelector, Address, getAddress } from "viem";
 
 import {
   Config,
+  readContract,
   simulateContract,
   waitForTransactionReceipt,
   writeContract,
@@ -26,6 +27,8 @@ import {
   RulesEngineRulesContract,
   MappedTrackerDefinition,
   RulesEngineForeignCallContract,
+  PolicyMetadataStruct,
+  Maybe,
 } from "./types";
 import {
   createForeignCall,
@@ -101,28 +104,29 @@ export const createPolicy = async (
   let rulesDoubleMapping = [];
   let callingFunctionSelectors = [];
   let callingFunctionMappings: hexToFunctionString[] = [];
-
-  const addPolicy = await simulateContract(config, {
-    address: rulesEnginePolicyContract.address,
-    abi: rulesEnginePolicyContract.abi,
-    functionName: "createPolicy",
-    args: [1],
-  });
-  const returnHash = await writeContract(config, {
-    ...addPolicy.request,
-    account: config.getClient().account,
-  });
-  const transactionReceipt = await waitForTransactionReceipt(config, {
-    hash: returnHash,
-  });
-
-  let policyId: number = addPolicy.result;
+  var policyId = -1;
   if (policySyntax !== undefined) {
     const validatedPolicyJSON = validatePolicyJSON(policySyntax);
     if (isLeft(validatedPolicyJSON)) {
       throw new Error(getRulesErrorMessages(unwrapEither(validatedPolicyJSON)));
     }
     const policyJSON = unwrapEither(validatedPolicyJSON);
+
+    const addPolicy = await simulateContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "createPolicy",
+      args: [1, policyJSON.Policy, policyJSON.Description],
+    });
+    const returnHash = await writeContract(config, {
+      ...addPolicy.request,
+      account: config.getClient().account,
+    });
+    const transactionReceipt = await waitForTransactionReceipt(config, {
+      hash: returnHash,
+    });
+
+    policyId = addPolicy.result;
 
     for (var callingFunctionJSON of policyJSON.CallingFunctions) {
       var callingFunction = callingFunctionJSON.functionSignature;
@@ -266,7 +270,9 @@ export const createPolicy = async (
       policyId,
       callingFunctionSelectors,
       callingFunctionIds,
-      rulesDoubleMapping
+      rulesDoubleMapping,
+      policyJSON.Policy,
+      policyJSON.Description
     );
   }
   return { policyId };
@@ -289,7 +295,9 @@ export const updatePolicy = async (
   policyId: number,
   signatures: any[],
   ids: number[],
-  ruleIds: any[]
+  ruleIds: any[],
+  policyName: string,
+  policyDescription: string
 ): Promise<number> => {
   var updatePolicy;
   while (true) {
@@ -298,7 +306,15 @@ export const updatePolicy = async (
         address: rulesEnginePolicyContract.address,
         abi: rulesEnginePolicyContract.abi,
         functionName: "updatePolicy",
-        args: [policyId, signatures, ids, ruleIds, 1],
+        args: [
+          policyId,
+          signatures,
+          ids,
+          ruleIds,
+          1,
+          policyName,
+          policyDescription,
+        ],
       });
       break;
     } catch (error) {
@@ -346,7 +362,6 @@ export const setPolicies = async (
       });
       break;
     } catch (error) {
-      console.log(error);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -591,6 +606,38 @@ export const getPolicy = async (
     return "";
   }
 };
+
+/**
+ * Retrieves the metadata for a policy from the Rules Engine Policy Contract based on the provided policy ID.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEnginePolicyContract - The contract instance containing the address and ABI for interaction.
+ * @param policyId - The ID of the policy.
+ * @returns A promise that resolves to the policy metadata result if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
+export const getPolicyMetadata = async (
+  config: Config,
+  rulesEnginePolicyContract: RulesEnginePolicyContract,
+  policyId: number
+): Promise<Maybe<PolicyMetadataStruct>> => {
+  try {
+    const getMeta = await readContract(config, {
+      address: rulesEnginePolicyContract.address,
+      abi: rulesEnginePolicyContract.abi,
+      functionName: "getPolicyMetadata",
+      args: [policyId],
+    });
+
+    let ruleResult = getMeta as PolicyMetadataStruct;
+    return ruleResult;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 /**
  * Checks if a policy exists in the Rules Engine.
  * @param config - The configuration object containing network and wallet information.

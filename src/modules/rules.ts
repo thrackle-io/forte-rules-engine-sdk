@@ -22,6 +22,7 @@ import {
   RulesEngineComponentContract,
   RulesEnginePolicyContract,
   RulesEngineForeignCallContract,
+  RuleMetadataStruct,
 } from "./types";
 import { getCallingFunctionMetadata } from "./calling-functions";
 import { buildForeignCallList } from "../parsing/parser";
@@ -251,7 +252,7 @@ export const createRule = async (
         address: rulesEngineRulesContract.address,
         abi: rulesEngineRulesContract.abi,
         functionName: "createRule",
-        args: [policyId, rule],
+        args: [policyId, rule, ruleSyntax.Name, ruleSyntax.Description],
       });
       break;
     } catch (err) {
@@ -447,7 +448,7 @@ export const updateRule = async (
         address: rulesEngineRulesContract.address,
         abi: rulesEngineRulesContract.abi,
         functionName: "updateRule",
-        args: [policyId, ruleId, rule],
+        args: [policyId, ruleId, rule, ruleSyntax.Name, ruleSyntax.Description],
       });
       break;
     } catch (err) {
@@ -546,6 +547,39 @@ export const getRule = async (
     }
 
     return ruleS;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+/**
+ * Retrieves the metadata for a rule from the Rules Engine Rules Contract based on the provided policy ID and rule ID.
+ *
+ * @param config - The configuration object containing network and wallet information.
+ * @param rulesEngineRulesContract - The contract instance containing the address and ABI for interaction.
+ * @param policyId - The ID of the policy associated with the rule.
+ * @param ruleId - The ID of the rule to retrieve.
+ * @returns A promise that resolves to the rule metadata result if successful, or `null` if an error occurs.
+ *
+ * @throws Will log an error to the console if the contract interaction fails.
+ */
+export const getRuleMetadata = async (
+  config: Config,
+  rulesEngineRulesContract: RulesEngineRulesContract,
+  policyId: number,
+  ruleId: number
+): Promise<Maybe<RuleMetadataStruct>> => {
+  try {
+    const getMeta = await readContract(config, {
+      address: rulesEngineRulesContract.address,
+      abi: rulesEngineRulesContract.abi,
+      functionName: "getRuleMetadata",
+      args: [policyId, ruleId],
+    });
+
+    let ruleResult = getMeta as RuleMetadataStruct;
+    return ruleResult;
   } catch (error) {
     console.error(error);
     return null;
