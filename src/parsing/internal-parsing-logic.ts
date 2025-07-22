@@ -170,8 +170,20 @@ function convertASTToInstructionSet(
     }
 
     searchExpressions.push(split);
+    if (searchExpressions.length > 1) {
+      console.log("searchExpressions", searchExpressions);
+      console.log("split", split);
+    }
     var expCount = 0;
     for (var expr of searchExpressions) {
+      if (searchExpressions.length > 1) {
+        console.log("LOOPIN", expr);
+        if (expr.includes("TRU:")) {
+          acc.mem.push(acc.iterator.value);
+          acc.iterator.value += 1;
+          continue;
+        }
+      }
       for (var parameter of parameterNames) {
         if (parameter.name == expr.trim()) {
           foundMatch = true;
@@ -186,7 +198,6 @@ function convertASTToInstructionSet(
                 place.typeSpecificIndex == parameter.tIndex &&
                 place.flags == 0x02
               ) {
-
                 // if searchExpressions as length more than 1
                 // it is a mapped tracker else it is a standard tracker
                 if (searchExpressions.length > 1) {
@@ -266,14 +277,39 @@ function convertASTToInstructionSet(
         } else if (split.trim().includes("TRU:")) {
           foundMatch = true;
           var trackerName = split.trim().replace("TRU:", "TR:");
+          if (trackerName.includes("|")) {
+            console.log("woah", trackerName);
+          } else {
+            console.log("noah", trackerName);
+          }
           var values = trackerName.split(" ");
           var comparison = values[0];
           if (values.length > 1) {
             comparison = values[1];
           }
+
+          if (searchExpressions.length > 1) {
+            console.log("GOT ONE BABY");
+            console.log(expr);
+            if (comparison == parameter.name) {
+              console.log("GOT TWO BABY");
+            }
+          } else {
+            console.log("OH NO");
+          }
+
           if (comparison == parameter.name) {
-            acc.instructionSet.push("PLH");
-            acc.instructionSet.push(plhIndex);
+            if (searchExpressions.length > 1) {
+              acc.instructionSet.push("PLH");
+              acc.instructionSet.push(plhIndex);
+              plhIndex += 1;
+              acc.instructionSet.push("PLHM");
+              acc.instructionSet.push(plhIndex);
+              acc.instructionSet.push(plhIndex - 1);
+            } else {
+              acc.instructionSet.push("PLH");
+              acc.instructionSet.push(plhIndex);
+            }
 
             for (var ind of indexMap) {
               if (parameter.name == "TR:" + ind.name) {
@@ -346,6 +382,8 @@ function convertASTToInstructionSet(
           }
           if (truMatchArray.includes(split.trim())) {
             // this asumes the update operator is at index 0 and the tracker name is at index 1
+            console.log("split!", split);
+            console.log(expression[1]);
             if (expression[1].includes("|")) {
               acc.instructionSet.push("TRUM");
             } else {
