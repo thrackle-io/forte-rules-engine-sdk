@@ -2598,12 +2598,12 @@ test("Evaluates another complex effect involving a mapped tracker update (TRUM))
 test("Evaluates a third complex effect involving a mapped tracker update (TRUM))", () => {
   var expectedArray = [
     "PLH",
-    1,
+    0,
     "PLHM",
     2,
     0,
     "PLH",
-    0,
+    1,
     "-",
     1,
     2,
@@ -2621,10 +2621,6 @@ test("Evaluates a third complex effect involving a mapped tracker update (TRUM))
   "callingFunction": "addValue"
   }`;
 
-  // id: number;
-  // name: string;
-  // type: number;
-
   var retVal = parseRuleSyntax(
     JSON.parse(ruleStringA),
     [
@@ -2635,17 +2631,14 @@ test("Evaluates a third complex effect involving a mapped tracker update (TRUM))
       {
         id: 1,
         name: "foreignCallEx",
-        type: 3,
+        type: 0,
       },
     ],
     "uint256 value, address to",
     [],
     ["FC:foreignCallEx"]
   );
-  // expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
-  // expect(retVal.effectPlaceHolders.length).toEqual(3);
-  console.log(retVal.positiveEffects[0]);
-  console.log(retVal.effectPlaceHolders);
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
 });
 
 test("Creates a simple foreign call with a boolean return", () => {

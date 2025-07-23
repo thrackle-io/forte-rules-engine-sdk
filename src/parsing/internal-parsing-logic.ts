@@ -173,6 +173,7 @@ function convertASTToInstructionSet(
     var expCount = 0;
     var previousIndex = -1;
     for (var expr of searchExpressions) {
+      plhIndex = 0;
       for (var parameter of parameterNames) {
         if (parameter.name == expr.trim()) {
           foundMatch = true;
