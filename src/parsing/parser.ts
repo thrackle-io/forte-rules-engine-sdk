@@ -112,8 +112,9 @@ export function parseRuleSyntax(
   ruleComponents = [...ruleComponents, ...gvComponents];
   var placeHolders = buildPlaceholderList(ruleComponents);
   for (var effectP in syntax.positiveEffects) {
-    var effectNamesInternal: any[] = [];
-
+    var effectNamesInternal: RuleComponent[] = [
+      ...parseFunctionArguments(encodedValues, syntax.positiveEffects[effectP]),
+    ];
     let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.positiveEffects[effectP],
       effectNamesInternal,
@@ -134,7 +135,9 @@ export function parseRuleSyntax(
     effectNamesMega.push(effectNamesInternal);
   }
   for (var effectN in syntax.negativeEffects) {
-    var effectNamesInternal: any[] = [];
+    var effectNamesInternal: RuleComponent[] = [
+      ...parseFunctionArguments(encodedValues, syntax.negativeEffects[effectN]),
+    ];
 
     let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.negativeEffects[effectN],

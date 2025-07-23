@@ -1,7 +1,13 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { getAddress, toFunctionSelector, toHex } from "viem";
 import { expect, test, describe, beforeAll, beforeEach } from "vitest";
-import { getConfig, DiamondAddress, connectConfig, createTestConfig, foundryAccountAddress } from '../src/config'
+import {
+  getConfig,
+  DiamondAddress,
+  connectConfig,
+  createTestConfig,
+  foundryAccountAddress,
+} from "../src/config";
 import {
   getRulesEnginePolicyContract,
   getRulesEngineComponentContract,

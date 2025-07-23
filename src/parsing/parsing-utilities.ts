@@ -108,7 +108,9 @@ export function parseTrackers(
   const truMappedRegex = /TRU:[a-zA-Z]+\([^()]+\)/g;
   const mappedMatches = condition.match(trMappedRegex) || [];
   const mappedUpdateMatches = condition.match(truMappedRegex) || [];
-  const mappedMatchesSet = [...new Set([...mappedMatches, ...mappedUpdateMatches])];
+  const mappedMatchesSet = [
+    ...new Set([...mappedMatches, ...mappedUpdateMatches]),
+  ];
 
   // replace mapped tracker parens syntx `trackerName(key) with pipe syntax `trackerName | key`
   const trCondition = mappedMatchesSet.reduce((acc, match) => {
@@ -116,10 +118,7 @@ export function parseTrackers(
 
     initialSplit = initialSplit.substring(0, initialSplit.length - 1);
 
-    return acc.replace(
-      match,
-      initialSplit + " | " + match.split("(")[0]
-    );
+    return acc.replace(match, initialSplit + " | " + match.split("(")[0]);
   }, condition);
 
   for (var match of matches) {
@@ -149,8 +148,7 @@ export function parseTrackers(
     });
   }
 
-  const updateMatchesSet = [...new Set([...condition.match(truRegex) || []])];
-
+  const updateMatchesSet = [...new Set([...(condition.match(truRegex) || [])])];
 
   for (var match of updateMatchesSet) {
     var index = 0;

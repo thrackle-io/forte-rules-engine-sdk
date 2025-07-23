@@ -29,7 +29,7 @@ import { ConsoleLogger } from "typedoc/dist/lib/utils";
  */
 
 var truIndex = -1;
-
+var truKey = -1;
 // --------------------------------------------------------------------------------------------------
 // Main Parsing Logic:
 // Converting the Human Readable Expression syntax to the Executable Instruction set syntax takes
@@ -170,20 +170,9 @@ function convertASTToInstructionSet(
     }
 
     searchExpressions.push(split);
-    if (searchExpressions.length > 1) {
-      console.log("searchExpressions", searchExpressions);
-      console.log("split", split);
-    }
     var expCount = 0;
+    var previousIndex = -1;
     for (var expr of searchExpressions) {
-      if (searchExpressions.length > 1) {
-        console.log("LOOPIN", expr);
-        if (expr.includes("TRU:")) {
-          acc.mem.push(acc.iterator.value);
-          acc.iterator.value += 1;
-          continue;
-        }
-      }
       for (var parameter of parameterNames) {
         if (parameter.name == expr.trim()) {
           foundMatch = true;
@@ -203,10 +192,11 @@ function convertASTToInstructionSet(
                 if (searchExpressions.length > 1) {
                   acc.instructionSet.push("PLHM");
                   acc.instructionSet.push(plhIter);
-                  acc.instructionSet.push(plhIter - 1);
+                  acc.instructionSet.push(previousIndex);
                 } else {
                   acc.instructionSet.push("PLH");
                   acc.instructionSet.push(plhIter);
+                  previousIndex = acc.iterator.value;
                 }
                 copyFound = true;
                 break;
@@ -219,6 +209,7 @@ function convertASTToInstructionSet(
               ) {
                 acc.instructionSet.push("PLH");
                 acc.instructionSet.push(plhIter);
+                previousIndex = acc.iterator.value;
                 copyFound = true;
                 break;
               }
@@ -228,6 +219,7 @@ function convertASTToInstructionSet(
           if (!copyFound) {
             acc.instructionSet.push("PLH");
             acc.instructionSet.push(plhIndex);
+            previousIndex = acc.iterator.value;
           }
           expCount += 1;
           acc.mem.push(acc.iterator.value);
@@ -250,6 +242,7 @@ function convertASTToInstructionSet(
             foundMatch = true;
             acc.instructionSet.push("PLH");
             acc.instructionSet.push(plhIndex);
+            previousIndex = acc.iterator.value;
             var found = false;
             for (var pHold of placeHolders) {
               if (
@@ -274,51 +267,38 @@ function convertASTToInstructionSet(
           }
 
           // Check if the expression is a tracker update
-        } else if (split.trim().includes("TRU:")) {
+        } else if (expr.trim().includes("TRU:")) {
           foundMatch = true;
           var trackerName = split.trim().replace("TRU:", "TR:");
-          if (trackerName.includes("|")) {
-            console.log("woah", trackerName);
-          } else {
-            console.log("noah", trackerName);
-          }
           var values = trackerName.split(" ");
           var comparison = values[0];
           if (values.length > 1) {
             comparison = values[1];
           }
 
-          if (searchExpressions.length > 1) {
-            console.log("GOT ONE BABY");
-            console.log(expr);
-            if (comparison == parameter.name) {
-              console.log("GOT TWO BABY");
-            }
-          } else {
-            console.log("OH NO");
-          }
-
           if (comparison == parameter.name) {
             if (searchExpressions.length > 1) {
-              acc.instructionSet.push("PLH");
-              acc.instructionSet.push(plhIndex);
-              plhIndex += 1;
+              //   acc.instructionSet.push("PLH");
+              //   acc.instructionSet.push(plhIndex);
+              //   plhIndex += 1;
               acc.instructionSet.push("PLHM");
               acc.instructionSet.push(plhIndex);
-              acc.instructionSet.push(plhIndex - 1);
+              acc.instructionSet.push(previousIndex);
+              acc.mem.pop();
             } else {
               acc.instructionSet.push("PLH");
               acc.instructionSet.push(plhIndex);
+              previousIndex = acc.iterator.value;
             }
 
             for (var ind of indexMap) {
               if (parameter.name == "TR:" + ind.name) {
                 truIndex = ind.id;
+                truKey = previousIndex;
               }
             }
 
             var sliced = expression.slice(1);
-            console.log("sliced: ", sliced);
             acc.mem.push(acc.iterator.value);
             acc.iterator.value += 1;
             convertASTToInstructionSet(
@@ -333,7 +313,12 @@ function convertASTToInstructionSet(
           }
           // The current parameter does not match the expression
         } else {
-          plhIndex += 1;
+          if (
+            split.replace("TRU:", "TR:").trim() != parameter.name &&
+            !split.includes("TRU:")
+          ) {
+            plhIndex += 1;
+          }
         }
       }
       if (!foundMatch) {
@@ -382,8 +367,6 @@ function convertASTToInstructionSet(
           }
           if (truMatchArray.includes(split.trim())) {
             // this asumes the update operator is at index 0 and the tracker name is at index 1
-            console.log("split!", split);
-            console.log(expression[1]);
             if (expression[1].includes("|")) {
               acc.instructionSet.push("TRUM");
             } else {
@@ -391,8 +374,15 @@ function convertASTToInstructionSet(
             }
             acc.instructionSet.push(truIndex);
             acc.instructionSet.push(acc.iterator.value);
+            //TODO: if TRUM add key here save it off like truIndex
+            if (expression[1].includes("|")) {
+              acc.instructionSet.push(truKey);
+            }
             // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates
             acc.instructionSet.push(0);
+
+            acc.iterator.value += 1;
+            acc.mem.push(acc.iterator.value);
           } else {
             acc.mem.push(acc.iterator.value);
           }
