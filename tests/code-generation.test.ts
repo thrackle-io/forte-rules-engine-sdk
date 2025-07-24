@@ -6,9 +6,11 @@ import * as fs from "fs";
 import { policyModifierGeneration } from "../src/codeGeneration/code-modification-script";
 
 test("Code Modification test)", () => {
-
-  policyModifierGeneration("./tests/testPolicy.json", "./tests/testOutput/TestContract.sol", []);
-
+  policyModifierGeneration(
+    "./tests/testPolicy.json",
+    "./tests/testOutput/TestContract.sol",
+    []
+  );
 
   fs.readFile("tests/testOutput/TestContract.sol", "utf-8", (err, data) => {
     if (err) {
@@ -22,10 +24,10 @@ test("Code Modification test)", () => {
 });
 
 test("Code Generation test)", () => {
-
   const policyJSON = `
         {
-        "Policy": "Test Policy", 
+        "Policy": "Test Policy",
+        "Description": "Test Policy Description",
         "PolicyType": "open",
         "CallingFunctions": [
             {
@@ -54,6 +56,8 @@ test("Code Generation test)", () => {
         "MappedTrackers": [],
         "Rules": [
             {
+                "Name": "Rule A",
+                "Description": "Rule A Description",
                 "condition": "value > 500",
                 "positiveEffects": ["emit Success"],
                 "negativeEffects": ["revert()"],

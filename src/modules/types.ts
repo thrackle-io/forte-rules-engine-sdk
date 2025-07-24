@@ -121,6 +121,16 @@ export type RuleStruct = RuleBase & {
   negEffects: any[];
 };
 
+export type RuleMetadataStruct = {
+  ruleName: string;
+  ruleDescription: string;
+};
+
+export type PolicyMetadataStruct = {
+  policyName: string;
+  policyDescription: string;
+};
+
 export type ForeignCallOnChain = {
   set: boolean;
   foreignCallAddress: string;

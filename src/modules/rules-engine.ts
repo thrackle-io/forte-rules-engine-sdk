@@ -37,6 +37,8 @@ import {
   RulesEngineAdminABI,
   RulesEngineForeignCallContract,
   RulesEngineForeignCallABI,
+  RuleMetadataStruct,
+  PolicyMetadataStruct,
 } from "./types";
 import {
   createPolicy as createPolicyInternal,
@@ -55,6 +57,7 @@ import {
   removeClosedPolicySubscriber as removeClosedPolicySubscriberInternal,
   cementPolicy as cementPolicyInternal,
   isCementedPolicy as isCementedPolicyInternal,
+  getPolicyMetadata as getPolicyMetadataInternal,
 } from "./policy";
 
 import {
@@ -63,6 +66,7 @@ import {
   deleteRule as deleteRuleInternal,
   getRule as getRuleInternal,
   getAllRules as getAllRulesInternal,
+  getRuleMetadata as getRuleMetadataInternal,
 } from "./rules";
 
 import {
@@ -279,6 +283,24 @@ export class RulesEngine {
   }
 
   /**
+   * Retrieves the metadata for a policy from the Rules Engine Policy Contract based on the provided policy ID.
+   *
+   * @param policyId - The ID of the policy.
+   * @returns A promise that resolves to the policy metadata result if successful, or `null` if an error occurs.
+   *
+   * @throws Will log an error to the console if the contract interaction fails.
+   */
+  getPolicyMetadata = async (
+    policyId: number
+  ): Promise<Maybe<PolicyMetadataStruct>> => {
+    return getPolicyMetadataInternal(
+      config,
+      this.rulesEnginePolicyContract,
+      policyId
+    );
+  };
+
+  /**
    * Retrieves the IDs of all of the policies that have been applied to a contract address.
    * @param address - The ID of the policy to check.
    * @returns array of all of the policy ids applied to the contract
@@ -476,6 +498,27 @@ export class RulesEngine {
    */
   getRule(policyId: number, ruleId: number): Promise<Maybe<RuleStruct>> {
     return getRuleInternal(
+      config,
+      this.rulesEngineRulesContract,
+      policyId,
+      ruleId
+    );
+  }
+
+  /**
+   * Retrieves the metadata for a rule from the Rules Engine Rules Contract based on the provided policy ID and rule ID.
+   *
+   * @param policyId - The ID of the policy associated with the rule.
+   * @param ruleId - The ID of the rule to retrieve.
+   * @returns A promise that resolves to the rule metadata result if successful, or `null` if an error occurs.
+   *
+   * @throws Will log an error to the console if the contract interaction fails.
+   */
+  getRuleMetadata(
+    policyId: number,
+    ruleId: number
+  ): Promise<Maybe<RuleMetadataStruct>> {
+    return getRuleMetadataInternal(
       config,
       this.rulesEngineRulesContract,
       policyId,
