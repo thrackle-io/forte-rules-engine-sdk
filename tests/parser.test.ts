@@ -2641,6 +2641,52 @@ test("Evaluates a third complex effect involving a mapped tracker update (TRUM))
   expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
 });
 
+test("Evaluates a fourth complex effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = [
+    "PLH",
+    2,
+    "PLHM",
+    1,
+    0,
+    "N",
+    1n,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+  ];
+
+  var ruleStringA = `{
+  "condition": " 1 == 1",
+  "positiveEffects": [" TRU:testOne(GV:BLOCK_NUMBER) -= 1"],
+  "negativeEffects": [],
+  "callingFunction": "addValue"
+  }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "testOne", type: 3 },
+      { id: 2, name: "testTwo", type: 3 },
+    ],
+    [
+      {
+        id: 1,
+        name: "foreignCallEx",
+        type: 0,
+      },
+    ],
+    "uint256 value, address to",
+    [],
+    ["FC:foreignCallEx"]
+  );
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+});
+
 test("Creates a simple foreign call with a boolean return", () => {
   var str = `{
   "name": "Simple Foreign Call",

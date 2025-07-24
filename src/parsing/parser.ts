@@ -129,8 +129,12 @@ export function parseRuleSyntax(
       effectNamesInternal,
       indexMap
     );
+
     syntax.positiveEffects[effectP] = effectTrCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
+
+    const gvEComponents = parseGlobalVariables(syntax.positiveEffects[effectP]);
+    effectNamesInternal = [...effectNamesInternal, ...gvEComponents];
 
     effectNamesMega.push(effectNamesInternal);
   }
@@ -155,6 +159,10 @@ export function parseRuleSyntax(
     );
     effectCondition = effectTrackerCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
+
+    const gvEComponents = parseGlobalVariables(effectCondition);
+    effectNamesInternal = [...effectNamesInternal, ...gvEComponents];
+
     effectNamesMega.push(effectNamesInternal);
   }
   effectNames = cleanseForeignCallLists(effectNamesMega);
