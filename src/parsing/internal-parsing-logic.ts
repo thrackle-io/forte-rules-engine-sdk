@@ -192,7 +192,7 @@ function convertASTToInstructionSet(
                 // it is a mapped tracker else it is a standard tracker
                 if (searchExpressions.length > 1) {
                   acc.instructionSet.push("PLHM");
-                  acc.instructionSet.push(plhIter);
+                  acc.instructionSet.push(place.typeSpecificIndex);
                   acc.instructionSet.push(previousIndex);
                 } else {
                   acc.instructionSet.push("PLH");
@@ -279,11 +279,8 @@ function convertASTToInstructionSet(
 
           if (comparison == parameter.name) {
             if (searchExpressions.length > 1) {
-              //   acc.instructionSet.push("PLH");
-              //   acc.instructionSet.push(plhIndex);
-              //   plhIndex += 1;
               acc.instructionSet.push("PLHM");
-              acc.instructionSet.push(plhIndex);
+              acc.instructionSet.push(parameter.tIndex);
               acc.instructionSet.push(previousIndex);
               acc.mem.pop();
             } else {

@@ -157,10 +157,10 @@ export function parseRuleSyntax(
       effectNamesInternal,
       indexMap
     );
-    effectCondition = effectTrackerCondition;
+    syntax.negativeEffects[effectN] = effectTrackerCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
 
-    const gvEComponents = parseGlobalVariables(effectCondition);
+    const gvEComponents = parseGlobalVariables(syntax.negativeEffects[effectN]);
     effectNamesInternal = [...effectNamesInternal, ...gvEComponents];
 
     effectNamesMega.push(effectNamesInternal);

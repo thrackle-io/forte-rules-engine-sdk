@@ -2567,7 +2567,7 @@ test("Evaluates another complex effect involving a mapped tracker update (TRUM))
     1,
     2,
     "TRUM",
-    1,
+    2,
     3,
     0,
     0,
@@ -2575,7 +2575,7 @@ test("Evaluates another complex effect involving a mapped tracker update (TRUM))
 
   var ruleStringA = `{
   "condition": " 1 == 1",
-  "positiveEffects": [" TRU:testOne(to) -= value "],
+  "positiveEffects": [" TRU:testTwo(to) -= value "],
   "negativeEffects": [],
   "callingFunction": "addValue"
   }`;
@@ -2600,7 +2600,7 @@ test("Evaluates a third complex effect involving a mapped tracker update (TRUM))
     "PLH",
     0,
     "PLHM",
-    2,
+    1,
     0,
     "PLH",
     1,
@@ -2662,8 +2662,8 @@ test("Evaluates a fourth complex effect involving a mapped tracker update (TRUM)
 
   var ruleStringA = `{
   "condition": " 1 == 1",
-  "positiveEffects": [" TRU:testOne(GV:BLOCK_NUMBER) -= 1"],
-  "negativeEffects": [],
+  "positiveEffects": [],
+  "negativeEffects": [" TRU:testOne(GV:BLOCK_NUMBER) -= 1"],
   "callingFunction": "addValue"
   }`;
 
@@ -2684,7 +2684,7 @@ test("Evaluates a fourth complex effect involving a mapped tracker update (TRUM)
     [],
     ["FC:foreignCallEx"]
   );
-  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+  expect(retVal.negativeEffects[0].instructionSet).toEqual(expectedArray);
 });
 
 test("Creates a simple foreign call with a boolean return", () => {
