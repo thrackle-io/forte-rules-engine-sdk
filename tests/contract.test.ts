@@ -1,7 +1,13 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { getAddress, toFunctionSelector, toHex } from "viem";
 import { expect, test, describe, beforeAll, beforeEach } from "vitest";
-import { getConfig, DiamondAddress, connectConfig, createTestConfig, foundryAccountAddress } from '../src/config'
+import {
+  getConfig,
+  DiamondAddress,
+  connectConfig,
+  createTestConfig,
+  foundryAccountAddress,
+} from "../src/config";
 import {
   getRulesEnginePolicyContract,
   getRulesEngineComponentContract,
@@ -973,7 +979,6 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
-    console.log(retVal);
     expect(retVal).toEqual(
       '{"Trackers":["testTracker --> string --> 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047465737400000000000000000000000000000000000000000000000000000000"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256"],"Rules":[{"condition":"TR:testTracker > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"callingFunction":"transfer(address to, uint256 value)"}]}'
     );

@@ -244,14 +244,8 @@ export const mappedTrackerValidator = z.object({
   name: z.string().trim(),
   keyType: z.string().trim(),
   valueType: z.string().trim(),
-  initialKeys: z.preprocess(
-    trimPossibleString,
-    z.array(z.discriminatedUnion("type", SupportedValues))
-  ),
-  initialValues: z.preprocess(
-    trimPossibleString,
-    z.array(z.discriminatedUnion("type", SupportedValues))
-  ),
+  initialKeys: z.array(z.string()),
+  initialValues: z.array(z.string()),
 });
 
 /**

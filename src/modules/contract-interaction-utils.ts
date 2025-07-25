@@ -160,7 +160,6 @@ export function buildARuleStruct(
       fcList.push(...buildForeignCallList(eff));
     }
   }
-
   var output = parseRuleSyntax(
     ruleSyntax,
     trackerNameToID,

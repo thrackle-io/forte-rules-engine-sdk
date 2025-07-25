@@ -18,6 +18,7 @@ import {
   validateMappedTrackerJSON,
   validateTrackerJSON,
 } from "./validation";
+import { encodePacked } from "viem";
 
 /**
  * @file Trackers.ts
@@ -56,7 +57,7 @@ export const createMappedTracker = async (
     pType: parsedTracker.valueType,
     mapped: true,
     trackerKeyType: parsedTracker.keyType,
-    trackerValue: 0,
+    trackerValue: encodePacked(["uint256"], [BigInt(0)]),
     trackerIndex: 0,
   };
   var addTR;
@@ -76,7 +77,6 @@ export const createMappedTracker = async (
       });
       break;
     } catch (err) {
-      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -138,7 +138,6 @@ export const createTracker = async (
       });
       break;
     } catch (err) {
-      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }
@@ -201,7 +200,6 @@ export const updateTracker = async (
       });
       break;
     } catch (err) {
-      console.log(err);
       // TODO: Look into replacing this loop/sleep with setTimeout
       await sleep(1000);
     }

@@ -104,6 +104,7 @@ export const createPolicy = async (
   let rulesDoubleMapping = [];
   let callingFunctionSelectors = [];
   let callingFunctionMappings: hexToFunctionString[] = [];
+
   var policyId = -1;
   if (policySyntax !== undefined) {
     const validatedPolicyJSON = validatePolicyJSON(policySyntax);
@@ -156,11 +157,12 @@ export const createPolicy = async (
           policyId,
           [selector],
           [fsId],
-          [[]]
+          [[]],
+          policyJSON.Policy,
+          policyJSON.Description
         );
       }
     }
-
     if (policyJSON.Trackers != null) {
       for (var tracker of policyJSON.Trackers) {
         const parsedTracker = parseTrackerSyntax(tracker);
@@ -179,7 +181,6 @@ export const createPolicy = async (
         trackerIds.push(struc);
       }
     }
-
     if (policyJSON.MappedTrackers != null) {
       for (var mTracker of policyJSON.MappedTrackers) {
         const parsedTracker = parseMappedTrackerSyntax(mTracker);
@@ -197,7 +198,6 @@ export const createPolicy = async (
         trackerIds.push(struc);
       }
     }
-
     if (policyJSON.ForeignCalls != null) {
       for (var foreignCall of policyJSON.ForeignCalls) {
         var encodedValues: string[] = [];
