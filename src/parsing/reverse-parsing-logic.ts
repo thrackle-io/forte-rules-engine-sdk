@@ -42,6 +42,7 @@ export function reverseParseRule(
   placeHolderArray: string[],
   stringReplacements: stringReplacement[]
 ): string {
+  console.log("reverseParseRule called with instructionSet:", instructionSet, placeHolderArray, stringReplacements);
   var currentAction = -1;
   var currentActionIndex = 0;
   var currentMemAddress = 0;
@@ -160,6 +161,11 @@ export function reverseParseRule(
           }
           break;
         case 4:
+          memAddressesMap.push({
+            memAddr: currentMemAddress,
+            value: placeHolderArray[instruction],
+          });
+          currentMemAddress += 1;
           break;
         case 5:
           retVal = arithmeticOperatorReverseInterpretation(
@@ -315,6 +321,57 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
+        case 16:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " != "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 17:
+          for (var memValue of memAddressesMap) {
+            if (memValue.memAddr == instruction) {
+              currentInstructionValues.push(memValue.value);
+            }
+          }
+          console.log("CC values", currentInstructionValues);
+          if (currentActionIndex == 1) {
+            var currentString = "= " + currentInstructionValues[0];
+            memAddressesMap.push({
+              memAddr: currentMemAddress,
+              value: currentString,
+            });
+            retVal = currentString;
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 18:
+          for (var memValue of memAddressesMap) {
+            if (memValue.memAddr == instruction) {
+              currentInstructionValues.push(memValue.value);
+            }
+          }
+          console.log("c values", currentInstructionValues, currentActionIndex, instruction, currentString, memAddressesMap);
+          if (currentActionIndex == 1) {
+            var currentString = "= " + currentInstructionValues[0];
+            memAddressesMap.push({
+              memAddr: currentMemAddress,
+              value: currentString,
+            });
+            retVal = currentString;
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+
         default:
           console.log("unknown instruction");
           break;
@@ -360,6 +417,8 @@ export function convertRuleStructToString(
   mappings: hexToFunctionString[]
 ): RuleJSON {
   var rJSON: RuleJSON = {
+    Name: "",
+    Description: "",
     condition: "",
     positiveEffects: [],
     negativeEffects: [],
