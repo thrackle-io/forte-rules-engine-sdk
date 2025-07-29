@@ -83,14 +83,7 @@ export const createForeignCall = async (
     policyId
   );
   var indexMap: FCNameToID[] = [];
-  var mappedArray: boolean[] = [];
-  for (var tr of trackers) {
-    if (tr.mapped) {
-      mappedArray.push(true);
-    } else {
-      mappedArray.push(false);
-    }
-  }
+  var mappedArray: boolean[] = trackers.map((tracker) => tracker.mapped);
 
   const trackerMetadataCalls = trackers.map((tracker) =>
     getTrackerMetadata(
@@ -103,14 +96,13 @@ export const createForeignCall = async (
   const trackerMetadata = await Promise.all(trackerMetadataCalls);
   const indexMapAdditions: FCNameToID[] = trackerMetadata.map(
     (name: string, index: number) => {
-      return { name: name, id: trackers[index].trackerIndex, type: 0 };
+      return {
+        name: name,
+        id: trackers[index].trackerIndex,
+        type: mappedArray[index] ? 1 : 0,
+      };
     }
   );
-  for (var ind in indexMapAdditions) {
-    if (mappedArray[ind]) {
-      indexMapAdditions[ind].type = 1;
-    }
-  }
 
   indexMap = [...indexMap, ...indexMapAdditions];
 
