@@ -1069,8 +1069,8 @@ describe("Rules Engine Interactions", async () => {
                 "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
                 "function": "testSigTwo(uint256)",
                 "returnType": "uint256",
-                "valuesToPass": "value",
-                "mappedTrackerKeyValues": "",
+                "valuesToPass": "TR:mTrackerOne",
+                "mappedTrackerKeyValues": "to",
                 "callingFunction": "transfer(address to, uint256 value)"
         },{
                 "name": "testSig(address)",
@@ -1089,7 +1089,14 @@ describe("Rules Engine Interactions", async () => {
             "initialValue": "test"
         }
         ],
-        "MappedTrackers": [],
+        "MappedTrackers": [
+        {
+          "name": "mTrackerOne",
+          "keyType": "address",
+          "valueType": "uint256",
+          "initialKeys": ["0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"],
+          "initialValues": ["1"]
+        }],
         "Rules": [
             {
                 "Name": "Rule A",
