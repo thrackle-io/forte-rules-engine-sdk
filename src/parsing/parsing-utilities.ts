@@ -100,77 +100,75 @@ export function parseTrackers(
 ): [string, Tracker[]] {
   const trRegex = /TR:[a-zA-Z]+/g;
   const truRegex = /TRU:[a-zA-Z]+/g;
-  const trMappedRegex = /TR:[a-zA-Z]+\([^()]+\)/g;
-  var matches = condition.match(trRegex);
+
+  const matches = [...new Set(condition.match(trRegex) || [])];
   const trackers: Tracker[] = [];
-  var trCondition = condition;
-  var mappedMatches = condition.match(trMappedRegex);
-  if (mappedMatches != null) {
-    var uniq = [...new Set(mappedMatches)];
-    for (var match of uniq!) {
-      var initialSplit = match.split("(")[1];
-      initialSplit = initialSplit.substring(0, initialSplit.length - 1);
-      trCondition = trCondition.replace(
-        match,
-        initialSplit + " | " + match.split("(")[0]
-      );
-    }
-  }
-  if (matches != null) {
-    var uniq = [...new Set(matches)];
-    for (var match of uniq!) {
-      var type = "address";
-      var index = 0;
-      for (var ind of indexMap) {
-        if ("TR:" + ind.name == match) {
-          index = ind.id;
-          if (ind.type == 0) {
-            type = "address";
-          } else if (ind.type == 1) {
-            type = "string";
-          } else if (ind.type == 3) {
-            type = "bool";
-          } else if (ind.type == 5) {
-            type = "bytes";
-          } else {
-            type = "uint256";
-          }
+
+  const trMappedRegex = /TR:[a-zA-Z]+\([^()]+\)/g;
+  const truMappedRegex = /TRU:[a-zA-Z]+\([^()]+\)/g;
+  const mappedMatches = condition.match(trMappedRegex) || [];
+  const mappedUpdateMatches = condition.match(truMappedRegex) || [];
+  const mappedMatchesSet = [
+    ...new Set([...mappedMatches, ...mappedUpdateMatches]),
+  ];
+
+  // replace mapped tracker parens syntx `trackerName(key) with pipe syntax `trackerName | key`
+  const trCondition = mappedMatchesSet.reduce((acc, match) => {
+    let initialSplit = match.split("(")[1];
+
+    initialSplit = initialSplit.substring(0, initialSplit.length - 1);
+
+    return acc.replace(match, initialSplit + " | " + match.split("(")[0]);
+  }, condition);
+
+  for (var match of matches) {
+    var type = "address";
+    var index = 0;
+    for (var ind of indexMap) {
+      if ("TR:" + ind.name == match) {
+        index = ind.id;
+        if (ind.type == 0) {
+          type = "address";
+        } else if (ind.type == 1) {
+          type = "string";
+        } else if (ind.type == 3) {
+          type = "bool";
+        } else if (ind.type == 5) {
+          type = "bytes";
+        } else {
+          type = "uint256";
         }
       }
-      trackers.push({
-        name: match,
-        tIndex: index,
-        rawType: "tracker",
-        rawTypeTwo: type,
-      });
     }
+    trackers.push({
+      name: match,
+      tIndex: index,
+      rawType: "tracker",
+      rawTypeTwo: type,
+    });
   }
 
-  var matchesUpdate = condition.match(truRegex);
+  const updateMatchesSet = [...new Set([...(condition.match(truRegex) || [])])];
 
-  if (matchesUpdate != null) {
-    var uniq = [...new Set(matchesUpdate)];
-    for (var match of uniq!) {
-      var index = 0;
-      match = match.replace("TRU:", "TR:");
-      for (var ind of indexMap) {
-        if ("TR:" + ind.name == match) {
-          index = ind.id;
-        }
-      }
-      var found = false;
-      for (var name of [...names, ...trackers]) {
-        if (name.name == match) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        trackers.push({ name: match, tIndex: index, rawType: "tracker" });
+  for (var match of updateMatchesSet) {
+    var index = 0;
+    match = match.replace("TRU:", "TR:");
+    for (var ind of indexMap) {
+      if ("TR:" + ind.name == match) {
+        index = ind.id;
       }
     }
+    var found = false;
+    for (var name of [...names, ...trackers]) {
+      if (name.name == match) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      trackers.push({ name: match, tIndex: index, rawType: "tracker" });
+    }
   }
-
   return [trCondition, trackers];
 }
 

@@ -2455,6 +2455,238 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
   expect(retVal.instructionSet).toEqual(expectedArray);
 });
 
+test("Evaluates a simple effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = [
+    "PLH",
+    0,
+    "PLHM",
+    1,
+    0,
+    "N",
+    1n,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+  ];
+
+  var ruleStringA = `{
+  "condition": " 1 == 1",
+  "positiveEffects": [" TRU:testOne(to) -= 1 "],
+  "negativeEffects": [],
+  "callingFunction": "addValue"
+  }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "testOne", type: 3 },
+      { id: 2, name: "testTwo", type: 3 },
+    ],
+    [],
+    "uint256 value, address to",
+    [],
+    []
+  );
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+  expect(retVal.effectPlaceHolders.length).toEqual(2);
+});
+
+test("Evaluates a complex effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = [
+    "PLH",
+    0,
+    "PLHM",
+    1,
+    0,
+    "N",
+    1n,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+    "PLH",
+    0,
+    "PLHM",
+    2,
+    5,
+    "N",
+    1n,
+    "-",
+    6,
+    7,
+    "TRUM",
+    2,
+    8,
+    5,
+    0,
+    "AND",
+    4,
+    9,
+  ];
+
+  var ruleStringA = `{
+  "condition": " 1 == 1",
+  "positiveEffects": [" TRU:testOne(to) -= 1 AND TRU:testTwo(to) -= 1"],
+  "negativeEffects": [],
+  "callingFunction": "addValue"
+  }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "testOne", type: 3 },
+      { id: 2, name: "testTwo", type: 3 },
+    ],
+    [],
+    "uint256 value, address to",
+    [],
+    []
+  );
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+});
+
+test("Evaluates another complex effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = [
+    "PLH",
+    1,
+    "PLHM",
+    2,
+    0,
+    "PLH",
+    0,
+    "-",
+    1,
+    2,
+    "TRUM",
+    2,
+    3,
+    0,
+    0,
+  ];
+
+  var ruleStringA = `{
+  "condition": " 1 == 1",
+  "positiveEffects": [" TRU:testTwo(to) -= value "],
+  "negativeEffects": [],
+  "callingFunction": "addValue"
+  }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "testOne", type: 3 },
+      { id: 2, name: "testTwo", type: 3 },
+    ],
+    [],
+    "uint256 value, address to",
+    [],
+    []
+  );
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+  expect(retVal.effectPlaceHolders.length).toEqual(3);
+});
+
+test("Evaluates a third complex effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = [
+    "PLH",
+    0,
+    "PLHM",
+    1,
+    0,
+    "PLH",
+    1,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+  ];
+
+  var ruleStringA = `{
+  "condition": " 1 == 1",
+  "positiveEffects": [" TRU:testOne(to) -= FC:foreignCallEx"],
+  "negativeEffects": [],
+  "callingFunction": "addValue"
+  }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "testOne", type: 3 },
+      { id: 2, name: "testTwo", type: 3 },
+    ],
+    [
+      {
+        id: 1,
+        name: "foreignCallEx",
+        type: 0,
+      },
+    ],
+    "uint256 value, address to",
+    [],
+    ["FC:foreignCallEx"]
+  );
+  expect(retVal.positiveEffects[0].instructionSet).toEqual(expectedArray);
+});
+
+test("Evaluates a fourth complex effect involving a mapped tracker update (TRUM))", () => {
+  var expectedArray = [
+    "PLH",
+    2,
+    "PLHM",
+    1,
+    0,
+    "N",
+    1n,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+  ];
+
+  var ruleStringA = `{
+  "condition": " 1 == 1",
+  "positiveEffects": [],
+  "negativeEffects": [" TRU:testOne(GV:BLOCK_NUMBER) -= 1"],
+  "callingFunction": "addValue"
+  }`;
+
+  var retVal = parseRuleSyntax(
+    JSON.parse(ruleStringA),
+    [
+      { id: 1, name: "testOne", type: 3 },
+      { id: 2, name: "testTwo", type: 3 },
+    ],
+    [
+      {
+        id: 1,
+        name: "foreignCallEx",
+        type: 0,
+      },
+    ],
+    "uint256 value, address to",
+    [],
+    ["FC:foreignCallEx"]
+  );
+  expect(retVal.negativeEffects[0].instructionSet).toEqual(expectedArray);
+});
+
 test("Creates a simple foreign call with a boolean return", () => {
   var str = `{
   "name": "Simple Foreign Call",

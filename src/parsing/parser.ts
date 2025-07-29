@@ -112,8 +112,9 @@ export function parseRuleSyntax(
   ruleComponents = [...ruleComponents, ...gvComponents];
   var placeHolders = buildPlaceholderList(ruleComponents);
   for (var effectP in syntax.positiveEffects) {
-    var effectNamesInternal: any[] = [];
-
+    var effectNamesInternal: RuleComponent[] = [
+      ...parseFunctionArguments(encodedValues, syntax.positiveEffects[effectP]),
+    ];
     let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.positiveEffects[effectP],
       effectNamesInternal,
@@ -128,13 +129,19 @@ export function parseRuleSyntax(
       effectNamesInternal,
       indexMap
     );
-    effectCondition = effectTrCondition;
+
+    syntax.positiveEffects[effectP] = effectTrCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
+
+    const gvEComponents = parseGlobalVariables(syntax.positiveEffects[effectP]);
+    effectNamesInternal = [...effectNamesInternal, ...gvEComponents];
 
     effectNamesMega.push(effectNamesInternal);
   }
   for (var effectN in syntax.negativeEffects) {
-    var effectNamesInternal: any[] = [];
+    var effectNamesInternal: RuleComponent[] = [
+      ...parseFunctionArguments(encodedValues, syntax.negativeEffects[effectN]),
+    ];
 
     let [effectCondition, effectCalls] = parseForeignCalls(
       syntax.negativeEffects[effectN],
@@ -150,8 +157,12 @@ export function parseRuleSyntax(
       effectNamesInternal,
       indexMap
     );
-    effectCondition = effectTrackerCondition;
+    syntax.negativeEffects[effectN] = effectTrackerCondition;
     effectNamesInternal = [...effectNamesInternal, ...effectTrackers];
+
+    const gvEComponents = parseGlobalVariables(syntax.negativeEffects[effectN]);
+    effectNamesInternal = [...effectNamesInternal, ...gvEComponents];
+
     effectNamesMega.push(effectNamesInternal);
   }
   effectNames = cleanseForeignCallLists(effectNamesMega);
@@ -476,6 +487,8 @@ export function cleanInstructionSet(instructionSet: any[]): any[] {
       return 16;
     } else if (instruction == "TRU") {
       return 17;
+    } else if (instruction == "TRUM") {
+      return 18;
     }
     return instruction;
   });

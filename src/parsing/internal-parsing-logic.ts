@@ -29,7 +29,7 @@ import { ConsoleLogger } from "typedoc/dist/lib/utils";
  */
 
 var truIndex = -1;
-
+var truKey = -1;
 // --------------------------------------------------------------------------------------------------
 // Main Parsing Logic:
 // Converting the Human Readable Expression syntax to the Executable Instruction set syntax takes
@@ -159,15 +159,7 @@ function convertASTToInstructionSet(
   placeHolders: PlaceholderStruct[],
   indexMap: trackerIndexNameMapping[]
 ): ASTAccumulator {
-  // If it's a number add it directly to the instruction set and store its memory location in mem
-  if (typeof expression == "number" || typeof expression == "bigint") {
-    acc.instructionSet.push("N");
-    acc.instructionSet.push(BigInt(expression));
-    acc.mem.push(acc.iterator.value);
-    acc.iterator.value += 1;
-    // If it's an array with a string as the first index, recursively run starting at the next index
-    // Then add the the string and the two memory addresses generated from the recursive run to the instruction set
-  } else if (typeof expression[0] == "string") {
+  if (typeof expression[0] == "string") {
     var foundMatch = false;
     var plhIndex = 0;
     var searchExpressions = [];
@@ -176,9 +168,12 @@ function convertASTToInstructionSet(
       searchExpressions.push(expression[0].split(" | ")[0]);
       split = expression[0].split(" | ")[1];
     }
+
     searchExpressions.push(split);
     var expCount = 0;
+    var previousIndex = -1;
     for (var expr of searchExpressions) {
+      plhIndex = 0;
       for (var parameter of parameterNames) {
         if (parameter.name == expr.trim()) {
           foundMatch = true;
@@ -193,16 +188,16 @@ function convertASTToInstructionSet(
                 place.typeSpecificIndex == parameter.tIndex &&
                 place.flags == 0x02
               ) {
-
                 // if searchExpressions as length more than 1
                 // it is a mapped tracker else it is a standard tracker
                 if (searchExpressions.length > 1) {
                   acc.instructionSet.push("PLHM");
-                  acc.instructionSet.push(plhIter);
-                  acc.instructionSet.push(plhIter - 1);
+                  acc.instructionSet.push(place.typeSpecificIndex);
+                  acc.instructionSet.push(previousIndex);
                 } else {
                   acc.instructionSet.push("PLH");
                   acc.instructionSet.push(plhIter);
+                  previousIndex = acc.iterator.value;
                 }
                 copyFound = true;
                 break;
@@ -215,6 +210,7 @@ function convertASTToInstructionSet(
               ) {
                 acc.instructionSet.push("PLH");
                 acc.instructionSet.push(plhIter);
+                previousIndex = acc.iterator.value;
                 copyFound = true;
                 break;
               }
@@ -224,6 +220,7 @@ function convertASTToInstructionSet(
           if (!copyFound) {
             acc.instructionSet.push("PLH");
             acc.instructionSet.push(plhIndex);
+            previousIndex = acc.iterator.value;
           }
           expCount += 1;
           acc.mem.push(acc.iterator.value);
@@ -246,6 +243,7 @@ function convertASTToInstructionSet(
             foundMatch = true;
             acc.instructionSet.push("PLH");
             acc.instructionSet.push(plhIndex);
+            previousIndex = acc.iterator.value;
             var found = false;
             for (var pHold of placeHolders) {
               if (
@@ -270,7 +268,7 @@ function convertASTToInstructionSet(
           }
 
           // Check if the expression is a tracker update
-        } else if (split.trim().includes("TRU:")) {
+        } else if (expr.trim().includes("TRU:")) {
           foundMatch = true;
           var trackerName = split.trim().replace("TRU:", "TR:");
           var values = trackerName.split(" ");
@@ -278,13 +276,23 @@ function convertASTToInstructionSet(
           if (values.length > 1) {
             comparison = values[1];
           }
+
           if (comparison == parameter.name) {
-            acc.instructionSet.push("PLH");
-            acc.instructionSet.push(plhIndex);
+            if (searchExpressions.length > 1) {
+              acc.instructionSet.push("PLHM");
+              acc.instructionSet.push(parameter.tIndex);
+              acc.instructionSet.push(previousIndex);
+              acc.mem.pop();
+            } else {
+              acc.instructionSet.push("PLH");
+              acc.instructionSet.push(plhIndex);
+              previousIndex = acc.iterator.value;
+            }
 
             for (var ind of indexMap) {
               if (parameter.name == "TR:" + ind.name) {
                 truIndex = ind.id;
+                truKey = previousIndex;
               }
             }
 
@@ -303,7 +311,12 @@ function convertASTToInstructionSet(
           }
           // The current parameter does not match the expression
         } else {
-          plhIndex += 1;
+          if (
+            split.replace("TRU:", "TR:").trim() != parameter.name &&
+            !split.includes("TRU:")
+          ) {
+            plhIndex += 1;
+          }
         }
       }
       if (!foundMatch) {
@@ -351,11 +364,23 @@ function convertASTToInstructionSet(
             acc.instructionSet.push(...acc.mem.splice(acc.mem.length - 2, 2));
           }
           if (truMatchArray.includes(split.trim())) {
-            acc.instructionSet.push("TRU");
+            // this asumes the update operator is at index 0 and the tracker name is at index 1
+            if (expression[1].includes("|")) {
+              acc.instructionSet.push("TRUM");
+            } else {
+              acc.instructionSet.push("TRU");
+            }
             acc.instructionSet.push(truIndex);
             acc.instructionSet.push(acc.iterator.value);
+            //TODO: if TRUM add key here save it off like truIndex
+            if (expression[1].includes("|")) {
+              acc.instructionSet.push(truKey);
+            }
             // Currently only supporting Memory type need to expand to support placeholder usage in tracker updates
             acc.instructionSet.push(0);
+
+            acc.iterator.value += 1;
+            acc.mem.push(acc.iterator.value);
           } else {
             acc.mem.push(acc.iterator.value);
           }
