@@ -126,6 +126,7 @@ export const foreignCallValidator = z.object({
     z.literal(PType, "Unsupported return type")
   ),
   valuesToPass: z.string().trim(),
+  mappedTrackerKeyValues: z.string().trim(),
   callingFunction: z.string().trim(),
 });
 

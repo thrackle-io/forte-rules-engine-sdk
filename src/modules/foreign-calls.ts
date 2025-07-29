@@ -83,6 +83,15 @@ export const createForeignCall = async (
     policyId
   );
   var indexMap: FCNameToID[] = [];
+  var mappedArray: boolean[] = [];
+  for (var tr of trackers) {
+    if (tr.mapped) {
+      mappedArray.push(true);
+    } else {
+      mappedArray.push(false);
+    }
+  }
+
   const trackerMetadataCalls = trackers.map((tracker) =>
     getTrackerMetadata(
       config,
@@ -97,6 +106,12 @@ export const createForeignCall = async (
       return { name: name, id: trackers[index].trackerIndex, type: 0 };
     }
   );
+  for (var ind in indexMapAdditions) {
+    if (mappedArray[ind]) {
+      indexMapAdditions[ind].type = 1;
+    }
+  }
+
   indexMap = [...indexMap, ...indexMapAdditions];
 
   var foreignCalls: ForeignCallOnChain[] = await getAllForeignCalls(
@@ -176,6 +191,7 @@ export const createForeignCall = async (
     returnType: foreignCall.returnType,
     parameterTypes: foreignCall.parameterTypes,
     encodedIndices: foreignCall.encodedIndices,
+    mappedTrackerKeyIndices: foreignCall.mappedTrackerKeyIndices,
   };
   var addFC;
   while (true) {
@@ -333,6 +349,7 @@ export const updateForeignCall = async (
     returnType: foreignCall.returnType,
     parameterTypes: foreignCall.parameterTypes,
     encodedIndices: foreignCall.encodedIndices,
+    mappedTrackerKeyIndices: foreignCall.mappedTrackerKeyIndices,
   };
   var addFC;
 

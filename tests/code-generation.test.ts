@@ -43,6 +43,7 @@ test("Code Generation test)", () => {
                 "function": "testSig(address)",
                 "returnType": "uint256",
                 "valuesToPass": "to",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "transfer(address to, uint256 value)"
             }
         ], 

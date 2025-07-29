@@ -25,6 +25,7 @@ const fcJSON = `{
 					"function": "testSig(address,string,uint256)",
 					"returnType": "uint256",
 					"valuesToPass": "0, 1, 2",
+          "mappedTrackerKeyValues": "",
 					"callingFunction": "transfer(address to, uint256 value)"
 					}`;
 
@@ -53,6 +54,7 @@ var policyJSON = `
             "function": "testSig(address)",
             "returnType": "uint256",
             "valuesToPass": "to",
+            "mappedTrackerKeyValues": "",
             "callingFunction": "transfer(address to, uint256 value)"
         }
     ],
@@ -193,7 +195,7 @@ test("Can catch all missing required fields in foreign call JSON", () => {
   if (isLeft(parsedFC)) {
     const errors = unwrapEither(parsedFC);
 
-    expect(errors.length).toEqual(6);
+    expect(errors.length).toEqual(7);
     expect(errors[0].message).toEqual(
       "Invalid input: expected string, received undefined: Field name"
     );
@@ -210,6 +212,9 @@ test("Can catch all missing required fields in foreign call JSON", () => {
       "Invalid input: expected string, received undefined: Field valuesToPass"
     );
     expect(errors[5].message).toEqual(
+      "Invalid input: expected string, received undefined: Field mappedTrackerKeyValues"
+    );
+    expect(errors[6].message).toEqual(
       "Invalid input: expected string, received undefined: Field callingFunction"
     );
   }
@@ -222,6 +227,7 @@ test("Can catch all wrong inputs for fields in foreign call JSON", () => {
 					"function": 1,
 					"returnType": 1,
 					"valuesToPass": 1,
+          "mappedTrackerKeyValues": 1,
 					"callingFunction": 1
 					}`;
   const parsedFC = validateForeignCallJSON(invalidJSON);
@@ -229,7 +235,7 @@ test("Can catch all wrong inputs for fields in foreign call JSON", () => {
   if (isLeft(parsedFC)) {
     const errors = unwrapEither(parsedFC);
 
-    expect(errors.length).toEqual(6);
+    expect(errors.length).toEqual(7);
     expect(errors[0].message).toEqual(
       "Invalid input: expected string, received number: Field name"
     );
@@ -246,6 +252,9 @@ test("Can catch all wrong inputs for fields in foreign call JSON", () => {
       "Invalid input: expected string, received number: Field valuesToPass"
     );
     expect(errors[5].message).toEqual(
+      "Invalid input: expected string, received number: Field mappedTrackerKeyValues"
+    );
+    expect(errors[6].message).toEqual(
       "Invalid input: expected string, received number: Field callingFunction"
     );
   }

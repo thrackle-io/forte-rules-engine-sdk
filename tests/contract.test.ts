@@ -515,6 +515,7 @@ describe("Rules Engine Interactions", async () => {
             "function": "testSig(address,string,uint256)",
             "returnType": "uint256",
             "valuesToPass": "to, someString, value",
+            "mappedTrackerKeyValues": "",
             "callingFunction": "someFunction(address to, string someString, uint256 value)"
             }`;
     var fcId = await createForeignCall(
@@ -578,6 +579,7 @@ describe("Rules Engine Interactions", async () => {
             "function": "testSig(address,string,uint256[])",
             "returnType": "uint256",
             "valuesToPass": "to, someString, values",
+            "mappedTrackerKeyValues": "",
             "callingFunction": "someFunction(address to, string someString, uint256[] values)"
             }`;
     var fcId = await createForeignCall(
@@ -634,6 +636,7 @@ describe("Rules Engine Interactions", async () => {
                     "function": "testSig(address)",
                     "returnType": "uint256",
                     "valuesToPass": "to",
+                    "mappedTrackerKeyValues": "",
                     "callingFunction": "someFunction(address to, string someString, uint256 value)"
                 }`;
     var fcId = await createForeignCall(
@@ -708,6 +711,7 @@ describe("Rules Engine Interactions", async () => {
                 "function": "testSig(address)",
                 "returnType": "uint256",
                 "valuesToPass": "to",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "someFunction(address to, string someString, uint256 value)"
             }`;
     var fcId = await createForeignCall(
@@ -737,6 +741,7 @@ describe("Rules Engine Interactions", async () => {
                 "function": "testSig(address)",
                 "returnType": "uint256",
                 "valuesToPass": "to",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "someFunction(address to, string someString, uint256 value)"
             }`;
     var updatedId = await updateForeignCall(
@@ -926,6 +931,7 @@ describe("Rules Engine Interactions", async () => {
                     "function": "testSig(address)",
                     "returnType": "uint256",
                     "valuesToPass": "to",
+                    "mappedTrackerKeyValues": "",
                     "callingFunction": "transfer(address to, uint256 value)"
                 }
             ],
@@ -1003,6 +1009,7 @@ describe("Rules Engine Interactions", async () => {
                     "function": "testSig(address)",
                     "returnType": "uint256",
                     "valuesToPass": "to",
+                    "mappedTrackerKeyValues": "",
                     "callingFunction": "transfer(address to, uint256 value)"
                 }
             ],
@@ -1063,6 +1070,7 @@ describe("Rules Engine Interactions", async () => {
                 "function": "testSigTwo(uint256)",
                 "returnType": "uint256",
                 "valuesToPass": "value",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "transfer(address to, uint256 value)"
         },{
                 "name": "testSig(address)",
@@ -1070,6 +1078,7 @@ describe("Rules Engine Interactions", async () => {
                 "function": "testSig(uint256)",
                 "returnType": "uint256",
                 "valuesToPass": "FC:testSigTwo",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "transfer(address to, uint256 value)"
             }
         ],
@@ -1129,6 +1138,7 @@ describe("Rules Engine Interactions", async () => {
                     "function": "testSig(address)",
                     "returnType": "uint256",
                     "valuesToPass": "to",
+                    "mappedTrackerKeyValues": "",
                     "callingFunction": "transfer(address to, uint256 value)"
                 }
             ],
@@ -1212,6 +1222,7 @@ describe("Rules Engine Interactions", async () => {
                 "function": "testSig(address)",
                 "returnType": "uint256",
                 "valuesToPass": "to",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "transfer(address to, uint256 value)"
             }
         ],
@@ -1270,6 +1281,7 @@ describe("Rules Engine Interactions", async () => {
                 "function": "testSig(address)",
                 "returnType": "uint256",
                 "valuesToPass": "to",
+                "mappedTrackerKeyValues": "",
                 "callingFunction": "transfer(address to, uint256 value)"
             }
         ],
@@ -1341,6 +1353,7 @@ describe("Rules Engine Interactions", async () => {
               "function": "testSig(address)",
               "returnType": "uint256",
               "valuesToPass": "to",
+              "mappedTrackerKeyValues": "",
               "callingFunction": "transfer(address to, uint256 value)"
           }
       ],
@@ -1420,6 +1433,7 @@ describe("Rules Engine Interactions", async () => {
               "function": "testSig(address)",
               "returnType": "uint256",
               "valuesToPass": "to",
+              "mappedTrackerKeyValues": "",
               "callingFunction": "transfer(address to, uint256 value)"
           }
       ],

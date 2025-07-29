@@ -152,6 +152,7 @@ export const createRule = async (
           policyId,
           id.id
         );
+
         for (var ind of fcChain!.encodedIndices) {
           if (ind.eType == 1) {
             var fcChainInternal = await getForeignCallMetadata(

@@ -174,11 +174,15 @@ function convertASTToInstructionSet(
     var previousIndex = -1;
     for (var expr of searchExpressions) {
       plhIndex = 0;
+
+      // This is everything (function parameters, foreign calls, trackers)
       for (var parameter of parameterNames) {
         if (parameter.name == expr.trim()) {
           foundMatch = true;
           var plhIter = 0;
           var copyFound = false;
+
+          // Function parameters and trackers
           for (var place of placeHolders) {
             // Check if the expression is an exact match for one of our placeholders
             // This will cover all placeholders except foreign calls and tracker updates
