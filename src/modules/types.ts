@@ -139,11 +139,14 @@ export type ForeignCallOnChain = {
   foreignCallIndex: number;
   parameterTypes: number[];
   encodedIndices: ForeignCallEncodedIndex[];
+  mappedTrackerKeyIndices: ForeignCallEncodedIndex[];
 };
 
 export type TrackerOnChain = {
   set: boolean;
   pType: number;
+  mapped: boolean;
+  trackerKeyType: number;
   trackerValue: string;
   trackerIndex: number;
 };
@@ -155,6 +158,7 @@ export type ForeignCallDefinition = {
   returnType: number;
   parameterTypes: number[];
   encodedIndices: ForeignCallEncodedIndex[];
+  mappedTrackerKeyIndices: ForeignCallEncodedIndex[];
 };
 
 export type ForeignCallEncodedIndex = {
@@ -170,14 +174,14 @@ export type PlaceholderStruct = {
 };
 
 export type IndividualArgumentMapping = {
-  functionCallArgumentType: number
-  callingFunctionArg: PlaceholderStruct
-}
+  functionCallArgumentType: number;
+  callingFunctionArg: PlaceholderStruct;
+};
 
 export type ForeignCallArgumentMappings = {
-  foreignCallIndex: number
-  mappings: IndividualArgumentMapping[]
-}
+  foreignCallIndex: number;
+  mappings: IndividualArgumentMapping[];
+};
 
 export type FunctionArgument = {
   name: string;

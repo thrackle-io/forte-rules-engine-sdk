@@ -968,7 +968,8 @@ test("Creates a simple foreign call", () => {
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
   "returnType": "uint256",
-  "valuesToPass": "to, FC:testSigTwo, TR:thisTracker"
+  "valuesToPass": "to, FC:testSigTwo, TR:thisTracker",
+  "mappedTrackerKeyValues": ""
   }`;
 
   var retVal = parseForeignCallDefinition(
@@ -2694,6 +2695,7 @@ test("Creates a simple foreign call with a boolean return", () => {
   "function": "testSig(address,string,uint256)",
   "returnType": "bool",
   "valuesToPass": "to, someString, value",
+  "mappedTrackerKeyValues": "",
   "callingFunction": "someFunction(address to, string someString, uint256 value)"
   }`;
 
@@ -2709,6 +2711,34 @@ test("Creates a simple foreign call with a boolean return", () => {
   );
   expect(retVal.function).toEqual("testSig(address,string,uint256)");
   expect(retVal.returnType).toEqual(3);
+});
+
+test("Creates a foreign call using a mapped tracker as a parameter", () => {
+  var str = `{
+  "name": "Simple Foreign Call",
+  "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+  "function": "testSig(address,string,uint256)",
+  "returnType": "bool",
+  "valuesToPass": "TR:someTracker, someString, value",
+  "mappedTrackerKeyValues": "value",
+  "callingFunction": "someFunction(address to, string someString, uint256 value)"
+  }`;
+
+  var retVal = parseForeignCallDefinition(
+    JSON.parse(str),
+    [],
+    [
+      {
+        id: 1,
+        name: "someTracker",
+        type: 3,
+      },
+    ],
+    ["to", "someString", "value"]
+  );
+  expect(retVal.mappedTrackerKeyIndices.length).toEqual(1);
+  expect(retVal.mappedTrackerKeyIndices[0].eType).toEqual(0);
+  expect(retVal.mappedTrackerKeyIndices[0].index).toEqual(2);
 });
 
 test("Evaluates a syntax string that includes the Block Number Global Variable", () => {

@@ -349,7 +349,11 @@ export function parseForeignCallDefinition(
       } else if (encodedIndex.includes("TR:")) {
         for (var trMap of indexMap) {
           if ("TR:" + trMap.name.trim() == encodedIndex.trim()) {
-            return { eType: 2, index: trMap.id };
+            if (trMap.type == 1) {
+              return { eType: 4, index: trMap.id };
+            } else {
+              return { eType: 2, index: trMap.id };
+            }
           }
         }
       } else {
@@ -364,6 +368,41 @@ export function parseForeignCallDefinition(
       }
     }) as ForeignCallEncodedIndex[];
 
+  var mappedTrackerKeyIndices: ForeignCallEncodedIndex[] = [];
+  if (syntax.mappedTrackerKeyValues == "") {
+  } else {
+    mappedTrackerKeyIndices = syntax.mappedTrackerKeyValues
+      .split(",")
+      .map((encodedIndex: string) => {
+        if (encodedIndex.includes("FC:")) {
+          for (var fcMap of foreignCallNameToID) {
+            if ("FC:" + fcMap.name.trim() == encodedIndex.trim()) {
+              return { eType: 1, index: fcMap.id };
+            }
+          }
+        } else if (encodedIndex.includes("TR:")) {
+          for (var trMap of indexMap) {
+            if ("TR:" + trMap.name.trim() == encodedIndex.trim()) {
+              if (trMap.type == 1) {
+                return { eType: 4, index: trMap.id };
+              } else {
+                return { eType: 2, index: trMap.id };
+              }
+            }
+          }
+        } else {
+          var iter = 0;
+          for (var functionArg of functionArguments) {
+            if (functionArg.trim() == encodedIndex.trim()) {
+              return { eType: 0, index: iter };
+            } else {
+              iter += 1;
+            }
+          }
+        }
+      }) as ForeignCallEncodedIndex[];
+  }
+
   const returnType: number = PType.indexOf(syntax.returnType);
 
   var parameterTypes: number[] = splitFunctionInput(syntax.function).map(
@@ -375,6 +414,7 @@ export function parseForeignCallDefinition(
     returnType,
     parameterTypes,
     encodedIndices,
+    mappedTrackerKeyIndices,
   };
 }
 
