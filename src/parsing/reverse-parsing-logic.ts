@@ -42,6 +42,7 @@ export function reverseParseRule(
   placeHolderArray: string[],
   stringReplacements: stringReplacement[]
 ): string {
+  console.log("reverseParseRule called with instructionSet:", instructionSet, placeHolderArray, stringReplacements);
   var currentAction = -1;
   var currentActionIndex = 0;
   var currentMemAddress = 0;
