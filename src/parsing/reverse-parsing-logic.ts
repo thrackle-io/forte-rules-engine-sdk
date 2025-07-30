@@ -42,7 +42,12 @@ export function reverseParseRule(
   placeHolderArray: string[],
   stringReplacements: stringReplacement[]
 ): string {
-  console.log("reverseParseRule called with instructionSet:", instructionSet, placeHolderArray, stringReplacements);
+  console.log(
+    "reverseParseRule called with instructionSet:",
+    instructionSet,
+    placeHolderArray,
+    stringReplacements
+  );
   var currentAction = -1;
   var currentActionIndex = 0;
   var currentMemAddress = 0;
@@ -50,6 +55,7 @@ export function reverseParseRule(
   var currentInstructionValues: any[] = [];
   var retVal = "";
   var instructionNumber = 0;
+  var truUpdated = false;
   for (var instruction of instructionSet) {
     if (currentAction == -1) {
       currentAction = Number(instruction);
@@ -64,7 +70,7 @@ export function reverseParseRule(
           currentActionIndex = 1;
           break;
         case 3:
-          currentActionIndex = 1;
+          currentActionIndex = 2;
           break;
         case 4:
           currentActionIndex = 1;
@@ -92,6 +98,9 @@ export function reverseParseRule(
           break;
         case 12:
           currentActionIndex = 2;
+          break;
+        case 17:
+          currentActionIndex = 3;
           break;
         default:
           currentActionIndex = 2;
@@ -144,18 +153,15 @@ export function reverseParseRule(
           currentMemAddress += 1;
           break;
         case 3:
-          for (var memValue of memAddressesMap) {
-            if (memValue.memAddr == instruction) {
-              currentInstructionValues.push(memValue.value);
-            }
-          }
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " = "
+          );
           if (currentActionIndex == 1) {
-            var currentString = "= " + currentInstructionValues[0];
-            memAddressesMap.push({
-              memAddr: currentMemAddress,
-              value: currentString,
-            });
-            retVal = currentString;
             currentMemAddress += 1;
             currentInstructionValues = [];
           }
@@ -336,37 +342,18 @@ export function reverseParseRule(
           }
           break;
         case 17:
-          for (var memValue of memAddressesMap) {
-            if (memValue.memAddr == instruction) {
-              currentInstructionValues.push(memValue.value);
-            }
+          if (!truUpdated) {
+            retVal = retVal
+              .replace("TR:", "TRU:")
+              .replace("-", "-=")
+              .replace("+", "+=")
+              .replace("*", "*=")
+              .replace("/", "/=");
+            truUpdated = true;
+          } else {
+            truUpdated = false;
           }
-          console.log("CC values", currentInstructionValues);
           if (currentActionIndex == 1) {
-            var currentString = "= " + currentInstructionValues[0];
-            memAddressesMap.push({
-              memAddr: currentMemAddress,
-              value: currentString,
-            });
-            retVal = currentString;
-            currentMemAddress += 1;
-            currentInstructionValues = [];
-          }
-          break;
-        case 18:
-          for (var memValue of memAddressesMap) {
-            if (memValue.memAddr == instruction) {
-              currentInstructionValues.push(memValue.value);
-            }
-          }
-          console.log("c values", currentInstructionValues, currentActionIndex, instruction, currentString, memAddressesMap);
-          if (currentActionIndex == 1) {
-            var currentString = "= " + currentInstructionValues[0];
-            memAddressesMap.push({
-              memAddr: currentMemAddress,
-              value: currentString,
-            });
-            retVal = currentString;
             currentMemAddress += 1;
             currentInstructionValues = [];
           }
