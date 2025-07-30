@@ -293,6 +293,8 @@ export const getTracker = async (
       pType: 0,
       trackerValue: "",
       trackerIndex: -1,
+      mapped: false,
+      trackerKeyType: 0,
     };
   }
 };

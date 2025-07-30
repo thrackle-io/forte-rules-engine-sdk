@@ -81,7 +81,7 @@ import {
   addMultipleAdminsToPermissionList as addMultipleAdminsToPermissionListInternal,
   removeMultipleAdminsFromPermissionList as removeMultipleAdminsFromPermissionListInternal,
   removeAllFromPermissionList as removeAllFromPermissionListInternal,
-} from './foreign-calls'
+} from "./foreign-calls";
 
 import {
   createTracker as createTrackerInternal,
@@ -209,7 +209,9 @@ export class RulesEngine {
     policyId: number,
     callingFunctions: any[],
     ids: number[],
-    ruleIds: any[]
+    ruleIds: any[],
+    name: string,
+    description: string
   ): Promise<number> {
     return updatePolicyInternal(
       config,
@@ -217,7 +219,9 @@ export class RulesEngine {
       policyId,
       callingFunctions,
       ids,
-      ruleIds
+      ruleIds,
+      name,
+      description
     );
   }
 

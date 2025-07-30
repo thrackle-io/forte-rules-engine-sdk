@@ -360,6 +360,8 @@ export function convertRuleStructToString(
   mappings: hexToFunctionString[]
 ): RuleJSON {
   var rJSON: RuleJSON = {
+    Name: "",
+    Description: "",
     condition: "",
     positiveEffects: [],
     negativeEffects: [],
