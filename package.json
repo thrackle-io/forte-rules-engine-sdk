@@ -47,7 +47,7 @@
     "tsx": "^4.20.3",
     "typedoc": "^0.26.5",
     "typedoc-plugin-frontmatter": "1.0.0",
-    "typedoc-plugin-markdown": "4.2.3",
+    "typedoc-plugin-markdown": "4.2.10",
     "typescript": "^5.6.3",
     "viem": "^2.28.0"
   },
