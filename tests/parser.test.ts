@@ -376,10 +376,6 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using o
   ];
   var expectedString = "3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 )";
   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
-<<<<<<< HEAD
-
-=======
->>>>>>> dd01758 (added mapped reverse parsing tests)
   var placeholderArray = ["value", "info", "addr"];
   var retVal = reverseParseRule(
     cleanedInstructionSet as number[],
