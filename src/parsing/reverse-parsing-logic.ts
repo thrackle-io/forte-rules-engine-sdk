@@ -49,6 +49,10 @@ export function reverseParseRule(
   var currentInstructionValues: any[] = [];
   var retVal = "";
   var instructionNumber = 0;
+  var truUpdated = false;
+  var keyIndex = -1;
+  var valueIndex = -1;
+  var instructionCount = instructionSet.length;
   for (var instruction of instructionSet) {
     if (currentAction == -1) {
       currentAction = Number(instruction);
@@ -63,10 +67,10 @@ export function reverseParseRule(
           currentActionIndex = 1;
           break;
         case 3:
-          currentActionIndex = 1;
+          currentActionIndex = 2;
           break;
         case 4:
-          currentActionIndex = 1;
+          currentActionIndex = 2;
           break;
         case 5:
           currentActionIndex = 2;
@@ -91,6 +95,12 @@ export function reverseParseRule(
           break;
         case 12:
           currentActionIndex = 2;
+          break;
+        case 17:
+          currentActionIndex = 3;
+          break;
+        case 18:
+          currentActionIndex = 4;
           break;
         default:
           currentActionIndex = 2;
@@ -140,26 +150,39 @@ export function reverseParseRule(
             memAddr: currentMemAddress,
             value: placeHolderArray[instruction],
           });
+          keyIndex = instruction;
           currentMemAddress += 1;
           break;
         case 3:
-          for (var memValue of memAddressesMap) {
-            if (memValue.memAddr == instruction) {
-              currentInstructionValues.push(memValue.value);
-            }
-          }
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " = "
+          );
           if (currentActionIndex == 1) {
-            var currentString = "= " + currentInstructionValues[0];
-            memAddressesMap.push({
-              memAddr: currentMemAddress,
-              value: currentString,
-            });
-            retVal = currentString;
             currentMemAddress += 1;
             currentInstructionValues = [];
           }
           break;
         case 4:
+          if (currentActionIndex == 2) {
+            valueIndex = instruction;
+          } else {
+            var newMem =
+              placeHolderArray[valueIndex] +
+              "(" +
+              placeHolderArray[keyIndex] +
+              ")";
+            memAddressesMap.push({
+              memAddr: currentMemAddress,
+              value: newMem,
+            });
+            currentMemAddress += 1;
+          }
+
           break;
         case 5:
           retVal = arithmeticOperatorReverseInterpretation(
@@ -315,6 +338,47 @@ export function reverseParseRule(
             currentInstructionValues = [];
           }
           break;
+        case 16:
+          retVal = arithmeticOperatorReverseInterpretation(
+            instruction,
+            currentMemAddress,
+            memAddressesMap,
+            currentActionIndex,
+            currentInstructionValues,
+            " != "
+          );
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+          }
+          break;
+        case 17:
+        case 18:
+          if (!truUpdated) {
+            var str = memAddressesMap[currentMemAddress - 1].value;
+            var memVal: any = str
+              .replace("TR:", "TRU:")
+              .replace("-", "-=")
+              .replace("+", "+=")
+              .replace("*", "*=")
+              .replace("/", "/=");
+            truUpdated = true;
+            memAddressesMap.push({
+              memAddr: currentMemAddress,
+              value: memVal,
+            });
+          }
+          if (currentActionIndex == 1) {
+            currentMemAddress += 1;
+            currentInstructionValues = [];
+            truUpdated = false;
+
+            if (instructionNumber + 1 == instructionCount) {
+              retVal = memAddressesMap[currentMemAddress - 1].value;
+            }
+          }
+          break;
+
         default:
           console.log("unknown instruction");
           break;
