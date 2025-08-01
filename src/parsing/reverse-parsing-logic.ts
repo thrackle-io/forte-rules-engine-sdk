@@ -530,22 +530,21 @@ export function convertRuleStructToString(
  */
 export function convertForeignCallStructsToStrings(
   foreignCallsOnChain: ForeignCallOnChain[],
-  callingFunctionMappings: hexToFunctionString[],
-  names: string[]
+  callingFunctionMappings: hexToFunctionString[]
 ): ForeignCallJSONReversed[] {
   const foreignCalls: ForeignCallJSONReversed[] = foreignCallsOnChain.map((call, iter) => {
-    const callingFunction = callingFunctionMappings.find(mapping => mapping.hex === call.signature);
+    const functionMeta = callingFunctionMappings.find(mapping => mapping.hex === call.signature);
 
     const returnTypeString = PT.find(pType => pType.enumeration == call.returnType)?.name;
 
     const inputs = {
-      "name": names[iter],
+      "name": functionMeta?.functionString || "",
       "address": call.foreignCallAddress as Address,
       "function": call.signature,
       "returnType": returnTypeString || "",
-      "valuesToPass": call.signature,
+      "valuesToPass": functionMeta?.encodedValues || "",
       "mappedTrackerKeyValues": "",
-      "callingFunction": callingFunction ? callingFunction.functionString : "",
+      "callingFunction": "",
     };
 
     return inputs
