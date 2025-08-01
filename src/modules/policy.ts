@@ -53,7 +53,7 @@ import {
   convertForeignCallStructsToStrings,
   convertTrackerStructsToStrings,
 } from "../parsing/reverse-parsing-logic";
-import { getRulesErrorMessages, validatePolicyJSON } from "./validation";
+import { CallingFunctionJSON, ForeignCallJSON, getRulesErrorMessages, PolicyJSON, validatePolicyJSON } from "./validation";
 import { isLeft, isRight, unwrapEither } from "./utils";
 
 /**
@@ -470,6 +470,7 @@ export const getPolicy = async (
   policyId: number
 ): Promise<string> => {
   var callingFunctionMappings: hexToFunctionString[] = [];
+  const callingFunctionJSONs: CallingFunctionJSON[] = [];
   try {
     const retrievePolicy = await simulateContract(config, {
       address: rulesEnginePolicyContract.address,
@@ -478,9 +479,19 @@ export const getPolicy = async (
       args: [policyId],
     });
 
+    const policyMeta = await getPolicyMetadata(
+      config,
+      rulesEnginePolicyContract,
+      policyId
+    );
+    if (policyMeta == null) {
+      throw new Error(`Policy with ID ${policyId} does not exist.`);
+    }
     let policyResult = retrievePolicy.result;
+    console.log("PR: ", policyResult);
     let callingFunctions: any = policyResult[0];
     let ruleIds2DArray: any = policyResult[2];
+    const PolicyType = policyResult[3];
 
     var iter = 1;
     for (var cfId in callingFunctions) {
@@ -497,6 +508,12 @@ export const getPolicy = async (
         index: -1,
       };
       callingFunctionMappings.push(newMapping);
+      const callingFunctionJSON = {
+        name: mapp.callingFunction,
+        functionSignature: mapp.signature,
+        encodedValues: mapp.encodedValues,
+      }
+      callingFunctionJSONs.push(callingFunctionJSON)
       iter++;
     }
 
@@ -523,9 +540,7 @@ export const getPolicy = async (
       callingFunctionMappings.push(newMapping);
     }
 
-    var callStrings: string[] = [];
-    convertForeignCallStructsToStrings(
-      callStrings,
+    const callStrings: ForeignCallJSON[] = convertForeignCallStructsToStrings(
       foreignCalls,
       callingFunctionMappings,
       foreignCallNames
@@ -544,6 +559,7 @@ export const getPolicy = async (
         policyId,
         tracker.trackerIndex
       );
+      console.log("Tracker name: ", name);
       trackerNames.push(name);
       var newMapping: hexToFunctionString = {
         hex: "",
@@ -554,7 +570,7 @@ export const getPolicy = async (
       callingFunctionMappings.push(newMapping);
     }
 
-    const trackerStrings = convertTrackerStructsToStrings(
+    const trackerJSONs = convertTrackerStructsToStrings(
       trackers,
       trackerNames
     );
@@ -586,7 +602,6 @@ export const getPolicy = async (
               functionString,
               encodedValues,
               ruleS,
-              plhArray,
               foreignCalls,
               trackers,
               callingFunctionMappings
@@ -597,11 +612,16 @@ export const getPolicy = async (
       iter++;
     }
 
-    var jsonObj = {
-      Trackers: trackerStrings,
+    var jsonObj: PolicyJSON = {
+      ...trackerJSONs,
+      Policy: policyMeta.policyName,
+      PolicyType,
+      Description: policyMeta.policyDescription,
+      CallingFunctions: callingFunctionJSONs,
       ForeignCalls: callStrings,
       Rules: ruleJSONObjs,
     };
+    console.log("Policy JSON: ", jsonObj);
     return JSON.stringify(jsonObj);
   } catch (error) {
     console.error(error);

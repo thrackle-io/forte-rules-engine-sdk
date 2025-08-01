@@ -985,9 +985,7 @@ describe("Rules Engine Interactions", async () => {
       getRulesEngineForeignCallContract(rulesEngineContract, client),
       result.policyId
     );
-    expect(retVal).toEqual(
-      '{"Trackers":["testTracker --> string --> 0x05294e8f4a5ee627df181a607a6376b9d98fab962d53722cd6871cf8321cedf6"],"ForeignCalls":["testSig(address) --> 0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC --> testSig(address) --> uint256"],"Rules":[{"Name":"","Description":"","condition":"TR:testTracker > 500","positiveEffects":["emit Success"],"negativeEffects":["revert()"],"callingFunction":"transfer(address to, uint256 value)"}]}'
-    );
+    expect(retVal).toEqual(policyJSON);
   });
   test("Can retrieve policy metadata", async () => {
     var policyJSON = `
