@@ -376,7 +376,130 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string (using o
   ];
   var expectedString = "3 + 4 > 5 AND ( 1 == 1 AND 2 == 2 )";
   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
-  var placeholderArray: any[] = [];
+
+  var placeholderArray = ["value", "info", "addr"];
+  var retVal = reverseParseRule(
+    cleanedInstructionSet as number[],
+    placeholderArray,
+    []
+  );
+  expect(retVal).toEqual(expectedString);
+});
+
+test('Reverse Interpretation for the: "Evaluates a simple syntax string involving a mapped tracker" test', () => {
+  let instructionSet = ["PLH", 0n, "PLHM", 1n, 0n, "N", 1n, "==", 1n, 2n];
+  var expectedString = "TR:trackerOne(to) == 1";
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+  var placeholderArray = ["to", "TR:trackerOne"];
+  var retVal = reverseParseRule(
+    cleanedInstructionSet as number[],
+    placeholderArray,
+    []
+  );
+  expect(retVal).toEqual(expectedString);
+});
+
+test('Reverse Interpretation for the: "Evaluates a simple effect involving a mapped tracker update (TRUM))" test', () => {
+  let instructionSet = [
+    "PLH",
+    0,
+    "PLHM",
+    1,
+    0,
+    "N",
+    1n,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+  ];
+  var expectedString = "TRU:testOne(to) -= 1";
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+  var placeholderArray = ["to", "TR:testOne"];
+  var retVal = reverseParseRule(
+    cleanedInstructionSet as number[],
+    placeholderArray,
+    []
+  );
+  expect(retVal).toEqual(expectedString);
+});
+
+test("Evaluates a complex effect involving a mapped tracker update (TRUM))", () => {
+  var instructionSet = [
+    "PLH",
+    0,
+    "PLHM",
+    1,
+    0,
+    "N",
+    1n,
+    "-",
+    1,
+    2,
+    "TRUM",
+    1,
+    3,
+    0,
+    0,
+    "PLH",
+    0,
+    "PLHM",
+    2,
+    5,
+    "N",
+    1n,
+    "-",
+    6,
+    7,
+    "TRUM",
+    2,
+    8,
+    5,
+    0,
+    "AND",
+    4,
+    9,
+  ];
+
+  var ruleStringA = `{
+    "condition": " 1 == 1",
+      "positiveEffects": [" TRU:testOne(to) -= 1 AND TRU:testTwo(to) -= 1"],
+        "negativeEffects": [],
+          "callingFunction": "addValue"
+  } `;
+
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+  var placeholderArray = ["to", "TR:testOne", "TR:testTwo"];
+  var retVal = reverseParseRule(
+    cleanedInstructionSet as number[],
+    placeholderArray,
+    []
+  );
+  expect(retVal).toEqual("TRU:testOne(to) -= 1 AND TRU:testTwo(to) -= 1");
+});
+
+test('Reverse Interpretation for the: "Evaluates a simple effect involving a tracker update (TRU))" test', () => {
+  let instructionSet = ["PLH", 1n, "N", 1n, "-", 0, 1, "TRU", 1, 2, 0];
+  var expectedString = "TRU:testOne -= 1";
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+  var placeholderArray = ["value", "TR:testOne"];
+  var retVal = reverseParseRule(
+    cleanedInstructionSet as number[],
+    placeholderArray,
+    []
+  );
+  expect(retVal).toEqual(expectedString);
+});
+
+test('Reverse Interpretation for the: "Evaluates a second effect involving a tracker update (TRU))" test', () => {
+  let instructionSet = ["PLH", 1n, "PLH", 0n, "=", 0, 1, "TRU", 1, 2, 0];
+  var expectedString = "TRU:testOne = value";
+  const cleanedInstructionSet = cleanInstructionSet(instructionSet);
+  var placeholderArray = ["value", "TR:testOne"];
   var retVal = reverseParseRule(
     cleanedInstructionSet as number[],
     placeholderArray,
