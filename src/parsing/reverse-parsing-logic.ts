@@ -5,13 +5,14 @@ import {
   stringReplacement,
   RuleStruct,
   PT,
-  ForeignCallOnChain,
   TrackerOnChain,
   hexToFunctionString,
   CallingFunctionHashMapping,
   FunctionArgument,
+  RuleMetadataStruct,
+  ForeignCallOnChain
 } from "../modules/types";
-import { CallingFunctionJSON, ForeignCallJSON, MappedTrackerJSON, RuleJSON, TrackerJSON, validateCallingFunctionJSON, validateFCFunctionInput, validateForeignCallJSON, validateMappedTrackerJSON, validateTrackerJSON } from "../modules/validation";
+import { CallingFunctionJSON, ForeignCallJSON, ForeignCallJSONReversed, MappedTrackerJSON, RuleJSON, TrackerJSON, validateCallingFunctionJSON, validateFCFunctionInput, validateForeignCallJSON, validateMappedTrackerJSON, validateTrackerJSON } from "../modules/validation";
 import { parseFunctionArguments } from "./parsing-utilities";
 import { isRight, unwrapEither } from "../modules/utils";
 
@@ -46,12 +47,6 @@ export function reverseParseRule(
   placeHolderArray: string[],
   stringReplacements: stringReplacement[]
 ): string {
-  console.log(
-    "reverseParseRule called with instructionSet:",
-    instructionSet,
-    placeHolderArray,
-    stringReplacements
-  );
   var currentAction = -1;
   var currentActionIndex = 0;
   var currentMemAddress = 0;
@@ -418,7 +413,6 @@ export const reverseParsePlaceholder = (
     const map = mappings.find(map => map.hex === call?.signature);
     return "FC:" + map?.functionString;
   } else if (placeholder.flags == 0x02) {
-    const tracker = trackers.find(tracker => tracker.trackerIndex === placeholder.typeSpecificIndex);
     const map = mappings.find(map => map.index === placeholder.typeSpecificIndex);
     return "TR:" + map?.functionString;
   } else if (placeholder.flags == 0x04) {
@@ -433,6 +427,16 @@ export const reverseParsePlaceholder = (
     return "GV:TX_ORIGIN";
   } else {
     return names[placeholder.typeSpecificIndex].name;
+  }
+}
+
+export const reverseParseEffect = (effect: any, placeholders: string[]): string => {
+  if (effect.effectType == 0) {
+    return "revert('" + effect.text + "')";
+  } else if (effect.effectType == 1) {
+    return "emit " + effect.text;
+  } else {
+    return reverseParseRule(effect.instructionSet, placeholders, [])
   }
 }
 
@@ -458,13 +462,14 @@ export function convertRuleStructToString(
   functionString: string,
   encodedValues: string,
   ruleS: RuleStruct,
+  ruleM: RuleMetadataStruct,
   foreignCalls: ForeignCallOnChain[],
   trackers: TrackerOnChain[],
   mappings: hexToFunctionString[]
 ): RuleJSON {
   var rJSON: RuleJSON = {
-    Name: "",
-    Description: "",
+    Name: ruleM.ruleName,
+    Description: ruleM.ruleDescription,
     condition: "",
     positiveEffects: [],
     negativeEffects: [],
@@ -492,8 +497,8 @@ export function convertRuleStructToString(
     mappings
   ));
 
-  rJSON.positiveEffects = ruleS.posEffects.map(effect => reverseParseRule(effect.instructionSet, effectPlhArray, []));
-  rJSON.negativeEffects = ruleS.negEffects.map(effect => reverseParseRule(effect.instructionSet, effectPlhArray, []));
+  rJSON.positiveEffects = ruleS.posEffects.map(effect => reverseParseEffect(effect, effectPlhArray));
+  rJSON.negativeEffects = ruleS.negEffects.map(effect => reverseParseEffect(effect, effectPlhArray));
 
   return rJSON;
 }
@@ -527,32 +532,23 @@ export function convertForeignCallStructsToStrings(
   foreignCallsOnChain: ForeignCallOnChain[],
   callingFunctionMappings: hexToFunctionString[],
   names: string[]
-): ForeignCallJSON[] {
-  console.log("CFM ", callingFunctionMappings);
-  const foreignCalls: ForeignCallJSON[] = foreignCallsOnChain.map((call, iter) => {
+): ForeignCallJSONReversed[] {
+  const foreignCalls: ForeignCallJSONReversed[] = foreignCallsOnChain.map((call, iter) => {
     const callingFunction = callingFunctionMappings.find(mapping => mapping.hex === call.signature);
 
     const returnTypeString = PT.find(pType => pType.enumeration == call.returnType)?.name;
-    console.log("Inputs for foreign call:", call, names, callingFunction);
 
     const inputs = {
       "name": names[iter],
-      "address": call.foreignCallAddress,
-      "function": names[iter],
-      "returnType": returnTypeString,
+      "address": call.foreignCallAddress as Address,
+      "function": call.signature,
+      "returnType": returnTypeString || "",
       "valuesToPass": call.signature,
+      "mappedTrackerKeyValues": "",
       "callingFunction": callingFunction ? callingFunction.functionString : "",
     };
 
-    const validatedInputs = validateForeignCallJSON(JSON.stringify(inputs));
-
-    if (isRight(validatedInputs)) {
-      return unwrapEither(validatedInputs);
-    } else {
-      throw new Error(
-        `Invalid foreign call function input: ${JSON.stringify(validatedInputs.left)}`
-      );
-    }
+    return inputs
   });
 
   return foreignCalls;
@@ -598,14 +594,16 @@ export function convertTrackerStructsToStrings(
       const inputs = {
         "name": trackerNames[iter],
         valueType,
-        keyType
+        keyType,
+        initialKeys: [],
+        initialValues: []
       };
       const validatedInputs = validateMappedTrackerJSON(JSON.stringify(inputs));
       if (isRight(validatedInputs)) {
         return unwrapEither(validatedInputs);
       } else {
         throw new Error(
-          `Invalid tracker input: ${JSON.stringify(validatedInputs.left)}`
+          `Invalid mapped tracker input: ${JSON.stringify(validatedInputs.left)}`
         );
       }
     });

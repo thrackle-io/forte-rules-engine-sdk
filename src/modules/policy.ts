@@ -35,7 +35,7 @@ import {
   getAllForeignCalls,
   getForeignCallMetadata,
 } from "./foreign-calls";
-import { createRule } from "./rules";
+import { createRule, getRuleMetadata } from "./rules";
 import {
   createMappedTracker,
   getAllTrackers,
@@ -488,12 +488,16 @@ export const getPolicy = async (
       throw new Error(`Policy with ID ${policyId} does not exist.`);
     }
     let policyResult = retrievePolicy.result;
-    console.log("PR: ", policyResult);
     let callingFunctions: any = policyResult[0];
     let ruleIds2DArray: any = policyResult[2];
-    const PolicyType = policyResult[3];
+    const PolicyType = await isClosedPolicy(
+      config,
+      rulesEnginePolicyContract,
+      policyId
+    )
 
     var iter = 1;
+
     for (var cfId in callingFunctions) {
       var mapp = await getCallingFunctionMetadata(
         config,
@@ -510,7 +514,7 @@ export const getPolicy = async (
       callingFunctionMappings.push(newMapping);
       const callingFunctionJSON = {
         name: mapp.callingFunction,
-        functionSignature: mapp.signature,
+        functionSignature: mapp.callingFunction,
         encodedValues: mapp.encodedValues,
       }
       callingFunctionJSONs.push(callingFunctionJSON)
@@ -551,6 +555,7 @@ export const getPolicy = async (
       rulesEngineComponentContract,
       policyId
     );
+
     var trackerNames: string[] = [];
     for (var tracker of trackers) {
       var name = await getTrackerMetadata(
@@ -559,7 +564,6 @@ export const getPolicy = async (
         policyId,
         tracker.trackerIndex
       );
-      console.log("Tracker name: ", name);
       trackerNames.push(name);
       var newMapping: hexToFunctionString = {
         hex: "",
@@ -595,13 +599,20 @@ export const getPolicy = async (
           policyId,
           ruleId
         );
-        var plhArray: string[] = [];
+
+        const ruleM = await getRuleMetadata(
+          config,
+          rulesEngineRulesContract,
+          policyId,
+          ruleId
+        );
         if (ruleS != null) {
           ruleJSONObjs.push(
             convertRuleStructToString(
               functionString,
               encodedValues,
               ruleS,
+              ruleM!,
               foreignCalls,
               trackers,
               callingFunctionMappings
@@ -613,15 +624,14 @@ export const getPolicy = async (
     }
 
     var jsonObj: PolicyJSON = {
-      ...trackerJSONs,
       Policy: policyMeta.policyName,
-      PolicyType,
       Description: policyMeta.policyDescription,
+      PolicyType: PolicyType ? "closed" : "open",
       CallingFunctions: callingFunctionJSONs,
       ForeignCalls: callStrings,
+      ...trackerJSONs,
       Rules: ruleJSONObjs,
     };
-    console.log("Policy JSON: ", jsonObj);
     return JSON.stringify(jsonObj);
   } catch (error) {
     console.error(error);
