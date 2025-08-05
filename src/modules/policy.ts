@@ -488,7 +488,6 @@ export const getPolicy = async (
       throw new Error(`Policy with ID ${policyId} does not exist.`);
     }
     let policyResult = retrievePolicy.result;
-    console.log("PR: ", policyResult);
     let callingFunctions: any = policyResult[0];
     let ruleIds2DArray: any = policyResult[2];
     const PolicyType = await isClosedPolicy(
@@ -565,7 +564,6 @@ export const getPolicy = async (
         policyId,
         tracker.trackerIndex
       );
-      console.log("Tracker name: ", name);
       trackerNames.push(name);
       var newMapping: hexToFunctionString = {
         hex: "",
