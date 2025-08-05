@@ -516,8 +516,8 @@ export const getPolicy = async (
         name: mapp.callingFunction,
         functionSignature: mapp.callingFunction,
         encodedValues: mapp.encodedValues,
-      }
-      callingFunctionJSONs.push(callingFunctionJSON)
+      };
+      callingFunctionJSONs.push(callingFunctionJSON);
       iter++;
     }
 
