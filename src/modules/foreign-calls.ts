@@ -156,6 +156,7 @@ export const createForeignCall = async (
   const fcJSON = unwrapEither(json);
   var iter = 1;
   var encodedValues: string[] = [];
+
   for (var mapp of callingFunctionMetadata) {
     if (mapp.callingFunction.trim() == fcJSON.callingFunction) {
       var builtJSON = {
@@ -174,7 +175,6 @@ export const createForeignCall = async (
     indexMap,
     encodedValues
   );
-
   var fc = {
     set: true,
     foreignCallAddress: foreignCall.address,

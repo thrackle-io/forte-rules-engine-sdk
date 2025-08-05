@@ -402,20 +402,20 @@ test('Reverse Interpretation for the: "Evaluates a simple syntax string involvin
 test('Reverse Interpretation for the: "Evaluates a simple effect involving a mapped tracker update (TRUM))" test', () => {
   let instructionSet = [
     "PLH",
-    0,
+    0n,
     "PLHM",
-    1,
-    0,
+    1n,
+    0n,
     "N",
     1n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    1,
-    3,
-    0,
-    0,
+    1n,
+    3n,
+    0n,
+    0n,
   ];
   var expectedString = "TRU:testOne(to) -= 1";
   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
@@ -431,38 +431,38 @@ test('Reverse Interpretation for the: "Evaluates a simple effect involving a map
 test("Evaluates a complex effect involving a mapped tracker update (TRUM))", () => {
   var instructionSet = [
     "PLH",
-    0,
+    0n,
     "PLHM",
-    1,
-    0,
+    1n,
+    0n,
     "N",
     1n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    1,
-    3,
-    0,
-    0,
+    1n,
+    3n,
+    0n,
+    0n,
     "PLH",
-    0,
+    0n,
     "PLHM",
-    2,
-    5,
+    2n,
+    5n,
     "N",
     1n,
     "-",
-    6,
-    7,
+    6n,
+    7n,
     "TRUM",
-    2,
-    8,
-    5,
-    0,
+    2n,
+    8n,
+    5n,
+    0n,
     "AND",
-    4,
-    9,
+    4n,
+    9n,
   ];
 
   var ruleStringA = `{
@@ -483,7 +483,7 @@ test("Evaluates a complex effect involving a mapped tracker update (TRUM))", () 
 });
 
 test('Reverse Interpretation for the: "Evaluates a simple effect involving a tracker update (TRU))" test', () => {
-  let instructionSet = ["PLH", 1n, "N", 1n, "-", 0, 1, "TRU", 1, 2, 0];
+  let instructionSet = ["PLH", 1n, "N", 1n, "-", 0n, 1n, "TRU", 1n, 2n, 0n];
   var expectedString = "TRU:testOne -= 1";
   const cleanedInstructionSet = cleanInstructionSet(instructionSet);
   var placeholderArray = ["value", "TR:testOne"];
@@ -1917,12 +1917,12 @@ test("Evaluate a simple syntax string that contains multiple positive and negati
   expect(retVal.negativeEffects[1].text).toEqual("");
   expect(retVal.negativeEffects[1].instructionSet).toEqual([
     "PLH",
-    0,
+    0n,
     "PLH",
-    1,
+    1n,
     "AND",
-    0,
-    1,
+    0n,
+    1n,
   ]);
   expect(retVal.effectPlaceHolders.length).toEqual(2);
   expect(retVal.effectPlaceHolders[0].flags).toEqual(0x1);
@@ -1951,12 +1951,12 @@ test("Evaluate a simple syntax string for an event effect with an instruction se
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([
     "PLH",
-    0,
+    0n,
     "PLH",
-    1,
+    1n,
     "AND",
-    0,
-    1,
+    0n,
+    1n,
   ]);
 });
 test("Simple Reverse Interpretation", () => {
@@ -1969,7 +1969,7 @@ test("Simple Reverse Interpretation", () => {
 });
 
 test("Evaluates a simple effect involving a tracker update (TRU))", () => {
-  var expectedArray = ["PLH", 0, "N", 1n, "-", 0, 1, "TRU", 4, 2, 0];
+  var expectedArray = ["PLH", 0n, "N", 1n, "-", 0n, 1n, "TRU", 4n, 2n, 0n];
 
   var ruleStringA = `{
   "condition": " value > 5 ",
@@ -2582,20 +2582,20 @@ test("Evaluates a simple syntax string involving a mapped tracker", () => {
 test("Evaluates a simple effect involving a mapped tracker update (TRUM))", () => {
   var expectedArray = [
     "PLH",
-    0,
+    0n,
     "PLHM",
-    1,
-    0,
+    1n,
+    0n,
     "N",
     1n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    1,
-    3,
-    0,
-    0,
+    1n,
+    3n,
+    0n,
+    0n,
   ];
 
   var ruleStringA = `{
@@ -2623,38 +2623,38 @@ test("Evaluates a simple effect involving a mapped tracker update (TRUM))", () =
 test("Evaluates a complex effect involving a mapped tracker update (TRUM))", () => {
   var expectedArray = [
     "PLH",
-    0,
+    0n,
     "PLHM",
-    1,
-    0,
+    1n,
+    0n,
     "N",
     1n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    1,
-    3,
-    0,
-    0,
+    1n,
+    3n,
+    0n,
+    0n,
     "PLH",
-    0,
+    0n,
     "PLHM",
-    2,
-    5,
+    2n,
+    5n,
     "N",
     1n,
     "-",
-    6,
-    7,
+    6n,
+    7n,
     "TRUM",
-    2,
-    8,
-    5,
-    0,
+    2n,
+    8n,
+    5n,
+    0n,
     "AND",
-    4,
-    9,
+    4n,
+    9n,
   ];
 
   var ruleStringA = `{
@@ -2681,20 +2681,20 @@ test("Evaluates a complex effect involving a mapped tracker update (TRUM))", () 
 test("Evaluates another complex effect involving a mapped tracker update (TRUM))", () => {
   var expectedArray = [
     "PLH",
-    1,
+    1n,
     "PLHM",
-    2,
-    0,
+    2n,
+    0n,
     "PLH",
-    0,
+    0n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    2,
-    3,
-    0,
-    0,
+    2n,
+    3n,
+    0n,
+    0n,
   ];
 
   var ruleStringA = `{
@@ -2722,20 +2722,20 @@ test("Evaluates another complex effect involving a mapped tracker update (TRUM))
 test("Evaluates a third complex effect involving a mapped tracker update (TRUM))", () => {
   var expectedArray = [
     "PLH",
-    0,
+    0n,
     "PLHM",
-    1,
-    0,
+    1n,
+    0n,
     "PLH",
-    1,
+    1n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    1,
-    3,
-    0,
-    0,
+    1n,
+    3n,
+    0n,
+    0n,
   ];
 
   var ruleStringA = `{
@@ -2768,20 +2768,20 @@ test("Evaluates a third complex effect involving a mapped tracker update (TRUM))
 test("Evaluates a fourth complex effect involving a mapped tracker update (TRUM))", () => {
   var expectedArray = [
     "PLH",
-    2,
+    2n,
     "PLHM",
-    1,
-    0,
+    1n,
+    0n,
     "N",
     1n,
     "-",
-    1,
-    2,
+    1n,
+    2n,
     "TRUM",
-    1,
-    3,
-    0,
-    0,
+    1n,
+    3n,
+    0n,
+    0n,
   ];
 
   var ruleStringA = `{

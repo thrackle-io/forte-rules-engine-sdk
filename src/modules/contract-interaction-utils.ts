@@ -168,6 +168,7 @@ export function buildARuleStruct(
     additionalForeignCalls,
     additionalEffectForeignCalls
   );
+
   var trList = buildTrackerList(ruleSyntax.condition);
   if (ruleSyntax.positiveEffects != null) {
     for (var eff of ruleSyntax.positiveEffects) {
