@@ -199,7 +199,7 @@ export function parseRuleSyntax(
     indexMap,
     placeHolders
   );
-  var excludeArray = [];
+  var excludeArray: string[] = [];
   for (var name of ruleComponents) {
     excludeArray.push(name.name);
   }
@@ -207,7 +207,20 @@ export function parseRuleSyntax(
   excludeArray.push(...matchArray);
   excludeArray.push(...operandArray);
   var raw = buildRawData(retVal, excludeArray);
-
+  positiveEffectsFinal.forEach(
+    (effect) =>
+      (effect.instructionSet = buildRawData(
+        effect.instructionSet,
+        excludeArray
+      ))
+  );
+  negativeEffectsFinal.forEach(
+    (effect) =>
+      (effect.instructionSet = buildRawData(
+        effect.instructionSet,
+        excludeArray
+      ))
+  );
   return {
     instructionSet: raw,
     positiveEffects: positiveEffectsFinal,

@@ -128,7 +128,9 @@ export const createPolicy = async (
     });
 
     policyId = addPolicy.result;
-
+    var fsSelectors = [];
+    var fsIds = [];
+    var emptyRules = [];
     for (var callingFunctionJSON of policyJSON.CallingFunctions) {
       var callingFunction = callingFunctionJSON.functionSignature;
       if (!callingFunctions.includes(callingFunction)) {
@@ -151,18 +153,22 @@ export const createPolicy = async (
           index: -1,
         });
         var selector = toFunctionSelector(callingFunction);
-        await updatePolicy(
-          config,
-          rulesEnginePolicyContract,
-          policyId,
-          [selector],
-          [fsId],
-          [[]],
-          policyJSON.Policy,
-          policyJSON.Description
-        );
+        fsSelectors.push(selector);
+        fsIds.push(fsId);
+        emptyRules.push([]);
       }
     }
+    await updatePolicy(
+      config,
+      rulesEnginePolicyContract,
+      policyId,
+      fsSelectors,
+      fsIds,
+      emptyRules,
+      policyJSON.Policy,
+      policyJSON.Description
+    );
+
     if (policyJSON.Trackers != null) {
       for (var tracker of policyJSON.Trackers) {
         const parsedTracker = parseTrackerSyntax(tracker);
@@ -215,7 +221,6 @@ export const createPolicy = async (
           trackerIds,
           encodedValues
         );
-
         const fcId = await createForeignCall(
           config,
           rulesEngineForeignCallContract,
