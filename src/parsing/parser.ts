@@ -272,11 +272,14 @@ function encodeTrackerData(valueSet: any[], keyType: string): any[] {
 
       return address;
     } else if (keyType == "bytes") {
-      var bytes = encodeAbiParameters(parseAbiParameters("bytes"), [
-        toHex(stringToBytes(String(val))),
-      ]);
-
-      return bytes;
+      var interim = BigInt(
+        keccak256(
+          encodeAbiParameters(parseAbiParameters("bytes"), [
+            toHex(stringToBytes(String(val))),
+          ])
+        )
+      );
+      return encodePacked(["uint256"], [BigInt(interim)]);
     } else if (keyType == "bool") {
       if (val == "true") {
         return encodePacked(["uint256"], [1n]);
@@ -317,9 +320,14 @@ export function parseTrackerSyntax(syntax: TrackerJSON): TrackerDefinition {
       validatedAddress,
     ]);
   } else if (trackerType == "bytes") {
-    trackerInitialValue = encodeAbiParameters(parseAbiParameters("bytes"), [
-      toHex(stringToBytes(String(syntax.initialValue))),
-    ]);
+    var interim = BigInt(
+      keccak256(
+        encodeAbiParameters(parseAbiParameters("bytes"), [
+          toHex(stringToBytes(String(syntax.initialValue))),
+        ])
+      )
+    );
+    trackerInitialValue = encodePacked(["uint256"], [BigInt(interim)]);
   } else if (trackerType == "bool") {
     if (syntax.initialValue == "true") {
       trackerInitialValue = encodePacked(["uint256"], [1n]);
