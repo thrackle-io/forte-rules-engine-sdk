@@ -938,8 +938,8 @@ describe("Rules Engine Interactions", async () => {
                     "Name": "Rule A",
                     "Description": "Rule A Description",
                     "condition": "value > 500",
-                    "positiveEffects": ["revert(\"Positive\")"],
-                    "negativeEffects": ["revert(\"Negative\")"],
+                    "positiveEffects": ["revert(Positive)"],
+                    "negativeEffects": ["revert(Negative)"],
                     "callingFunction": "transfer(address to, uint256 value)"
                 }
             ]
@@ -981,6 +981,8 @@ describe("Rules Engine Interactions", async () => {
 
     const input = JSON.parse(policyJSON);
     input.Trackers[0].initialValue = "";
+    input.Rules[0].positiveEffects = ["revert('')"];
+    input.Rules[0].negativeEffects = ["revert('')"];
 
     expect(parsed.Policy).toEqual(input.Policy);
     expect(retVal).toEqual(JSON.stringify(input));
