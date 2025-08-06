@@ -938,8 +938,8 @@ describe("Rules Engine Interactions", async () => {
                     "Name": "Rule A",
                     "Description": "Rule A Description",
                     "condition": "value > 500",
-                    "positiveEffects": ["revert('Positive')"],
-                    "negativeEffects": ["revert('Negative')"],
+                    "positiveEffects": ["revert(\"Positive\")"],
+                    "negativeEffects": ["revert(\"Negative\")"],
                     "callingFunction": "transfer(address to, uint256 value)"
                 }
             ]

@@ -110,6 +110,10 @@ export const validateFCFunctionInput = (input: string): boolean => {
 
 export const foreignCallValidator = z.object({
   name: z.string(),
+  function: z
+    .string()
+    .trim()
+    .refine(validateFCFunctionInput, { message: "Unsupported argument type" }),
   address: z
     .string()
     .trim()
@@ -117,10 +121,6 @@ export const foreignCallValidator = z.object({
       message: `Address is invalid`,
     })
     .transform((input) => checksumAddress(input.trim() as Address)),
-  function: z
-    .string()
-    .trim()
-    .refine(validateFCFunctionInput, { message: "Unsupported argument type" }),
   returnType: z.preprocess(
     trimPossibleString,
     z.literal(PType, "Unsupported return type")

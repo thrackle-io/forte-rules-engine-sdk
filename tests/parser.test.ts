@@ -2813,7 +2813,6 @@ test("Evaluates a fourth complex effect involving a mapped tracker update (TRUM)
 
 test("Creates a simple foreign call with a boolean return", () => {
   var str = `{
-<<<<<<< HEAD
   "name": "Simple Foreign Call",
   "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
   "function": "testSig(address,string,uint256)",
@@ -2822,15 +2821,6 @@ test("Creates a simple foreign call with a boolean return", () => {
   "mappedTrackerKeyValues": "",
   "callingFunction": "someFunction(address to, string someString, uint256 value)"
   }`;
-=======
-    "name": "Simple Foreign Call",
-      "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
-        "function": "testSig(address,string,uint256)",
-          "returnType": "bool",
-            "valuesToPass": "to, someString, value",
-              "callingFunction": "someFunction(address to, string someString, uint256 value)"
-  } `;
->>>>>>> dd01758 (added mapped reverse parsing tests)
 
   var retVal = parseForeignCallDefinition(
     JSON.parse(str),
