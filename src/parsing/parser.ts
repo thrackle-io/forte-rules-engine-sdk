@@ -6,6 +6,7 @@ import {
   parseAbiParameters,
   stringToBytes,
   getAddress,
+  keccak256,
 } from "viem";
 import {
   Either,
@@ -283,7 +284,12 @@ function encodeTrackerData(valueSet: any[], keyType: string): any[] {
         return encodePacked(["uint256"], [0n]);
       }
     } else {
-      return encodeAbiParameters(parseAbiParameters("string"), [val as string]);
+      var interim = BigInt(
+        keccak256(
+          encodeAbiParameters(parseAbiParameters("string"), [val as string])
+        )
+      );
+      return encodePacked(["uint256"], [BigInt(interim)]);
     }
   });
 
@@ -321,9 +327,14 @@ export function parseTrackerSyntax(syntax: TrackerJSON): TrackerDefinition {
       trackerInitialValue = encodePacked(["uint256"], [0n]);
     }
   } else {
-    trackerInitialValue = encodeAbiParameters(parseAbiParameters("string"), [
-      syntax.initialValue,
-    ]);
+    var interim = BigInt(
+      keccak256(
+        encodeAbiParameters(parseAbiParameters("string"), [
+          syntax.initialValue as string,
+        ])
+      )
+    );
+    trackerInitialValue = encodePacked(["uint256"], [BigInt(interim)]);
   }
   var trackerTypeEnum = 0;
   for (var parameterType of PT) {
