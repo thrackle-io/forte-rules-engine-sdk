@@ -988,13 +988,13 @@ test("Creates a simple mapped tracker with a string value", () => {
   expect(retVal.initialKeys[1]).toEqual(encodePacked(["uint256"], [BigInt(1)]));
   expect(retVal.initialKeys[2]).toEqual(encodePacked(["uint256"], [BigInt(2)]));
   expect(retVal.initialValues[0]).toEqual(
-    encodeAbiParameters(parseAbiParameters("string"), ["Test" as string])
+    "0x931dbaf3028ef6a59401824972e5ff2185985e313cf0a22def98b9627cbfb737"
   );
   expect(retVal.initialValues[1]).toEqual(
-    encodeAbiParameters(parseAbiParameters("string"), ["Test Two" as string])
+    "0x2578558fdfb44c8c485359293fa18d22bd9eb6bd60a474970adacacb46164d02"
   );
   expect(retVal.initialValues[2]).toEqual(
-    encodeAbiParameters(parseAbiParameters("string"), ["Test Three" as string])
+    "0x316e555747bdaabd3553c23c61a3d25280a3b3c4b5ed77bc8e9b109a3d57b6c5"
   );
 });
 
@@ -1081,7 +1081,7 @@ test("Creates a simple string tracker", () => {
   expect(retVal.name).toEqual("Simple String Tracker");
   expect(retVal.type).toEqual(pTypeEnum.STRING);
   expect(retVal.initialValue).toEqual(
-    encodeAbiParameters(parseAbiParameters("string"), ["test"])
+    "0x05294e8f4a5ee627df181a607a6376b9d98fab962d53722cd6871cf8321cedf6"
   );
 });
 

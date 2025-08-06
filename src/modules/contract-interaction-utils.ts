@@ -238,7 +238,6 @@ export function buildARuleStruct(
     negEffects: effect.negativeEffects,
   };
   console.log(rule);
-
   return rule;
 }
 
@@ -323,7 +322,6 @@ export function buildAnEffectStruct(
   }
   for (var nEffect of output.negativeEffects) {
     var param: any;
-
     if (nEffect.pType == 0) {
       // address
       param = encodeAbiParameters(parseAbiParameters("address"), [
@@ -345,7 +343,6 @@ export function buildAnEffectStruct(
         BigInt(nEffect.parameterValue),
       ]);
     }
-
     const instructionSet = cleanInstructionSet(nEffect.instructionSet);
     const effect = {
       valid: true,

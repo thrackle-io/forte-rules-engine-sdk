@@ -134,7 +134,6 @@ export const createRule = async (
     }
     iter += 1;
   }
-
   var fcList = await buildForeignCallList(ruleSyntax.condition);
   var fullFCList = [];
   for (var fc of fcList) {
@@ -176,7 +175,6 @@ export const createRule = async (
       }
     }
   }
-
   var fcListEff = [];
   var fullFCListEff = [];
   if (ruleSyntax.positiveEffects != null) {
@@ -189,7 +187,6 @@ export const createRule = async (
       fcListEff.push(...buildForeignCallList(eff));
     }
   }
-
   for (var fc of fcListEff) {
     for (var id of foreignCallNameToID) {
       if (id.name.trim() == fc.trim()) {
@@ -228,7 +225,6 @@ export const createRule = async (
       }
     }
   }
-
   var effects = buildAnEffectStruct(
     effectSyntax,
     trackerNameToID,

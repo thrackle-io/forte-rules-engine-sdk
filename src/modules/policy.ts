@@ -168,7 +168,6 @@ export const createPolicy = async (
       policyJSON.Policy,
       policyJSON.Description
     );
-
     if (policyJSON.Trackers != null) {
       for (var tracker of policyJSON.Trackers) {
         const parsedTracker = parseTrackerSyntax(tracker);
@@ -237,7 +236,6 @@ export const createPolicy = async (
         fcIds.push(struc);
       }
     }
-
     for (var rule of policyJSON.Rules) {
       const ruleId = await createRule(
         config,
@@ -260,7 +258,6 @@ export const createPolicy = async (
         ruleToCallingFunction.set(rule.callingFunction, [ruleId]);
       }
     }
-
     for (var cf of callingFunctions) {
       if (ruleToCallingFunction.has(cf)) {
         rulesDoubleMapping.push(ruleToCallingFunction.get(cf));
