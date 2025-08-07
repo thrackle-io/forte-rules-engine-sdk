@@ -187,6 +187,7 @@ export const createForeignCall = async (
   };
   var addFC;
   while (true) {
+    console.log("CREATING FC: ", policyId, fc, foreignCall);
     try {
       addFC = await simulateContract(config, {
         address: rulesEngineForeignCallContract.address,
@@ -197,6 +198,7 @@ export const createForeignCall = async (
       break;
     } catch (err) {
       // TODO: Look into replacing this loop/sleep with setTimeout
+      console.log("ERR CREATING FC: ", err)
       await sleep(1000);
       return -1;
     }
@@ -434,6 +436,7 @@ export const getForeignCall = async (
   policyId: number,
   foreignCallId: number
 ): Promise<Maybe<ForeignCallOnChain>> => {
+  console.log("GFC: ", policyId, foreignCallId);
   try {
     const addFC = await readContract(config, {
       address: rulesEngineForeignCallContract.address,

@@ -431,6 +431,7 @@ export const reverseParsePlaceholder = (
 }
 
 export const reverseParseEffect = (effect: any, placeholders: string[]): string => {
+  console.log("REVERSING EFFECT: ", effect, placeholders)
   if (effect.effectType == 0) {
     return "revert('" + effect.text + "')";
   } else if (effect.effectType == 1) {

@@ -139,6 +139,7 @@ export const createRule = async (
   for (var fc of fcList) {
     for (var id of foreignCallNameToID) {
       if (id.name.trim() == fc.trim()) {
+        console.log("GR FC: ", id);
         var fcChain = await getForeignCall(
           config,
           rulesEngineForeignCallContract,
