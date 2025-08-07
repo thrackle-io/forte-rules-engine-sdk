@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 import {
   EffectType,
   ForeignCallDefinition,
+  ParamTypeValues,
   pTypeEnum,
   RulesError,
   TrackerDefinition,
@@ -926,7 +927,7 @@ test("Creates a simple uint256 tracker", () => {
   var retVal = parseTrackerSyntax(JSON.parse(str));
 
   expect(retVal.name).toEqual("Simple Int Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.UINT256);
+  expect(retVal.type).toEqual(ParamTypeValues.UINT256);
   expect(retVal.initialValue).toEqual(
     encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(14)])
   );
@@ -940,7 +941,7 @@ test("Creates a simple bool tracker", () => {
         }`;
   var retVal = parseTrackerSyntax(JSON.parse(str));
   expect(retVal.name).toEqual("Simple bool Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.BOOL);
+  expect(retVal.type).toEqual(ParamTypeValues.BOOL);
   expect(retVal.initialValue).toEqual(
     encodeAbiParameters(parseAbiParameters("uint256"), [BigInt(1)])
   );
@@ -1063,7 +1064,7 @@ test("Creates a simple address tracker", () => {
   }`;
   var retVal = parseTrackerSyntax(JSON.parse(str));
   expect(retVal.name).toEqual("Simple Address Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.ADDRESS);
+  expect(retVal.type).toEqual(ParamTypeValues.ADDRESS);
   expect(retVal.initialValue).toEqual(
     encodeAbiParameters(parseAbiParameters("address"), [
       "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
@@ -1079,7 +1080,7 @@ test("Creates a simple string tracker", () => {
   }`;
   var retVal = parseTrackerSyntax(JSON.parse(str));
   expect(retVal.name).toEqual("Simple String Tracker");
-  expect(retVal.type).toEqual(pTypeEnum.STRING);
+  expect(retVal.type).toEqual(ParamTypeValues.STRING);
   expect(retVal.initialValue).toEqual(
     "0x05294e8f4a5ee627df181a607a6376b9d98fab962d53722cd6871cf8321cedf6"
   );
@@ -1772,7 +1773,7 @@ test("Evaluate a simple syntax string for a revert effect", () => {
     [],
     []
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.positiveEffects[0].type).toBe("REVERT");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 });
 
@@ -1792,7 +1793,7 @@ test("Evaluate a simple syntax string for a revert effect with message", () => {
     [],
     []
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.positiveEffects[0].type).toBe("REVERT");
   expect(retVal.positiveEffects[0].text).toEqual("Didn't pass the sniff test");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 });
@@ -1812,7 +1813,7 @@ test("Evaluate a simple syntax string for a event effect", () => {
     [],
     []
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].type).toBe("EVENT");
   expect(retVal.positiveEffects[0].text).toEqual("Something wrong");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 });
@@ -1832,7 +1833,7 @@ test("Evaluate a simple syntax string for a event effect without text", () => {
     [],
     []
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].type).toBe("EVENT");
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
 });
@@ -1852,10 +1853,10 @@ test("Evaluate a simple syntax string that contains a positive and negative effe
     [],
     []
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].type).toBe("EVENT");
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
-  expect(retVal.negativeEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.negativeEffects[0].type).toBe("REVERT");
   expect(retVal.negativeEffects[0].text).toEqual("");
   expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
 });
@@ -1875,13 +1876,13 @@ test("Evaluate a simple syntax string that contains multiple positive effects an
     [],
     []
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].type).toBe("EVENT");
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
-  expect(retVal.positiveEffects[1].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[1].type).toBe("EVENT");
   expect(retVal.positiveEffects[1].text).toEqual("OtherGoodvibes");
   expect(retVal.positiveEffects[1].instructionSet).toEqual([]);
-  expect(retVal.negativeEffects[0].type).toBe(EffectType.REVERT);
+  expect(retVal.negativeEffects[0].type).toBe("REVERT");
   expect(retVal.negativeEffects[0].text).toEqual("");
   expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
 });
@@ -1904,16 +1905,16 @@ test("Evaluate a simple syntax string that contains multiple positive and negati
     [],
     ["FC:updateOracle", "FC:alert"]
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[0].type).toBe("EVENT");
   expect(retVal.positiveEffects[0].text).toEqual("Goodvibes");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([]);
-  expect(retVal.positiveEffects[1].type).toBe(EffectType.EVENT);
+  expect(retVal.positiveEffects[1].type).toBe("EVENT");
   expect(retVal.positiveEffects[1].text).toEqual("OtherGoodvibes");
   expect(retVal.positiveEffects[1].instructionSet).toEqual([]);
-  expect(retVal.negativeEffects[0].type).toBe(EffectType.EVENT);
+  expect(retVal.negativeEffects[0].type).toBe("EVENT");
   expect(retVal.negativeEffects[0].text).toEqual("badVibes");
   expect(retVal.negativeEffects[0].instructionSet).toEqual([]);
-  expect(retVal.negativeEffects[1].type).toBe(EffectType.EXPRESSION);
+  expect(retVal.negativeEffects[1].type).toBe("EXPRESSION");
   expect(retVal.negativeEffects[1].text).toEqual("");
   expect(retVal.negativeEffects[1].instructionSet).toEqual([
     "PLH",
@@ -1947,7 +1948,7 @@ test("Evaluate a simple syntax string for an event effect with an instruction se
     [],
     ["FC:updateOracle", "FC:alert"]
   );
-  expect(retVal.positiveEffects[0].type).toBe(EffectType.EXPRESSION);
+  expect(retVal.positiveEffects[0].type).toBe("EXPRESSION");
   expect(retVal.positiveEffects[0].text).toEqual("");
   expect(retVal.positiveEffects[0].instructionSet).toEqual([
     "PLH",

@@ -544,8 +544,23 @@ export function convertForeignCallStructsToStrings(
       }
       var returnTypeString = "";
 
+      // Convert number back to enumeration string for comparison
+      const getEnumerationFromNumber = (num: number): string => {
+        switch (num) {
+          case 0: return "ADDRESS";
+          case 1: return "STRING";
+          case 2: return "UINT256";
+          case 3: return "BOOL";
+          case 4: return "VOID";
+          case 5: return "BYTES";
+          case 6: return "STATIC_TYPE_ARRAY";
+          case 7: return "DYNAMIC_TYPE_ARRAY";
+          default: return "VOID";
+        }
+      };
+
       for (var parameterType of PT) {
-        if (call.returnType == parameterType.enumeration) {
+        if (getEnumerationFromNumber(call.returnType) == parameterType.enumeration) {
           returnTypeString = parameterType.name;
         }
       }
@@ -581,8 +596,23 @@ export function convertTrackerStructsToStrings(
     var iter = 0;
     for (var tracker of trackers) {
       var trackerType = "";
+      // Convert number back to enumeration string for comparison  
+      const getEnumerationFromNumber = (num: number): string => {
+        switch (num) {
+          case 0: return "ADDRESS";
+          case 1: return "STRING";
+          case 2: return "UINT256";
+          case 3: return "BOOL";
+          case 4: return "VOID";
+          case 5: return "BYTES";
+          case 6: return "STATIC_TYPE_ARRAY";
+          case 7: return "DYNAMIC_TYPE_ARRAY";
+          default: return "VOID";
+        }
+      };
+
       for (var parameterType of PT) {
-        if (tracker.pType == parameterType.enumeration) {
+        if (getEnumerationFromNumber(tracker.pType) == parameterType.enumeration) {
           trackerType = parameterType.name;
         }
       }

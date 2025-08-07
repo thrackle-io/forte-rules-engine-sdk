@@ -459,7 +459,7 @@ export function buildPlaceholderList(names: any[]): PlaceholderStruct[] {
  * @param indexMap - A mapping of tracker index names used for interpreting expressions.
  *
  * @returns An object containing:
- * - `type`: The type of the effect (e.g., `EffectType.REVERT`, `EffectType.EVENT`, or `EffectType.EXPRESSION`).
+ * - `type`: The type of the effect (e.g., `"REVERT"`, `"EVENT"`, or `"EXPRESSION"`).
  * - `text`: The extracted text of the effect.
  * - `instructionSet`: An array of instructions for expression effects.
  * - `pType`: The parameter type (0 for address, 1 for string, 2 for numeric).
@@ -471,14 +471,14 @@ export function parseEffect(
   placeholders: PlaceholderStruct[],
   indexMap: trackerIndexNameMapping[]
 ): EffectDefinition {
-  var effectType = EffectType.REVERT;
+  var effectType: EffectType = "REVERT";
   var effectText = "";
   var effectInstructionSet: any[] = [];
   const revertTextPattern = /(revert)\("([^"]*)"\)/;
   var pType = 2;
   var parameterValue: any = 0;
   if (effect.includes("emit")) {
-    effectType = EffectType.EVENT;
+    effectType = "EVENT";
     var placeHolder = effect.replace("emit ", "").trim();
     var spli = placeHolder.split(", ");
     if (spli.length > 1) {
@@ -497,11 +497,11 @@ export function parseEffect(
       effectText = spli[0];
     }
   } else if (effect.includes("revert")) {
-    effectType = EffectType.REVERT;
+    effectType = "REVERT";
     const match = effect.match(revertTextPattern);
     effectText = match ? match[2] : "";
   } else {
-    effectType = EffectType.EXPRESSION;
+    effectType = "EXPRESSION";
     var instructionSet = convertHumanReadableToInstructionSet(
       effect,
       names,

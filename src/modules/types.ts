@@ -77,11 +77,8 @@ export type Tuple = {
   s: string;
 };
 
-export enum EffectType {
-  REVERT = 0,
-  EVENT = 1,
-  EXPRESSION = 2,
-}
+const effectTypes = ["REVERT", "EVENT", "EXPRESSION"] as const;
+export type EffectType = (typeof effectTypes)[number];
 
 export type EffectDefinition = {
   type: EffectType;
@@ -261,28 +258,33 @@ export const matchArray: string[] = [
 export const truMatchArray: string[] = ["+=", "-=", "*=", "/=", "="];
 export const operandArray: string[] = ["PLH", "N", "PLHM", "TRU", "TRUM"];
 
-export enum pTypeEnum {
-  ADDRESS = 0,
-  STRING = 1,
-  UINT256 = 2,
-  BOOL = 3,
-  VOID = 4,
-  BYTES = 5,
-  STATIC_TYPE_ARRAY = 6,
-  DYNAMIC_TYPE_ARRAY = 7,
-}
+const pTypeEnumTypes = ["ADDRESS", "STRING", "UINT256", "BOOL", "VOID", "BYTES", "STATIC_TYPE_ARRAY", "DYNAMIC_TYPE_ARRAY"] as const;
+export type pTypeEnum = (typeof pTypeEnumTypes)[number];
+
+// Utility mapping for readable test assertions
+export const ParamTypeValues = {
+  ADDRESS: 0,
+  STRING: 1, 
+  UINT256: 2,
+  BOOL: 3,
+  VOID: 4,
+  BYTES: 5,
+  STATIC_TYPE_ARRAY: 6,
+  DYNAMIC_TYPE_ARRAY: 7
+} as const;
+
 export const PT = [
-  { name: "address", enumeration: pTypeEnum.ADDRESS },
-  { name: "string", enumeration: pTypeEnum.STRING },
-  { name: "uint256", enumeration: pTypeEnum.UINT256 },
-  { name: "bool", enumeration: pTypeEnum.BOOL },
-  { name: "void", enumeration: pTypeEnum.VOID },
-  { name: "bytes", enumeration: pTypeEnum.BYTES },
-  { name: "address[]", enumeration: pTypeEnum.STATIC_TYPE_ARRAY },
-  { name: "uint256[]", enumeration: pTypeEnum.STATIC_TYPE_ARRAY },
-  { name: "bool[]", enumeration: pTypeEnum.STATIC_TYPE_ARRAY },
-  { name: "string[]", enumeration: pTypeEnum.DYNAMIC_TYPE_ARRAY },
-  { name: "bytes[]", enumeration: pTypeEnum.DYNAMIC_TYPE_ARRAY },
+  { name: "address", enumeration: "ADDRESS" },
+  { name: "string", enumeration: "STRING" },
+  { name: "uint256", enumeration: "UINT256" },
+  { name: "bool", enumeration: "BOOL" },
+  { name: "void", enumeration: "VOID" },
+  { name: "bytes", enumeration: "BYTES" },
+  { name: "address[]", enumeration: "STATIC_TYPE_ARRAY" },
+  { name: "uint256[]", enumeration: "STATIC_TYPE_ARRAY" },
+  { name: "bool[]", enumeration: "STATIC_TYPE_ARRAY" },
+  { name: "string[]", enumeration: "DYNAMIC_TYPE_ARRAY" },
+  { name: "bytes[]", enumeration: "DYNAMIC_TYPE_ARRAY" },
 ];
 
 export type ErrorType =

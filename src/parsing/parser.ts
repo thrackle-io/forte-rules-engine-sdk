@@ -244,10 +244,25 @@ export function parseMappedTrackerSyntax(
     syntax.initialValues,
     valueType
   );
-  const keyTypeEnum = (PT.find((_pt) => _pt.name == keyType) ?? PT[4])
-    .enumeration;
-  const valueTypeEnum = (PT.find((_pt) => _pt.name == valueType) ?? PT[4])
-    .enumeration;
+  // Convert string enumeration to number based on Solidity enum
+  const getTypeNumber = (enumeration: string): number => {
+    switch (enumeration) {
+      case "ADDRESS": return 0;
+      case "STRING": return 1;
+      case "UINT256": return 2;
+      case "BOOL": return 3;
+      case "VOID": return 4;
+      case "BYTES": return 5;
+      case "STATIC_TYPE_ARRAY": return 6;
+      case "DYNAMIC_TYPE_ARRAY": return 7;
+      default: return 0;
+    }
+  };
+
+  const keyTypeEnum = getTypeNumber((PT.find((_pt) => _pt.name == keyType) ?? PT[4])
+    .enumeration);
+  const valueTypeEnum = getTypeNumber((PT.find((_pt) => _pt.name == valueType) ?? PT[4])
+    .enumeration);
 
   return {
     name: syntax.name,
@@ -336,10 +351,25 @@ export function parseTrackerSyntax(syntax: TrackerJSON): TrackerDefinition {
     );
     trackerInitialValue = encodePacked(["uint256"], [BigInt(interim)]);
   }
+  // Convert string enumeration to number based on Solidity enum
+  const getTypeNumber = (enumeration: string): number => {
+    switch (enumeration) {
+      case "ADDRESS": return 0;
+      case "STRING": return 1;
+      case "UINT256": return 2;
+      case "BOOL": return 3;
+      case "VOID": return 4;
+      case "BYTES": return 5;
+      case "STATIC_TYPE_ARRAY": return 6;
+      case "DYNAMIC_TYPE_ARRAY": return 7;
+      default: return 0;
+    }
+  };
+
   var trackerTypeEnum = 0;
   for (var parameterType of PT) {
     if (parameterType.name == trackerType) {
-      trackerTypeEnum = parameterType.enumeration;
+      trackerTypeEnum = getTypeNumber(parameterType.enumeration);
     }
   }
   return {
@@ -443,7 +473,23 @@ export function parseForeignCallDefinition(
 }
 
 export function determinePTEnumeration(name: string): number {
-  return PT.find((pt) => name == pt.name)?.enumeration ?? 0;
+  // Convert string enumeration to number based on Solidity enum
+  const getTypeNumber = (enumeration: string): number => {
+    switch (enumeration) {
+      case "ADDRESS": return 0;
+      case "STRING": return 1;
+      case "UINT256": return 2;
+      case "BOOL": return 3;
+      case "VOID": return 4;
+      case "BYTES": return 5;
+      case "STATIC_TYPE_ARRAY": return 6;
+      case "DYNAMIC_TYPE_ARRAY": return 7;
+      default: return 0;
+    }
+  };
+  
+  const enumeration = PT.find((pt) => name == pt.name)?.enumeration;
+  return enumeration ? getTypeNumber(enumeration) : 0;
 }
 
 export function parseCallingFunction(syntax: CallingFunctionJSON): string[] {
