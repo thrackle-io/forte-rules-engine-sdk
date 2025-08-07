@@ -583,8 +583,7 @@ export const getPolicy = async (
 
     const callStrings: ForeignCallJSON[] = convertForeignCallStructsToStrings(
       foreignCalls,
-      allFunctionMappings,
-      foreignCallNames
+      allFunctionMappings
     );
 
     var trackers: TrackerOnChain[] = await getAllTrackers(

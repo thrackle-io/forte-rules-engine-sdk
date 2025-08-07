@@ -42,7 +42,7 @@ import { isRight, unwrapEither } from "../modules/utils";
  * @param stringReplacements - An array of string replacements for specific instructions.
  * @returns A human-readable rule condition string.
  */
-export function reverseParseRule(
+export function reverseParseInstructionSet(
   instructionSet: number[],
   placeHolderArray: string[],
   stringReplacements: stringReplacement[]
@@ -58,6 +58,7 @@ export function reverseParseRule(
   var keyIndex = -1;
   var valueIndex = -1;
   var instructionCount = instructionSet.length;
+  console.log("REVERSE PARSING INSTRUCTION SET: ", instructionSet, placeHolderArray, stringReplacements);
   for (var instruction of instructionSet) {
     if (currentAction == -1) {
       currentAction = Number(instruction);
@@ -157,6 +158,8 @@ export function reverseParseRule(
           });
           keyIndex = instruction;
           currentMemAddress += 1;
+          retVal = placeHolderArray[instruction]
+          console.log("PLH REV: ", memAddressesMap, currentMemAddress, keyIndex,)
           break;
         case 3:
           retVal = arithmeticOperatorReverseInterpretation(
@@ -437,7 +440,7 @@ export const reverseParseEffect = (effect: any, placeholders: string[]): string 
   } else if (effect.effectType == 1) {
     return "emit " + effect.text;
   } else {
-    return reverseParseRule(effect.instructionSet, placeholders, [])
+    return reverseParseInstructionSet(effect.instructionSet, placeholders, [])
   }
 }
 
@@ -487,7 +490,7 @@ export function convertRuleStructToString(
     mappings
   ));
 
-  rJSON.condition = reverseParseRule(ruleS!.instructionSet, plhArray, []);
+  rJSON.condition = reverseParseInstructionSet(ruleS!.instructionSet, plhArray, []);
   rJSON.callingFunction = functionString;
 
   const effectPlhArray = ruleS.effectPlaceHolders.map((placeholder) => reverseParsePlaceholder(
