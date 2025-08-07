@@ -237,7 +237,6 @@ export function buildARuleStruct(
     posEffects: effect.positiveEffects,
     negEffects: effect.negativeEffects,
   };
-  console.log(rule);
   return rule;
 }
 
@@ -263,6 +262,16 @@ export function buildARuleStruct(
  * - `errorMessage`: The error message associated with the effect.
  * - `instructionSet`: The cleaned instruction set for the effect.
  */
+// Convert EffectType union to number for contract compatibility
+function effectTypeToNumber(effectType: string): number {
+  switch (effectType) {
+    case "REVERT": return 0;
+    case "EVENT": return 1;
+    case "EXPRESSION": return 2;
+    default: return 0;
+  }
+}
+
 export function buildAnEffectStruct(
   ruleSyntax: RuleJSON,
   trackerNameToID: FCNameToID[],
@@ -311,7 +320,7 @@ export function buildAnEffectStruct(
     const effect = {
       valid: true,
       dynamicParam: false,
-      effectType: pEffect.type,
+      effectType: effectTypeToNumber(pEffect.type as string),
       pType: pEffect.pType,
       param: param,
       text: toHex(stringToBytes(pEffect.text, { size: 32 })),
@@ -347,7 +356,7 @@ export function buildAnEffectStruct(
     const effect = {
       valid: true,
       dynamicParam: false,
-      effectType: nEffect.type,
+      effectType: effectTypeToNumber(nEffect.type as string),
       pType: nEffect.pType,
       param: param,
       text: toHex(stringToBytes(nEffect.text, { size: 32 })),

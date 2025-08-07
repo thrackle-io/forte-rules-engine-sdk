@@ -91,7 +91,7 @@ export type EffectDefinition = {
 export type EffectStruct = {
   valid: boolean;
   dynamicParam: boolean;
-  effectType: EffectType;
+  effectType: EffectType | number; // Allow both union type and number for contract compatibility
   pType: number;
   param: any;
   text: Hex;

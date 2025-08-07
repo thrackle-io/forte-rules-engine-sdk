@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: BUSL-1.1
 import { getAddress, toFunctionSelector, toHex } from "viem";
-import { expect, test, describe, beforeAll, beforeEach } from "vitest";
+import { expect, test, describe, beforeAll, beforeEach, vi } from "vitest";
 import {
   getConfig,
   DiamondAddress,
@@ -87,6 +87,55 @@ export const takeSnapshot = async () => {
 // Revert to snapshot
 export const revertToSnapshot = async (snapshotId: any) => {
   await client.revert({ id: snapshotId });
+  // Wait for revert to fully process and mine a block
+  await sleep(200);
+  await client.mine({ blocks: 1 });
+};
+
+// Reset account nonces with timeout
+export const resetAccountNonces = async () => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Nonce reset timeout')), 5000)
+  );
+  
+  const resetPromise = async () => {
+    try {
+      console.log("🔄 Resetting primary account nonce...");
+      await client.setNonce({
+        address: foundryAccountAddress,
+        nonce: 0,
+      });
+      console.log("✅ Primary account nonce reset");
+      
+      // Reset nonce for second account if using one
+      const secondAccount = secondUserClient.account?.address;
+      if (secondAccount) {
+        console.log("🔄 Resetting second account nonce...");
+        await secondUserClient.setNonce({
+          address: secondAccount,
+          nonce: 0,
+        });
+        console.log("✅ Second account nonce reset");
+      }
+    } catch (error) {
+      console.log("⚠️ Setters failed, trying Anvil RPC...");
+      // Fallback: use Anvil RPC directly
+      await client.request({
+        method: 'anvil_setNonce',
+        params: [foundryAccountAddress, '0x0'],
+      });
+      console.log("✅ Anvil RPC nonce reset complete");
+    }
+  };
+  
+  return Promise.race([resetPromise(), timeoutPromise]);
+};
+
+// Utility to wait for transaction and mine block
+export const waitForTransaction = async (txHash: string) => {
+  await client.waitForTransactionReceipt({ hash: txHash });
+  await client.mine({ blocks: 1 });
+  await sleep(100); // Extra safety margin
 };
 
 describe("Rules Engine Interactions", async () => {
@@ -123,18 +172,38 @@ describe("Rules Engine Interactions", async () => {
             }`;
 
   beforeAll(async () => {
+    console.log("🚀 Starting test suite setup...");
+    
+    console.log("🔌 Connecting primary config...");
     await connectConfig(config, 0);
+    
+    console.log("🔌 Connecting second user config...");
     await connectConfig(secondUserConfig, 0);
+    
+    console.log("📸 Taking initial snapshot...");
     snapshotId = await takeSnapshot();
+    
+    console.log("✅ Test suite setup complete");
   });
 
   beforeEach(async () => {
+    console.log("🔄 Setting up test...");
+    
+    // Option A: Revert to original snapshot (current approach)
+    console.log("⏪ Reverting to snapshot...");
     await revertToSnapshot(snapshotId);
+    
+    // Reset account nonces to ensure clean state
+    console.log("🔢 Resetting nonces...");
+    await resetAccountNonces();
+    
+    console.log("✅ Test setup complete");
+    
+    // Option B: Fresh snapshot per test (uncomment if needed)
+    // snapshotId = await takeSnapshot();
   });
 
-  const options = {
-    timeout: 999999,
-  };
+  // Global timeout now configured in vitest.config.ts
   test("Can create a new rule", async () => {
     var result = await createPolicy(
       config,
@@ -1268,7 +1337,7 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(admin).toEqual(true);
   });
-  test("Can update a policies admin", options, async () => {
+  test("Can update a policies admin", async () => {
     var policyJSON = `
         {
         "Policy": "Test Policy",
@@ -1340,7 +1409,7 @@ describe("Rules Engine Interactions", async () => {
     );
     expect(admin).toEqual(true);
   });
-  test("Can cement a policy", options, async () => {
+  test("Can cement a policy", async () => {
     var policyJSON = `
       {
       "Policy": "Test Policy",
@@ -1419,7 +1488,6 @@ describe("Rules Engine Interactions", async () => {
   });
   test(
     "Can manipulate closed subscriber list for a policy",
-    options,
     async () => {
       var policyJSON = `
       {

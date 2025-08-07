@@ -63,7 +63,7 @@ export const createCallingFunction = async (
   callingFunction: string,
   encodedValues: string
 ): Promise<number> => {
-  var argsRaw = parseFunctionArguments(callingFunction);
+  var argsRaw = parseFunctionArguments(encodedValues);
   var args: number[] = argsRaw.map((val) =>
     determinePTEnumeration(val.rawType)
   );
