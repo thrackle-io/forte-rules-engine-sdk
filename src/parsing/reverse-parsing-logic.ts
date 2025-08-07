@@ -58,7 +58,6 @@ export function reverseParseInstructionSet(
   var keyIndex = -1;
   var valueIndex = -1;
   var instructionCount = instructionSet.length;
-  console.log("REVERSE PARSING INSTRUCTION SET: ", instructionSet, placeHolderArray, stringReplacements);
   for (var instruction of instructionSet) {
     if (currentAction == -1) {
       currentAction = Number(instruction);
@@ -159,7 +158,6 @@ export function reverseParseInstructionSet(
           keyIndex = instruction;
           currentMemAddress += 1;
           retVal = placeHolderArray[instruction]
-          console.log("PLH REV: ", memAddressesMap, currentMemAddress, keyIndex,)
           break;
         case 3:
           retVal = arithmeticOperatorReverseInterpretation(
@@ -434,7 +432,6 @@ export const reverseParsePlaceholder = (
 }
 
 export const reverseParseEffect = (effect: any, placeholders: string[]): string => {
-  console.log("REVERSING EFFECT: ", effect, placeholders)
   if (effect.effectType == 0) {
     return "revert('" + effect.text + "')";
   } else if (effect.effectType == 1) {

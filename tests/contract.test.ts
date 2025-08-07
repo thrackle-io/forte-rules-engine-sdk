@@ -945,7 +945,6 @@ describe("Rules Engine Interactions", async () => {
             ]
             }`;
 
-
     var result = await createPolicy(
       config,
       getRulesEnginePolicyContract(rulesEngineContract, client),
@@ -981,9 +980,11 @@ describe("Rules Engine Interactions", async () => {
 
     const input = JSON.parse(policyJSON);
     input.Trackers[0].initialValue = "";
+    input.Rules[0].negativeEffects = ["revert('Negative')"];
+    input.Rules[0].positiveEffects = ["revert('Positive')"];
 
     expect(parsed.Policy).toEqual(input.Policy);
-    expect(retVal).toEqual(JSON.stringify(input));
+    expect(retVal).toEqual(JSON.stringify(input, null, 2));
   });
 
 
@@ -1003,8 +1004,8 @@ describe("Rules Engine Interactions", async () => {
              "ForeignCalls": [
                {
                    "name": "AnotherTestForeignCall",
-                   "function": "testAnotherSig(address)",
                    "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+                   "function": "testAnotherSig(address)",
                    "returnType": "uint256",
                    "valuesToPass": "to",
                    "mappedTrackerKeyValues": "",
@@ -1012,8 +1013,8 @@ describe("Rules Engine Interactions", async () => {
                },
                {
                    "name": "ATestForeignCall",
-                   "function": "testSig(address,uint256)",
                    "address": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+                   "function": "testSig(address,uint256)",
                    "returnType": "uint256",
                    "valuesToPass": "to, FC:AnotherTestForeignCall",
                    "mappedTrackerKeyValues": "",
@@ -1077,7 +1078,7 @@ describe("Rules Engine Interactions", async () => {
     input.ForeignCalls[0].callingFunction = "";
     input.ForeignCalls[1].valuesToPass = "placeholder, FC:AnotherTestForeignCall";
     input.ForeignCalls[1].callingFunction = "";
-    input.Rules[0].negativeEffects = ["revert('')"];
+    input.Rules[0].negativeEffects = ["revert('Negative')"];
 
 
     expect(parsed.Policy).toEqual(input.Policy);

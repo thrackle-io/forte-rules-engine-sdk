@@ -474,7 +474,7 @@ export function parseEffect(
   var effectType = EffectType.REVERT;
   var effectText = "";
   var effectInstructionSet: any[] = [];
-  const revertTextPattern = /(revert)\(\'(.*)\'\)/;
+  const revertTextPattern = /(revert)\("([^"]*)"\)/;
   var pType = 2;
   var parameterValue: any = 0;
   if (effect.includes("emit")) {
