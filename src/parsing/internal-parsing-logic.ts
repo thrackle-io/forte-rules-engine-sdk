@@ -9,7 +9,6 @@ import {
   InstructionSet,
   ASTAccumulator,
 } from "../modules/types";
-import { ConsoleLogger } from "typedoc/dist/lib/utils";
 
 /**
  * @file internal-parsing-logic.ts
